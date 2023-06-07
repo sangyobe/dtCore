@@ -7,14 +7,11 @@
 #ifndef __DTCORE_DTTRAJECTORY_H__
 #define __DTCORE_DTTRAJECTORY_H__
 
-/** \defgroup dtCore
+/** \defgroup dtTrajectory
  *
- * This module provides the trajectory interface for various trajectory
- * interpolation implementations.
+ * dtTrajectory is the trajectory interface for various trajectory
+ * interpolator implementations. It provides a unit trajectory interpolation.
  *
- * \code
- * #include <dtCore/dtTrajectory>
- * \endcode
  */
 
 #include "dtMath/dtMath.h"
