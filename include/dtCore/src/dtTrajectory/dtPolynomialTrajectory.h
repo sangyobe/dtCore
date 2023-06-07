@@ -32,22 +32,43 @@
 
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType>
-class dtPolynomialTrajectory : public dtTrajectory<m_type, m_trajType> {
+template <typename ValueType, uint32_t DOF> class dtPolynomialTrajectory {
+public:
+  typedef Eigen::Matrix<ValueType, DOF, 1> ContainerType;
+
 public:
   dtPolynomialTrajectory();
-  dtPolynomialTrajectory(const double t0, const double tf,
-                         const m_type &initial, const m_type &final);
+  dtPolynomialTrajectory(dtTrajType trajType, const double t0, const double tf,
+                         const ContainerType &p0, const ContainerType &pf,
+                         const ContainerType &v0 = ContrainerType.Zero(),
+                         const ContainerType &vf = ContrainerType.Zero(),
+                         const ContainerType &a0 = ContrainerType.Zero(),
+                         const ContainerType &af = ContrainerType.Zero());
   virtual ~dtPolynomialTrajectory();
 
 public:
-  virtual void interpolate(const double t, m_type &current) const override;
+  virtual void interpolate(const double t, ContainerType &p, ContainerType &v,
+                           ContainerType &a) const;
 
 protected:
-  virtual void _determineCoeff(const m_type &initial,
-                               const m_type &final) override;
+  virtual void _determineCoeff(dtTrajType trajType, const double t0,
+                               const double tf, const ContainerType &p0,
+                               const ContainerType &pf, const ContainerType &v0,
+                               const ContainerType &vf, const ContainerType &a0,
+                               const ContainerType &af);
 
 private:
+  dtTrajType _trajType;
+  double _t0;
+  double _tf;
+#ifdef _DEBUG
+  m_type _p0;
+  m_type _pf;
+  m_type _v0;
+  m_type _vf;
+  m_type _a0;
+  m_type _af;
+#endif
   dtMath::VectorXd _coeff;
 };
 

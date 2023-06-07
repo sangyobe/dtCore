@@ -7,6 +7,25 @@ using dtCore::dtPolynomialTrajectory;
 using dtCore::dtPolyTrajectory;
 using dtCore::dtTrajType;
 
+void Test_dtPolynomialTrajectory() {
+  double t0 = 0.0;
+  double tf = 10.0;
+  dtMath::Vector3d pi, pf, vi, vf, ai, af;
+  pi << 0.0, 5.0, -10.0;
+  pf << 5.0, -5.0, 0.0;
+  vi.Zero();
+  vf.Zero();
+  ai.Zero();
+  af.Zero();
+  dtPolynomialTrajectory<double, 3> traj(dtTrajType::CUBIC, t0, tf, pi, pf, vi,
+                                         vf);
+
+  double tc = 3.0;
+  dtMath::Vector3d p, v, a;
+  traj.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+}
+
 void TestTrajectory1dof() {
   double t0 = 0.0;
   double tf = 10.0;

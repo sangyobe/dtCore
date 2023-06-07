@@ -1,23 +1,33 @@
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType>
-dtPolynomialTrajectory<m_type, m_trajType>::dtPolynomialTrajectory()
-    : dtTrajectory<m_type, m_trajType>(), _coeff() {}
+template <typename ValueType, uint32_t DOF>
+dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory()
+    : _trajType(dtTrajType::NONE), _t0(t0), _tf(tf), _coeff() {}
 
-template <typename m_type, dtTrajType m_trajType>
-dtPolynomialTrajectory<m_type, m_trajType>::~dtPolynomialTrajectory() {}
+template <typename ValueType, uint32_t DOF>
+dtPolynomialTrajectory<ValueType, DOF>::~dtPolynomialTrajectory() {}
 
-template <typename m_type, dtTrajType m_trajType>
-dtPolynomialTrajectory<m_type, m_trajType>::dtPolynomialTrajectory(
-    const double t0, const double tf, const m_type &initial,
-    const m_type &final)
-    : dtTrajectory<m_type, m_trajType>(t0, tf, initial, final), _coeff() {
-  _determineCoeff(initial, final);
+template <typename ValueType, uint32_t DOF>
+dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory(
+    dtTrajType trajType, const double t0, const double tf,
+    const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
+    const ContainerType &vf, const ContainerType &a0, const ContainerType &af)
+    : _trajType(trajType), _t0(t0), _tf(tf), _coeff() {
+#ifdef _DEBUG
+  _p0 = p0;
+  _pf = pf;
+  _v0 = v0;
+  _vf = vf;
+  _a0 = a0;
+  _af = af;
+#endif
+  _determineCoeff(_trajType, _t0, _tf, p0, pf, v0, vf, a0, af);
 }
 
-template <typename m_type, dtTrajType m_trajType>
-void dtPolynomialTrajectory<m_type, m_trajType>::interpolate(
-    const double t_, m_type &current) const {
+template <typename ValueType, uint32_t DOF>
+void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
+    const double t_, ContainerType &p, ContainerType &v,
+    ContainerType &a) const {
 
   double t = t_;
   if (t > this->_tf)
@@ -27,31 +37,30 @@ void dtPolynomialTrajectory<m_type, m_trajType>::interpolate(
 
   t -= this->_t0;
 
-  static_assert(m_trajType != dtTrajType::NONE);
+  static_assert(_trajType != dtTrajType::NONE);
 
-  switch (m_trajType) {
+  switch (_trajType) {
   case dtTrajType::LINEAR: {
-    current[0] = _coeff[0] + _coeff[1] * t;
-    current[1] = _coeff[1];
-    current[2] = 0.0;
+    p[0] = _coeff[0] + _coeff[1] * t;
+    v[0] = _coeff[1];
+    a[0] = 0.0;
   } break;
 
   case dtTrajType::QUADRATIC: {
     double tsqr = t * t;
 
-    current[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr;
-    current[1] = _coeff[1] + 2 * _coeff[2] * t;
-    current[2] = 2 * _coeff[2];
+    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr;
+    v[0] = _coeff[1] + 2 * _coeff[2] * t;
+    a[0] = 2 * _coeff[2];
   } break;
 
   case dtTrajType::CUBIC: {
     double tsqr = t * t;
     double tcub = t * tsqr;
 
-    current[0] =
-        _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr + _coeff[3] * tcub;
-    current[1] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr;
-    current[2] = 2 * _coeff[2] + 6 * _coeff[3] * t;
+    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr + _coeff[3] * tcub;
+    v[0] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr;
+    a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t;
   } break;
 
   case dtTrajType::QUINTIC:
@@ -61,26 +70,28 @@ void dtPolynomialTrajectory<m_type, m_trajType>::interpolate(
     double tquad = t * tcub;
     double tquint = t * tquad;
 
-    current[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr +
-                 _coeff[3] * tcub + _coeff[4] * tquad + _coeff[5] * tquint;
-    current[1] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr +
-                 4 * _coeff[4] * tcub + 5 * _coeff[5] * tquad;
-    current[2] = 2 * _coeff[2] + 6 * _coeff[3] * t + 12 * _coeff[4] * tsqr +
-                 20 * _coeff[5] * tcub;
+    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr + _coeff[3] * tcub +
+           _coeff[4] * tquad + _coeff[5] * tquint;
+    v[0] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr +
+           4 * _coeff[4] * tcub + 5 * _coeff[5] * tquad;
+    a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t + 12 * _coeff[4] * tsqr +
+           20 * _coeff[5] * tcub;
   } break;
   }
 }
 
-template <typename m_type, dtTrajType m_trajType>
-void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
-    const m_type &initial, const m_type &final) {
-  double t = this->_tf - this->_t0;
+template <typename ValueType, uint32_t DOF>
+void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
+    dtTrajType trajType, const double t0, const double tf,
+    const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
+    const ContainerType &vf, const ContainerType &a0, const ContainerType &af) {
+  double t = tf - t0;
   double t2 = t * t;
   double t3 = t * t2;
   double t4 = t * t3;
   double t5 = t * t4;
 
-  switch (m_trajType) {
+  switch (_trajType) {
   case dtTrajType::NONE:
     break;
 
@@ -92,8 +103,8 @@ void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
     B(1, 1) = t;
 
     _coeff.resize(2);
-    _coeff[0] = initial[0];
-    _coeff[1] = final[0];
+    _coeff[0] = p0[0];
+    _coeff[1] = pf[0];
 
     B.solve(_coeff);
   } break;
@@ -111,9 +122,9 @@ void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
     B(2, 2) = t2;
 
     _coeff.resize(3);
-    _coeff[0] = initial[0];
-    _coeff[1] = initial[1];
-    _coeff[2] = final[0];
+    _coeff[0] = p0[0];
+    _coeff[1] = v0[0];
+    _coeff[2] = pf[0];
 
     B.solve(_coeff);
   } break;
@@ -138,8 +149,10 @@ void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
     B(3, 3) = 3 * t2;
 
     _coeff.resize(4);
-    _coeff.head<2>() = initial.template head<2>();
-    _coeff.tail<2>() = final.template head<2>();
+    _coeff[0] = p0[0];
+    _coeff[1] = v0[0];
+    _coeff[2] = pf[0];
+    _coeff[3] = vf[0];
 
     B.solve(_coeff);
   } break;
@@ -184,8 +197,12 @@ void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
     B(5, 5) = 20 * t3;
 
     _coeff.resize(6);
-    _coeff.head<3>() = initial.template head<3>();
-    _coeff.tail<3>() = final.template head<3>();
+    _coeff[0] = p0[0];
+    _coeff[1] = v0[0];
+    _coeff[2] = a0[0];
+    _coeff[3] = pf[0];
+    _coeff[4] = vf[0];
+    _coeff[5] = af[0];
 
     B.solve(_coeff);
   } break;
@@ -230,8 +247,12 @@ void dtPolynomialTrajectory<m_type, m_trajType>::_determineCoeff(
     B(5, 5) = 60 * t2;
 
     _coeff.resize(6);
-    _coeff.head<3>() = initial.template head<3>();
-    _coeff.tail<3>() = final.template head<3>();
+    _coeff[0] = p0[0];
+    _coeff[1] = v0[0];
+    _coeff[2] = a0[0];
+    _coeff[3] = pf[0];
+    _coeff[4] = vf[0];
+    _coeff[5] = af[0];
 
     // enforcing zero jerk condition
     _coeff[2] = 0.0;
