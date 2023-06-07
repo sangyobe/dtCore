@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(dtCore C CXX)
+project(dtCoreTest C CXX)
 
 cmake_policy(VERSION 3.13)
 cmake_policy(SET CMP0077 NEW)
@@ -27,8 +27,19 @@ endif()
 MESSAGE(STATUS "Eigen3 was found at ${EIGEN3_INCLUDE_DIR}")
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
-# Target Art Protocol
-#add_subdirectory(dtcore)
-
-
-add_subdirectory(tests)
+# Test targets
+foreach(_target test_trajectory)
+  add_executable(
+    ${_target}
+    "${_target}.cpp"
+  )
+  # target_link_libraries(
+  #   ${_target}
+  #   dtcore
+  # )
+  target_include_directories(
+    ${_target}
+    PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+  )
+endforeach()

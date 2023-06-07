@@ -1,0 +1,1 @@
+dtCore is primarily ... licensed.

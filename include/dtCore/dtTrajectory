@@ -1,0 +1,6 @@
+#include "src/dtTrajectory/dtHTransformTrajectory.h"
+#include "src/dtTrajectory/dtOrientationTrajectory.h"
+#include "src/dtTrajectory/dtPolynomialTrajectory.h"
+#include "src/dtTrajectory/dtPolyTrajectory.h"
+#include "src/dtTrajectory/dtTrajectory.h"
+#include "src/dtTrajectory/dtTrajectoryList.h"
