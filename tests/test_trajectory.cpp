@@ -5,7 +5,39 @@
 
 using dtCore::dtPolynomialTrajectory;
 using dtCore::dtPolyTrajectory;
+using dtCore::dtTrajectoryList;
 using dtCore::dtTrajType;
+
+void Test_dtTrajectoryList() {
+  double t0 = 0.0, t1 = 2.0, t2 = 7.0, tf = 10.0;
+  dtMath::Vector3d pi, p1, p2, pf;
+  pi << 0.0, 0.0, 0.0;
+  p1 << 0.5, 1.0, -0.5;
+  p2 << 0.7, 0.5, 0.0;
+  pf << 1.0, 1.0, 1.0;
+  dtPolynomialTrajectory<double, 3> traj1(dtTrajType::CUBIC, t0, t1, pi, p1);
+  dtPolynomialTrajectory<double, 3> traj2(dtTrajType::CUBIC, t1, t2, p1, p2);
+  dtPolynomialTrajectory<double, 3> traj3(dtTrajType::CUBIC, t2, tf, p2, pf);
+  dtTrajectoryList<dtPolynomialTrajectory<double, 3>> trajList;
+  trajList.add(traj1);
+  trajList.add(traj2);
+  trajList.add(traj3);
+
+  double tc;
+  dtMath::Vector3d p, v, a;
+
+  tc = 1.0;
+  trajList.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+
+  tc = 5.0;
+  trajList.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+
+  tc = 9.0;
+  trajList.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+}
 
 void Test_dtPolynomialTrajectory() {
   double t0 = 0.0;

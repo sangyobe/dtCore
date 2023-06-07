@@ -29,6 +29,8 @@ typedef Eigen::Matrix3d Matrix3d;
 typedef Eigen::Matrix4d Matrix4d;
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::MatrixXd MatrixXd;
+typedef Eigen::Matrix3d Rotation;
+typedef Eigen::Matrix4d HTransform;
 } // namespace dtMath
 
 #endif // __DTMATH_DTMATH_H__
