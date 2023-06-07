@@ -7,32 +7,7 @@
 #ifndef __DTCORE_DTPOLYTRAJECTORY_H__
 #define __DTCORE_DTPOLYTRAJECTORY_H__
 
-/** \defgroup dtTrajectory
- *
- * dtPolyTrajectory provides trajectory interpolation for one joint
- * using polynomial interpolator. Degree of polynomial can be specified
- * as a template variable.
- *
- * \code
- * #include <dtCore/dtTrajectory>
- * 
- * double t0 = 0.0;
- * double tf = 10.0;
- * dtVector<double, 3> pi, pf, vi, vf, ai, af;
- * pi << 0.0, 5.0, -10.0;
- * pf << 5.0, -5.0, 0.0;
- * vi.Zero();
- * vf.Zero();
- * ai.Zero();
- * af.Zero();
- * dtPolyTrajectory<double, 3, 5> traj(t0, tf, pi, pf, vi, vf, ai, af);
- * 
- * double tc = 3.0;
- * dtVector<double, 3> p, v, a;
- * traj.interpolate(tc, p, v, a);
- * 
- * \endcode
- */
+
 
 // #include "dtTrajectory.h"
 

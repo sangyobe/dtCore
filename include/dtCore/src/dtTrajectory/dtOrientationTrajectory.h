@@ -7,18 +7,26 @@
 #ifndef __DTCORE_DTORIENTATIONTRAJECTORY_H__
 #define __DTCORE_DTORIENTATIONTRAJECTORY_H__
 
-/** \defgroup dtCore
+/** \defgroup dtTrajectory
  *
- * This module provides a list of trajectories.
- * A list of trajectories consist of a starting point, multiple via points,
- * and a final point.
+ * dtOrientationTrajectory provides orientation trajectory interpolation in task space.
  *
  * \code
- * #include <dtCore/dtOrientationTrajectory.h>
+ * #include <dtCore/dtTrajectory>
+ * 
+ * double ti = 0.0;
+ * double tf = 10.0;
+ * dtRotation<double> Ri, Rf;
+ * R0 << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+ * Rf << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+ * dtOrientationTrajectory<double> traj(t0, tf, Ri, Rf);
+ * 
+ * double tc = 3.0;
+ * dtRotation<double> Rc;
+ * traj.interpolate(tc, Rc);
+ * 
  * \endcode
  */
-
-#include "dtTrajectory.h"
 
 namespace dtCore {
 

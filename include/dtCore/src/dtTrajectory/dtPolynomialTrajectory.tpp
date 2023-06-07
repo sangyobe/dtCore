@@ -2,7 +2,7 @@ namespace dtCore {
 
 template <typename ValueType, uint32_t DOF>
 dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory()
-    : _trajType(dtTrajType::NONE), _t0(t0), _tf(tf), _coeff() {}
+    : _trajType(dtTrajType::NONE), _t0(0), _tf(0), _coeff() {}
 
 template <typename ValueType, uint32_t DOF>
 dtPolynomialTrajectory<ValueType, DOF>::~dtPolynomialTrajectory() {}
@@ -37,7 +37,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
 
   t -= this->_t0;
 
-  static_assert(_trajType != dtTrajType::NONE);
+  assert(_trajType != dtTrajType::NONE);
 
   switch (_trajType) {
   case dtTrajType::LINEAR: {
@@ -77,6 +77,10 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
     a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t + 12 * _coeff[4] * tsqr +
            20 * _coeff[5] * tcub;
   } break;
+
+  case dtTrajType::NONE:
+  default:
+    break;
   }
 }
 
@@ -92,9 +96,6 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
   double t5 = t * t4;
 
   switch (_trajType) {
-  case dtTrajType::NONE:
-    break;
-
   case dtTrajType::LINEAR: {
     dtMath::Matrix2d B;
     B(0, 0) = 1;
@@ -260,6 +261,10 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
 
     B.solve(_coeff);
   } break;
+  
+  case dtTrajType::NONE:
+  default:
+    break;
   }
 }
 

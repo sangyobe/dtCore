@@ -20,8 +20,18 @@ void Test_dtPolynomialTrajectory() {
   dtPolynomialTrajectory<double, 3> traj(dtTrajType::CUBIC, t0, tf, pi, pf, vi,
                                          vf);
 
-  double tc = 3.0;
+  double tc;
   dtMath::Vector3d p, v, a;
+
+  tc = 1.0;
+  traj.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+
+  tc = 5.0;
+  traj.interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p << ")" << std::endl;
+
+  tc = 9.0;
   traj.interpolate(tc, p, v, a);
   std::cout << "(" << tc << ", " << p << ")" << std::endl;
 }
@@ -72,7 +82,7 @@ void TestTrajectoryNdof() {
   traj.interpolate(tc, p);
   std::cout << "(" << tc << ", " << p << ")" << std::endl;
 }
-
+/*
 void TestTrajectory(int sps, int loop) {
   double t0 = 0.0;
   double tf = 10.0;
@@ -98,10 +108,11 @@ void TestTrajectory(int sps, int loop) {
               << " (sec)" << std::endl;
   }
 }
-
+*/
 int main() {
   // TestTrajectory(10, 1);
-  TestTrajectory1dof();
-  TestTrajectoryNdof();
+  // TestTrajectory1dof();
+  // TestTrajectoryNdof();
+  Test_dtPolynomialTrajectory();
   return 0;
 }

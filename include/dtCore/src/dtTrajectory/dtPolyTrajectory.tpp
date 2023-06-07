@@ -31,7 +31,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
 
   t -= this->_t0;
 
-  static_assert(m_trajType != dtTrajType::NONE);
+  static_assert(m_trajType != dtTrajType::NONE, "Trajectory type is not set.");
 
   switch (m_trajType) {
   case dtTrajType::LINEAR: {

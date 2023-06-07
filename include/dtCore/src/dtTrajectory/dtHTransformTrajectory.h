@@ -7,14 +7,24 @@
 #ifndef __DTCORE_DTHTRANSFORMTRAJECTORY_H__
 #define __DTCORE_DTHTRANSFORMTRAJECTORY_H__
 
-/** \defgroup dtCore
+/** \defgroup dtTrajectory
  *
- * This module provides a list of trajectories.
- * A list of trajectories consist of a starting point, multiple via points,
- * and a final point.
+ * dtHTransformTrajectory provides 3D pose trajectory interpolation in task space.
  *
  * \code
- * #include <dtCore/dtHTransformTrajectory.h>
+ * #include <dtCore/dtTrajectory>
+ * 
+ * double ti = 0.0;
+ * double tf = 10.0;
+ * dtHTransform<double> Ti, Tf;
+ * Ti << 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0;
+ * Tf << 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0;
+ * dtHTransformTrajectory<double> traj(t0, tf, Ti, Tf);
+ * 
+ * double tc = 3.0;
+ * dtHTransform<double> Tc;
+ * traj.interpolate(tc, Tc);
+ * 
  * \endcode
  */
 

@@ -7,28 +7,32 @@
 #ifndef __DTCORE_DTPOLYNOMIALTRAJECTORY_H__
 #define __DTCORE_DTPOLYNOMIALTRAJECTORY_H__
 
-/** \defgroup dtCore
+/** \defgroup dtTrajectory
  *
- * This module provides ...
+ * dtPolynomialTrajectory provides trajectory interpolation for one joint
+ * using polynomial interpolator. Degree of polynomial can be specified
+ * as a template variable.
  *
  * \code
- * #include <dtCore/dtPolynomialTrajectory.h>
- * // initialize trajectory interpolator
+ * #include <dtCore/dtTrajectory>
+ * 
  * double t0 = 0.0;
  * double tf = 10.0;
- * dtMath::Vector3d vi;
- * vi << 0.0, 0.0, 0.0;
- * dtMath::Vector3d vf;
- * vf << 5.0, 0.0, 0.0;
- * dtPolynomialTrajectory<dtMath::dtVector3d, dtTrajType::LINEAR> intp(t0, tf,
- * vi, vf);
- * // compute interpolated trajectory
- * dtMath::dtVector3d p;
- * intp.interpolate(5.0, p);
+ * dtVector<double, 3> pi, pf, vi, vf, ai, af;
+ * pi << 0.0, 5.0, -10.0;
+ * pf << 5.0, -5.0, 0.0;
+ * vi.Zero();
+ * vf.Zero();
+ * ai.Zero();
+ * af.Zero();
+ * dtPolynomialTrajectory<double, 3> traj(dtTrajType::CUBIC, t0, tf, pi, pf, vi, vf, ai, af);
+ * 
+ * double tc = 3.0;
+ * dtVector<double, 3> p, v, a;
+ * traj.interpolate(tc, p, v, a);
+ * 
  * \endcode
  */
-
-#include "dtTrajectory.h"
 
 namespace dtCore {
 
@@ -40,10 +44,10 @@ public:
   dtPolynomialTrajectory();
   dtPolynomialTrajectory(dtTrajType trajType, const double t0, const double tf,
                          const ContainerType &p0, const ContainerType &pf,
-                         const ContainerType &v0 = ContrainerType.Zero(),
-                         const ContainerType &vf = ContrainerType.Zero(),
-                         const ContainerType &a0 = ContrainerType.Zero(),
-                         const ContainerType &af = ContrainerType.Zero());
+                         const ContainerType &v0 = ContainerType::Zero(),
+                         const ContainerType &vf = ContainerType::Zero(),
+                         const ContainerType &a0 = ContainerType::Zero(),
+                         const ContainerType &af = ContainerType::Zero());
   virtual ~dtPolynomialTrajectory();
 
 public:
