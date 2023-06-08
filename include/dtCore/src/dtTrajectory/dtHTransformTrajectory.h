@@ -32,22 +32,27 @@
 
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType>
-class dtHTransformTrajectory : public dtTrajectory<m_type, m_trajType> {
+template <typename ValueType> class dtHTransformTrajectory {
 public:
-  dtHTransformTrajectory() {}
-  dtHTransformTrajectory(const double t0, const double tf,
-                         const m_type &initial, const m_type &final) {}
-  virtual ~dtHTransformTrajectory() {}
+  typedef Eigen::Matrix<ValueType, 4, 4> ContainerType;
 
 public:
-  virtual void interpolate(const double t, m_type &current) const override {}
+  dtHTransformTrajectory();
+  dtHTransformTrajectory(const double t0, const double tf,
+                         const ContainerType &initial,
+                         const ContainerType &final);
+  virtual ~dtHTransformTrajectory();
+
+public:
+  virtual void interpolate(const double t, ContainerType &current) const;
 
 protected:
-  virtual void _determineCoeff(const m_type &initial,
-                               const m_type &final) override {}
+  virtual void _determineCoeff(const ContainerType &initial,
+                               const ContainerType &final);
 };
 
 } // namespace dtCore
+
+#include "dtHTransformTrajectory.tpp"
 
 #endif // __DTCORE_DTHTRANSFORMTRAJECTORY_H__

@@ -3,21 +3,23 @@
 #include <dtCore/dtTrajectory>
 #include <iostream>
 
+using dtCore::dtHTransformTrajectory;
+using dtCore::dtOrientationTrajectory;
 using dtCore::dtPolynomialTrajectory;
 using dtCore::dtPolyTrajectory;
+using dtCore::dtPolyType;
 using dtCore::dtTrajectoryList;
-using dtCore::dtTrajType;
 
-void Test_dtTrajectoryList() {
-  double t0 = 0.0, t1 = 2.0, t2 = 7.0, tf = 10.0;
+void Test_PolynomialTrajectoryList() {
+  double ti = 0.0, t1 = 2.0, t2 = 7.0, tf = 10.0;
   dtMath::Vector3d pi, p1, p2, pf;
   pi << 0.0, 0.0, 0.0;
   p1 << 0.5, 1.0, -0.5;
   p2 << 0.7, 0.5, 0.0;
   pf << 1.0, 1.0, 1.0;
-  dtPolynomialTrajectory<double, 3> traj1(dtTrajType::CUBIC, t0, t1, pi, p1);
-  dtPolynomialTrajectory<double, 3> traj2(dtTrajType::CUBIC, t1, t2, p1, p2);
-  dtPolynomialTrajectory<double, 3> traj3(dtTrajType::CUBIC, t2, tf, p2, pf);
+  dtPolynomialTrajectory<double, 3> traj1(dtPolyType::CUBIC, ti, t1, pi, p1);
+  dtPolynomialTrajectory<double, 3> traj2(dtPolyType::CUBIC, t1, t2, p1, p2);
+  dtPolynomialTrajectory<double, 3> traj3(dtPolyType::CUBIC, t2, tf, p2, pf);
   dtTrajectoryList<dtPolynomialTrajectory<double, 3>> trajList;
   trajList.add(traj1);
   trajList.add(traj2);
@@ -39,8 +41,39 @@ void Test_dtTrajectoryList() {
   std::cout << "(" << tc << ", " << p << ")" << std::endl;
 }
 
-void Test_dtPolynomialTrajectory() {
-  double t0 = 0.0;
+void Test_OrientationTrajectoryList() {
+  double ti = 0.0, t1 = 2.0, t2 = 7.0, tf = 10.0;
+  dtMath::RotationMatrix Ri, R1, R2, Rf;
+  Ri << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  R1 << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  R2 << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  Rf << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  dtOrientationTrajectory<double> traj1(ti, t1, Ri, R1);
+  dtOrientationTrajectory<double> traj2(t1, t2, R1, R2);
+  dtOrientationTrajectory<double> traj3(t2, tf, R2, Rf);
+  dtTrajectoryList<dtOrientationTrajectory<double>> trajList;
+  trajList.add(traj1);
+  trajList.add(traj2);
+  trajList.add(traj3);
+
+  double tc;
+  dtMath::RotationMatrix Rc;
+
+  tc = 1.0;
+  trajList.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+
+  tc = 5.0;
+  trajList.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+
+  tc = 9.0;
+  trajList.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+}
+
+void Test_PolynomialTrajectory() {
+  double ti = 0.0;
   double tf = 10.0;
   dtMath::Vector3d pi, pf, vi, vf, ai, af;
   pi << 0.0, 5.0, -10.0;
@@ -49,7 +82,7 @@ void Test_dtPolynomialTrajectory() {
   vf.Zero();
   ai.Zero();
   af.Zero();
-  dtPolynomialTrajectory<double, 3> traj(dtTrajType::CUBIC, t0, tf, pi, pf, vi,
+  dtPolynomialTrajectory<double, 3> traj(dtPolyType::CUBIC, ti, tf, pi, pf, vi,
                                          vf);
 
   double tc;
@@ -68,15 +101,39 @@ void Test_dtPolynomialTrajectory() {
   std::cout << "(" << tc << ", " << p << ")" << std::endl;
 }
 
+void Test_OrientationTrajectory() {
+  double ti = 0.0;
+  double tf = 10.0;
+  dtMath::RotationMatrix Ri, Rf;
+  Ri << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  Rf << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  dtOrientationTrajectory<double> traj(ti, tf, Ri, Rf);
+
+  double tc;
+  dtMath::RotationMatrix Rc;
+
+  tc = 1.0;
+  traj.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+
+  tc = 5.0;
+  traj.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+
+  tc = 9.0;
+  traj.interpolate(tc, Rc);
+  std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+}
+
 void TestTrajectory1dof() {
-  double t0 = 0.0;
+  double ti = 0.0;
   double tf = 10.0;
   dtMath::Vector3d pi;
   pi << 0.0, 0.0, 0.0;
   dtMath::Vector3d pf;
   pf << 5.0, 0.0, 0.0;
 
-  dtPolyTrajectory<double, dtTrajType::CUBIC, 1> traj(t0, tf, pi, pf);
+  dtPolyTrajectory<double, dtPolyType::CUBIC, 1> traj(ti, tf, pi, pf);
   double tc;
   dtMath::Vector3d p;
 
@@ -90,17 +147,17 @@ void TestTrajectory1dof() {
 }
 
 void TestTrajectoryNdof() {
-  double t0 = 0.0;
+  double ti = 0.0;
   double tf = 10.0;
 
-  dtPolyTrajectory<double, dtTrajType::CUBIC, 2>::m_valueType pi, pf;
+  dtPolyTrajectory<double, dtPolyType::CUBIC, 2>::m_valueType pi, pf;
   pi << 0.0, 0.0, 0.0, 5.0, 0.0, 0.0;
   pf << 5.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
-  dtPolyTrajectory<double, dtTrajType::CUBIC, 2> traj(t0, tf, pi, pf);
+  dtPolyTrajectory<double, dtPolyType::CUBIC, 2> traj(ti, tf, pi, pf);
 
   double tc;
-  dtPolyTrajectory<double, dtTrajType::CUBIC, 2>::m_valueType p;
+  dtPolyTrajectory<double, dtPolyType::CUBIC, 2>::m_valueType p;
 
   tc = 1.0;
   traj.interpolate(tc, p);
@@ -116,7 +173,7 @@ void TestTrajectoryNdof() {
 }
 /*
 void TestTrajectory(int sps, int loop) {
-  double t0 = 0.0;
+  double ti = 0.0;
   double tf = 10.0;
   dtMath::Vector3d pi;
   pi << 0.0, 0.0, 0.0;
@@ -126,10 +183,10 @@ void TestTrajectory(int sps, int loop) {
     std::chrono::system_clock::time_point start =
         std::chrono::system_clock::now();
     for (int i = 0; i < sps; i++) {
-      dtPolynomialTrajectory<dtMath::Vector3d, dtTrajType::CUBIC> intp(t0, tf,
+      dtPolynomialTrajectory<dtMath::Vector3d, dtPolyType::CUBIC> intp(ti, tf,
                                                                        pi, pf);
       dtMath::Vector3d p;
-      double t = t0 + (tf - t0) / sps * i;
+      double t = ti + (tf - ti) / sps * i;
       intp.interpolate(t, p);
       std::cout << "(" << t << ", " << p << ")" << std::endl;
     }
@@ -145,6 +202,6 @@ int main() {
   // TestTrajectory(10, 1);
   // TestTrajectory1dof();
   // TestTrajectoryNdof();
-  Test_dtPolynomialTrajectory();
+  Test_PolynomialTrajectory();
   return 0;
 }

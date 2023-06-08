@@ -1,13 +1,13 @@
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof>
 dtPolyTrajectory<m_type, m_trajType, dof>::dtPolyTrajectory()
     : _t0(0), _tf(0), _coeff() {}
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof>
 dtPolyTrajectory<m_type, m_trajType, dof>::~dtPolyTrajectory() {}
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof>
 dtPolyTrajectory<m_type, m_trajType, dof>::dtPolyTrajectory(
     const double t0, const double tf, const m_valueType &initial,
     const m_valueType &final)
@@ -19,7 +19,7 @@ dtPolyTrajectory<m_type, m_trajType, dof>::dtPolyTrajectory(
   _determineCoeff(initial, final);
 }
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof>
 void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
     const double t_, m_valueType &current) const {
 
@@ -31,16 +31,16 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
 
   t -= this->_t0;
 
-  static_assert(m_trajType != dtTrajType::NONE, "Trajectory type is not set.");
+  static_assert(m_trajType != dtPolyType::NONE, "Trajectory type is not set.");
 
   switch (m_trajType) {
-  case dtTrajType::LINEAR: {
+  case dtPolyType::LINEAR: {
     current[0] = _coeff[0] + _coeff[1] * t;
     current[1] = _coeff[1];
     current[2] = 0.0;
   } break;
 
-  case dtTrajType::QUADRATIC: {
+  case dtPolyType::QUADRATIC: {
     double tsqr = t * t;
 
     current[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr;
@@ -48,7 +48,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
     current[2] = 2 * _coeff[2];
   } break;
 
-  case dtTrajType::CUBIC: {
+  case dtPolyType::CUBIC: {
     double tsqr = t * t;
     double tcub = t * tsqr;
 
@@ -58,8 +58,8 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
     current[2] = 2 * _coeff[2] + 6 * _coeff[3] * t;
   } break;
 
-  case dtTrajType::QUINTIC:
-  case dtTrajType::JERK: {
+  case dtPolyType::QUINTIC:
+  case dtPolyType::JERK: {
     double tsqr = t * t;
     double tcub = t * tsqr;
     double tquad = t * tcub;
@@ -75,7 +75,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::interpolate(
   }
 }
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof>
 void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
     const m_valueType &initial, const m_valueType &final) {
   double t = this->_tf - this->_t0;
@@ -85,10 +85,10 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
   double t5 = t * t4;
 
   switch (m_trajType) {
-  case dtTrajType::NONE:
+  case dtPolyType::NONE:
     break;
 
-  case dtTrajType::LINEAR: {
+  case dtPolyType::LINEAR: {
     dtMath::Matrix2d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -102,7 +102,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::QUADRATIC: {
+  case dtPolyType::QUADRATIC: {
     dtMath::Matrix3d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -122,7 +122,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::CUBIC: {
+  case dtPolyType::CUBIC: {
     dtMath::Matrix4d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -148,7 +148,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::QUINTIC: {
+  case dtPolyType::QUINTIC: {
     dtMath::Matrix6d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -194,7 +194,7 @@ void dtPolyTrajectory<m_type, m_trajType, dof>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::JERK: {
+  case dtPolyType::JERK: {
     dtMath::Matrix6d B;
     B(0, 0) = 1;
     B(0, 1) = 0;

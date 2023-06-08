@@ -1,11 +1,16 @@
 namespace dtCore {
 
-template <typename T>
-void dtTrajectoryList<T>::add(const T &traj)
-{}
+template <typename TrajType>
+void dtTrajectoryList<TrajType>::add(const TrajType &traj) {}
 
-template <typename T>
-void dtTrajectoryList<T>::interpolate(double t, typename T::ContainerType &p, typename T::ContainerType &v, typename T::ContainerType &a) const
-{}
+template <typename TrajType>
+void dtTrajectoryList<TrajType>::interpolate(
+    double t, typename TrajType::ContainerType &p,
+    typename TrajType::ContainerType &v,
+    typename TrajType::ContainerType &a) const {}
+
+template <typename TrajType>
+void dtTrajectoryList<TrajType>::interpolate(
+    double t, typename TrajType::ContainerType &p) const {}
 
 } // namespace dtCore

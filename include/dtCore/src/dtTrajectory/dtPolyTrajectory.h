@@ -13,7 +13,7 @@
 
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType, uint32_t dof = 1>
+template <typename m_type, dtPolyType m_trajType, uint32_t dof = 1>
 class dtPolyTrajectory {
 public:
   typedef Eigen::Matrix<m_type, dof * 3, 1> m_valueType;

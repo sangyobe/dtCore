@@ -2,14 +2,14 @@ namespace dtCore {
 
 template <typename ValueType, uint32_t DOF>
 dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory()
-    : _trajType(dtTrajType::NONE), _t0(0), _tf(0), _coeff() {}
+    : _trajType(dtPolyType::NONE), _t0(0), _tf(0), _coeff() {}
 
 template <typename ValueType, uint32_t DOF>
 dtPolynomialTrajectory<ValueType, DOF>::~dtPolynomialTrajectory() {}
 
 template <typename ValueType, uint32_t DOF>
 dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory(
-    dtTrajType trajType, const double t0, const double tf,
+    dtPolyType trajType, const double t0, const double tf,
     const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
     const ContainerType &vf, const ContainerType &a0, const ContainerType &af)
     : _trajType(trajType), _t0(t0), _tf(tf), _coeff() {
@@ -37,16 +37,16 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
 
   t -= this->_t0;
 
-  assert(_trajType != dtTrajType::NONE);
+  assert(_trajType != dtPolyType::NONE);
 
   switch (_trajType) {
-  case dtTrajType::LINEAR: {
+  case dtPolyType::LINEAR: {
     p[0] = _coeff[0] + _coeff[1] * t;
     v[0] = _coeff[1];
     a[0] = 0.0;
   } break;
 
-  case dtTrajType::QUADRATIC: {
+  case dtPolyType::QUADRATIC: {
     double tsqr = t * t;
 
     p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr;
@@ -54,7 +54,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
     a[0] = 2 * _coeff[2];
   } break;
 
-  case dtTrajType::CUBIC: {
+  case dtPolyType::CUBIC: {
     double tsqr = t * t;
     double tcub = t * tsqr;
 
@@ -63,8 +63,8 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
     a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t;
   } break;
 
-  case dtTrajType::QUINTIC:
-  case dtTrajType::JERK: {
+  case dtPolyType::QUINTIC:
+  case dtPolyType::JERK: {
     double tsqr = t * t;
     double tcub = t * tsqr;
     double tquad = t * tcub;
@@ -78,7 +78,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
            20 * _coeff[5] * tcub;
   } break;
 
-  case dtTrajType::NONE:
+  case dtPolyType::NONE:
   default:
     break;
   }
@@ -86,7 +86,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
 
 template <typename ValueType, uint32_t DOF>
 void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
-    dtTrajType trajType, const double t0, const double tf,
+    dtPolyType trajType, const double t0, const double tf,
     const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
     const ContainerType &vf, const ContainerType &a0, const ContainerType &af) {
   double t = tf - t0;
@@ -96,7 +96,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
   double t5 = t * t4;
 
   switch (_trajType) {
-  case dtTrajType::LINEAR: {
+  case dtPolyType::LINEAR: {
     dtMath::Matrix2d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -110,7 +110,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::QUADRATIC: {
+  case dtPolyType::QUADRATIC: {
     dtMath::Matrix3d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -130,7 +130,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::CUBIC: {
+  case dtPolyType::CUBIC: {
     dtMath::Matrix4d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -158,7 +158,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::QUINTIC: {
+  case dtPolyType::QUINTIC: {
     dtMath::Matrix6d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -208,7 +208,7 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
     B.solve(_coeff);
   } break;
 
-  case dtTrajType::JERK: {
+  case dtPolyType::JERK: {
     dtMath::Matrix6d B;
     B(0, 0) = 1;
     B(0, 1) = 0;
@@ -261,8 +261,8 @@ void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
 
     B.solve(_coeff);
   } break;
-  
-  case dtTrajType::NONE:
+
+  case dtPolyType::NONE:
   default:
     break;
   }

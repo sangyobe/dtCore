@@ -15,7 +15,7 @@
  *
  * \code
  * #include <dtCore/dtTrajectory>
- * 
+ *
  * double t0 = 0.0;
  * double tf = 10.0;
  * dtVector<double, 3> pi, pf, vi, vf, ai, af;
@@ -25,12 +25,13 @@
  * vf.Zero();
  * ai.Zero();
  * af.Zero();
- * dtPolynomialTrajectory<double, 3> traj(dtTrajType::CUBIC, t0, tf, pi, pf, vi, vf, ai, af);
- * 
+ * dtPolynomialTrajectory<double, 3> traj(dtPolyType::CUBIC, t0, tf, pi, pf, vi,
+ * vf, ai, af);
+ *
  * double tc = 3.0;
  * dtVector<double, 3> p, v, a;
  * traj.interpolate(tc, p, v, a);
- * 
+ *
  * \endcode
  */
 
@@ -42,7 +43,7 @@ public:
 
 public:
   dtPolynomialTrajectory();
-  dtPolynomialTrajectory(dtTrajType trajType, const double t0, const double tf,
+  dtPolynomialTrajectory(dtPolyType trajType, const double t0, const double tf,
                          const ContainerType &p0, const ContainerType &pf,
                          const ContainerType &v0 = ContainerType::Zero(),
                          const ContainerType &vf = ContainerType::Zero(),
@@ -55,14 +56,14 @@ public:
                            ContainerType &a) const;
 
 protected:
-  virtual void _determineCoeff(dtTrajType trajType, const double t0,
+  virtual void _determineCoeff(dtPolyType trajType, const double t0,
                                const double tf, const ContainerType &p0,
                                const ContainerType &pf, const ContainerType &v0,
                                const ContainerType &vf, const ContainerType &a0,
                                const ContainerType &af);
 
 private:
-  dtTrajType _trajType;
+  dtPolyType _trajType;
   double _t0;
   double _tf;
 #ifdef _DEBUG

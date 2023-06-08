@@ -30,22 +30,27 @@
 
 namespace dtCore {
 
-template <typename m_type, dtTrajType m_trajType>
-class dtOrientationTrajectory : public dtTrajectory<m_type, m_trajType> {
+template <typename ValueType> class dtOrientationTrajectory {
 public:
-  dtOrientationTrajectory() {}
-  dtOrientationTrajectory(const double t0, const double tf,
-                          const m_type &initial, const m_type &final) {}
-  virtual ~dtOrientationTrajectory() {}
+    typedef Eigen::Matrix<ValueType, 3, 3> ContainerType;
 
-public:
-  virtual void interpolate(const double t, m_type &current) const override {}
+  public:
+    dtOrientationTrajectory();
+    dtOrientationTrajectory(const double t0, const double tf,
+                            const ContainerType &initial,
+                            const ContainerType &final);
+    virtual ~dtOrientationTrajectory();
 
-protected:
-  virtual void _determineCoeff(const m_type &initial,
-                               const m_type &final) override {}
+  public:
+    virtual void interpolate(const double t, ContainerType &current) const;
+
+  protected:
+    virtual void _determineCoeff(const ContainerType &initial,
+                                 const ContainerType &final);
 };
 
 } // namespace dtCore
+
+#include "dtOrientationTrajectory.tpp"
 
 #endif // __DTCORE_DTORIENTATIONTRAJECTORY_H__
