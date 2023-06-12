@@ -7,9 +7,7 @@
 #ifndef __DTCORE_DTPOLYTRAJECTORY_H__
 #define __DTCORE_DTPOLYTRAJECTORY_H__
 
-
-
-// #include "dtTrajectory.h"
+#include "dtMath/dtMath.h"
 
 namespace dtCore {
 

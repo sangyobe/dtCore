@@ -8,6 +8,7 @@ using dtCore::dtOrientationTrajectory;
 using dtCore::dtPolynomialTrajectory;
 using dtCore::dtPolyTrajectory;
 using dtCore::dtPolyType;
+using dtCore::dtTrajectory;
 using dtCore::dtTrajectoryList;
 
 void Test_PolynomialTrajectoryList() {
@@ -70,6 +71,37 @@ void Test_OrientationTrajectoryList() {
   tc = 9.0;
   trajList.interpolate(tc, Rc);
   std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
+}
+
+void Test_PolynomialTrajectory2() {
+  double ti = 0.0;
+  double tf = 10.0;
+  double pi[3] = {0.0, 5.0, -10.0};
+  double pf[3] = {5.0, -5.0, 0.0};
+  double vi[3] = {0.0, 0.0, 0.0};
+  double vf[3] = {0.0, 0.0, 0.0};
+  double ai[3] = {0.0, 0.0, 0.0};
+  double af[3] = {0.0, 0.0, 0.0};
+
+  dtTrajectory<double, 3, 1> traj(tf - ti, pi, pf, vi, vf, ai, af, ti);
+
+  double tc;
+  double p[3], v[3], a[3];
+
+  tc = 1.0;
+  traj.Interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2] << ")"
+            << std::endl;
+
+  tc = 5.0;
+  traj.Interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2] << ")"
+            << std::endl;
+
+  tc = 9.0;
+  traj.Interpolate(tc, p, v, a);
+  std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2] << ")"
+            << std::endl;
 }
 
 void Test_PolynomialTrajectory() {
@@ -202,6 +234,6 @@ int main() {
   // TestTrajectory(10, 1);
   // TestTrajectory1dof();
   // TestTrajectoryNdof();
-  Test_PolynomialTrajectory();
+  Test_PolynomialTrajectory2();
   return 0;
 }

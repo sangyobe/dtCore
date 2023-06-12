@@ -28,7 +28,7 @@
  * \endcode
  */
 
-#include "dtTrajectory.h"
+#include "dtMath/dtMath.h"
 
 namespace dtCore {
 

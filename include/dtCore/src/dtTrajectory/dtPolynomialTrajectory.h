@@ -35,7 +35,22 @@
  * \endcode
  */
 
+#include "dtInterpolator.h"
+
 namespace dtCore {
+
+enum class dtPolyType {
+  NONE = 0,
+  LINEAR = 1,
+  QUADRATIC = 2,
+  CUBIC = 3,
+  QUINTIC = 4,
+  JERK = 5,
+  // LINEAR_PARABOLIC_BLEND = 6
+  // CSPLINE_NATURAL,
+  // CSPLINE_CLAMPED,
+  // CSPLINE_FORCED
+};
 
 template <typename ValueType, uint32_t DOF> class dtPolynomialTrajectory {
 public:
