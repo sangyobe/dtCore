@@ -57,6 +57,9 @@ protected:
 
   private:
     ValueType m_coeff[m_degree + 1];
+    ValueType m_duration;
+    ValueType m_p0;
+    ValueType m_pf;
   };
 
   void ReconfigurePolynomial();

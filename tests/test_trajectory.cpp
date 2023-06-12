@@ -84,6 +84,7 @@ void Test_PolynomialTrajectory2() {
   double af[3] = {0.0, 0.0, 0.0};
 
   dtTrajectory<double, 3, 1> traj(tf - ti, pi, pf, vi, vf, ai, af, ti);
+  traj.SetTimeOffset(5.0);
 
   double tc;
   double p[3], v[3], a[3];

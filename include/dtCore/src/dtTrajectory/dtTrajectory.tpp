@@ -27,6 +27,22 @@ dtTrajectory<ValueType, m_dof, m_degree>::~dtTrajectory() {}
 template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
 void dtTrajectory<ValueType, m_dof, m_degree>::Interpolate(
     const ValueType t, ContRefType p, ContRefType v, ContRefType a) const {
+  if (t < m_ti) {
+    memcpy(p, m_pi, sizeof(ValueType) * m_dof);
+    // memcpy(v, m_vi, sizeof(ValueType) * m_dof);
+    //  memcpy(a, m_ai, sizeof(ValueType) * m_dof);
+    memset(v, 0, sizeof(ValueType) * m_dof);
+    memset(a, 0, sizeof(ValueType) * m_dof);
+    return;
+  } else if (t > m_tf) {
+    memcpy(p, m_pf, sizeof(ValueType) * m_dof);
+    // memcpy(v, m_vf, sizeof(ValueType) * m_dof);
+    // memcpy(a, m_af, sizeof(ValueType) * m_dof);
+    memset(v, 0, sizeof(ValueType) * m_dof);
+    memset(a, 0, sizeof(ValueType) * m_dof);
+    return;
+  }
+
   for (uint16_t i = 0; i < m_dof; i++) {
     m_poly[i].Interpolate(t - m_ti, p[i], v[i], a[i]);
   }
@@ -82,6 +98,16 @@ dtTrajectory<ValueType, m_dof, m_degree>::dtPolynomial::~dtPolynomial() {}
 template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
 void dtTrajectory<ValueType, m_dof, m_degree>::dtPolynomial::Interpolate(
     const ValueType t, ValueType &p, ValueType &v, ValueType &a) const {
+  if (t < 0) {
+    p = m_p0;
+    v = a = 0;
+    return;
+  } else if (t > m_duration) {
+    p = m_pf;
+    v = a = 0;
+    return;
+  }
+
   switch (m_degree) {
   case 1: {
     p = m_coeff[0] + m_coeff[1] * t;
@@ -122,6 +148,9 @@ void dtTrajectory<ValueType, m_dof, m_degree>::dtPolynomial::DetermineCoeff(
     const ValueType duration, const ValueType &p0, const ValueType &pf,
     const ValueType &v0, const ValueType &vf, const ValueType &a0,
     const ValueType &af) {
+  m_duration = duration;
+  m_p0 = p0;
+  m_pf = pf;
 
   switch (m_degree) {
   case 1:
