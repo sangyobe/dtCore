@@ -9,29 +9,63 @@
 
 /** \defgroup dtTrajectory
  *
- * dtTrajectory is the trajectory interface for various trajectory
- * interpolator implementations. It provides a unit trajectory interpolation.
+ * dtPolynomialTrajectory provides trajectory interpolation for one joint
+ * using polynomial interpolator. Degree of polynomial can be specified
+ * as a template variable.
  *
+ * \code
+ * #include <dtCore/dtTrajectory>
+ *
+ * double t0 = 0.0;
+ * double tf = 10.0;
+ * dtVector<double, 3> pi, pf, vi, vf, ai, af;
+ * pi << 0.0, 5.0, -10.0;
+ * pf << 5.0, -5.0, 0.0;
+ * vi.Zero();
+ * vf.Zero();
+ * ai.Zero();
+ * af.Zero();
+ * dtPolynomialTrajectory<double, 3> traj(dtPolyType::CUBIC, t0, tf, pi, pf, vi,
+ * vf, ai, af);
+ *
+ * double tc = 3.0;
+ * dtVector<double, 3> p, v, a;
+ * traj.interpolate(tc, p, v, a);
+ *
+ * \endcode
  */
+
+#include "dtBezier.h"
+#include "dtPolynomial.h"
 
 namespace dtCore {
 
-template <typename ValueType, uint16_t m_dof = 1, uint16_t m_degree = 1>
-class dtTrajectory {
+/**
+ * dtPolynomialTrajectory
+ */
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+class dtPolynomialTrajectory {
 public:
   typedef ValueType *ContType;
   typedef ValueType *ContRefType;
 
 public:
-  dtTrajectory(const ValueType duration, const ContRefType pi,
-               const ContRefType pf, const ContRefType vi = 0,
-               const ContRefType vf = 0, const ContRefType ai = 0,
-               const ContRefType af = 0, const ValueType timeOffset = 0);
-  virtual ~dtTrajectory();
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                         const ContRefType pf, const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                         const ContRefType pf, const ContRefType vi,
+                         const ContRefType vf, const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                         const ContRefType pf, const ContRefType vi,
+                         const ContRefType vf, const ContRefType ai,
+                         const ContRefType af, const ValueType timeOffset = 0);
+  ~dtPolynomialTrajectory();
 
 public:
-  void Interpolate(const ValueType t, ContRefType p, ContRefType v,
-                   ContRefType a) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
+                           ContRefType a) const;
+
+  virtual void Reconfigure();
 
   void SetTimeOffset(const ValueType timeOffset);
   void SetDuration(const ValueType duration);
@@ -40,32 +74,7 @@ public:
   void SetTargetParam(const ContRefType pf, const ContRefType vf,
                       const ContRefType af);
 
-protected:
-  class dtPolynomial {
-  public:
-    dtPolynomial();
-    virtual ~dtPolynomial();
-
-  public:
-    virtual void Interpolate(const ValueType t, ValueType &p, ValueType &v,
-                             ValueType &a) const;
-
-    virtual void DetermineCoeff(const ValueType duration, const ValueType &p0,
-                                const ValueType &pf, const ValueType &v0,
-                                const ValueType &vf, const ValueType &a0,
-                                const ValueType &af);
-
-  private:
-    ValueType m_coeff[m_degree + 1];
-    ValueType m_duration;
-    ValueType m_p0;
-    ValueType m_pf;
-  };
-
-  void ReconfigurePolynomial();
-
 private:
-  dtPolynomial m_poly[m_dof];
   ValueType m_duration;
   ValueType m_ti;
   ValueType m_tf;
@@ -75,6 +84,44 @@ private:
   ValueType m_vf[m_dof];
   ValueType m_ai[m_dof];
   ValueType m_af[m_dof];
+  dtPolynomial<ValueType, m_degree> m_interpolator[m_dof];
+};
+
+/**
+ * dtBezierTrajectory
+ */
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+class dtBezierTrajectory {
+public:
+  typedef ValueType *ContType;
+  typedef ValueType *ContRefType;
+
+public:
+  dtBezierTrajectory(const ValueType duration, const ContRefType pi,
+                     const ContRefType pf, const ContRefType pc,
+                     const ValueType timeOffset = 0);
+  ~dtBezierTrajectory();
+
+public:
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
+                           ContRefType a) const;
+
+  virtual void Reconfigure();
+
+  void SetTimeOffset(const ValueType timeOffset);
+  void SetDuration(const ValueType duration);
+  void SetInitialParam(const ContRefType pi);
+  void SetTargetParam(const ContRefType pf);
+  void SetControlParam(const ContRefType pc);
+
+private:
+  ValueType m_duration;
+  ValueType m_ti;
+  ValueType m_tf;
+  ValueType m_pi[m_dof];
+  ValueType m_pf[m_dof];
+  dtBezier<ValueType, m_degree> m_interpolator[m_dof];
+  ValueType m_pc[m_dof][m_degree - 1];
 };
 
 } // namespace dtCore

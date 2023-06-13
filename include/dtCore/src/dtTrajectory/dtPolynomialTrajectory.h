@@ -35,61 +35,57 @@
  * \endcode
  */
 
-#include "dtInterpolator.h"
+#include "dtPolynomial.h"
+#include <cstring> // memcpy
 
 namespace dtCore {
 
-enum class dtPolyType {
-  NONE = 0,
-  LINEAR = 1,
-  QUADRATIC = 2,
-  CUBIC = 3,
-  QUINTIC = 4,
-  JERK = 5,
-  // LINEAR_PARABOLIC_BLEND = 6
-  // CSPLINE_NATURAL,
-  // CSPLINE_CLAMPED,
-  // CSPLINE_FORCED
-};
-
-template <typename ValueType, uint32_t DOF> class dtPolynomialTrajectory {
+/**
+ * dtPolynomialTrajectory
+ */
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+class dtPolynomialTrajectory {
 public:
-  typedef Eigen::Matrix<ValueType, DOF, 1> ContainerType;
+  typedef ValueType ValType;
+  typedef ValueType *ContType;
+  typedef ValueType *ContRefType;
 
 public:
-  dtPolynomialTrajectory();
-  dtPolynomialTrajectory(dtPolyType trajType, const double t0, const double tf,
-                         const ContainerType &p0, const ContainerType &pf,
-                         const ContainerType &v0 = ContainerType::Zero(),
-                         const ContainerType &vf = ContainerType::Zero(),
-                         const ContainerType &a0 = ContainerType::Zero(),
-                         const ContainerType &af = ContainerType::Zero());
-  virtual ~dtPolynomialTrajectory();
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                   const ContRefType pf, const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                   const ContRefType pf, const ContRefType vi,
+                   const ContRefType vf, const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
+                   const ContRefType pf, const ContRefType vi,
+                   const ContRefType vf, const ContRefType ai,
+                   const ContRefType af, const ValueType timeOffset = 0);
+  ~dtPolynomialTrajectory();
 
 public:
-  virtual void interpolate(const double t, ContainerType &p, ContainerType &v,
-                           ContainerType &a) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
+                           ContRefType a) const;
 
-protected:
-  virtual void _determineCoeff(dtPolyType trajType, const double t0,
-                               const double tf, const ContainerType &p0,
-                               const ContainerType &pf, const ContainerType &v0,
-                               const ContainerType &vf, const ContainerType &a0,
-                               const ContainerType &af);
+  virtual void Reconfigure();
+
+  void SetTimeOffset(const ValueType timeOffset);
+  void SetDuration(const ValueType duration);
+  void SetInitialParam(const ContRefType pi, const ContRefType vi,
+                       const ContRefType ai);
+  void SetTargetParam(const ContRefType pf, const ContRefType vf,
+                      const ContRefType af);
 
 private:
-  dtPolyType _trajType;
-  double _t0;
-  double _tf;
-#ifdef _DEBUG
-  m_type _p0;
-  m_type _pf;
-  m_type _v0;
-  m_type _vf;
-  m_type _a0;
-  m_type _af;
-#endif
-  dtMath::VectorXd _coeff;
+  ValueType m_duration;
+  ValueType m_ti;
+  ValueType m_tf;
+  ValueType m_pi[m_dof];
+  ValueType m_pf[m_dof];
+  ValueType m_vi[m_dof];
+  ValueType m_vf[m_dof];
+  ValueType m_ai[m_dof];
+  ValueType m_af[m_dof];
+  dtPolynomial<ValueType, m_degree> m_interpolator[m_dof];
 };
 
 } // namespace dtCore

@@ -1,271 +1,151 @@
 namespace dtCore {
 
-template <typename ValueType, uint32_t DOF>
-dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory()
-    : _trajType(dtPolyType::NONE), _t0(0), _tf(0), _coeff() {}
+////////////////////////////////////////////////////////////////////////////////
+// Implementation of dtPolynomialTrajectory
+//
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+    const ValueType duration, const ContRefType pi, const ContRefType pf,
+    const ValueType timeOffset)
+    : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
 
-template <typename ValueType, uint32_t DOF>
-dtPolynomialTrajectory<ValueType, DOF>::~dtPolynomialTrajectory() {}
+  static_assert(m_dof > 0,
+                "Trajectory dimension(m_dof) should be greater than zero.");
 
-template <typename ValueType, uint32_t DOF>
-dtPolynomialTrajectory<ValueType, DOF>::dtPolynomialTrajectory(
-    dtPolyType trajType, const double t0, const double tf,
-    const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
-    const ContainerType &vf, const ContainerType &a0, const ContainerType &af)
-    : _trajType(trajType), _t0(t0), _tf(tf), _coeff() {
-#ifdef _DEBUG
-  _p0 = p0;
-  _pf = pf;
-  _v0 = v0;
-  _vf = vf;
-  _a0 = a0;
-  _af = af;
-#endif
-  _determineCoeff(_trajType, _t0, _tf, p0, pf, v0, vf, a0, af);
+  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
+                    m_degree == 7,
+                "Invalid degree of polynomial.");
+
+  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  memset(m_vi, 0, sizeof(ValueType) * m_dof);
+  memset(m_vf, 0, sizeof(ValueType) * m_dof);
+  memset(m_ai, 0, sizeof(ValueType) * m_dof);
+  memset(m_af, 0, sizeof(ValueType) * m_dof);
+
+  Reconfigure();
 }
 
-template <typename ValueType, uint32_t DOF>
-void dtPolynomialTrajectory<ValueType, DOF>::interpolate(
-    const double t_, ContainerType &p, ContainerType &v,
-    ContainerType &a) const {
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+    const ValueType duration, const ContRefType pi, const ContRefType pf,
+    const ContRefType vi, const ContRefType vf, const ValueType timeOffset)
+    : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
 
-  double t = t_;
-  if (t > this->_tf)
-    t = this->_tf;
-  if (t < this->_t0)
-    t = this->_t0;
+  static_assert(m_dof > 0,
+                "Trajectory dimension(m_dof) should be greater than zero.");
 
-  t -= this->_t0;
+  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
+                    m_degree == 7,
+                "Invalid degree of polynomial.");
 
-  assert(_trajType != dtPolyType::NONE);
+  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+  memset(m_ai, 0, sizeof(ValueType) * m_dof);
+  memset(m_af, 0, sizeof(ValueType) * m_dof);
 
-  switch (_trajType) {
-  case dtPolyType::LINEAR: {
-    p[0] = _coeff[0] + _coeff[1] * t;
-    v[0] = _coeff[1];
-    a[0] = 0.0;
-  } break;
+  Reconfigure();
+}
 
-  case dtPolyType::QUADRATIC: {
-    double tsqr = t * t;
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+    const ValueType duration, const ContRefType pi, const ContRefType pf,
+    const ContRefType vi, const ContRefType vf, const ContRefType ai,
+    const ContRefType af, const ValueType timeOffset)
+    : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
 
-    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr;
-    v[0] = _coeff[1] + 2 * _coeff[2] * t;
-    a[0] = 2 * _coeff[2];
-  } break;
+  static_assert(m_dof > 0,
+                "Trajectory dimension(m_dof) should be greater than zero.");
 
-  case dtPolyType::CUBIC: {
-    double tsqr = t * t;
-    double tcub = t * tsqr;
+  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
+                    m_degree == 7,
+                "Invalid degree of polynomial.");
 
-    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr + _coeff[3] * tcub;
-    v[0] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr;
-    a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t;
-  } break;
+  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+  memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+  memcpy(m_af, af, sizeof(ValueType) * m_dof);
 
-  case dtPolyType::QUINTIC:
-  case dtPolyType::JERK: {
-    double tsqr = t * t;
-    double tcub = t * tsqr;
-    double tquad = t * tcub;
-    double tquint = t * tquad;
+  Reconfigure();
+}
 
-    p[0] = _coeff[0] + _coeff[1] * t + _coeff[2] * tsqr + _coeff[3] * tcub +
-           _coeff[4] * tquad + _coeff[5] * tquint;
-    v[0] = _coeff[1] + 2 * _coeff[2] * t + 3 * _coeff[3] * tsqr +
-           4 * _coeff[4] * tcub + 5 * _coeff[5] * tquad;
-    a[0] = 2 * _coeff[2] + 6 * _coeff[3] * t + 12 * _coeff[4] * tsqr +
-           20 * _coeff[5] * tcub;
-  } break;
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+dtPolynomialTrajectory<ValueType, m_dof, m_degree>::~dtPolynomialTrajectory() {}
 
-  case dtPolyType::NONE:
-  default:
-    break;
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Interpolate(
+    const ValueType t, ContRefType p, ContRefType v, ContRefType a) const {
+  ValueType t_ = t - this->m_ti;
+  if (t_ < 0) {
+    memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
+    // memcpy(v, m_vi, sizeof(ValueType) * m_dof);
+    //  memcpy(a, m_ai, sizeof(ValueType) * m_dof);
+    memset(v, 0, sizeof(ValueType) * m_dof);
+    memset(a, 0, sizeof(ValueType) * m_dof);
+  } else if (t_ > this->m_duration) {
+    memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
+    // memcpy(v, m_vf, sizeof(ValueType) * m_dof);
+    // memcpy(a, m_af, sizeof(ValueType) * m_dof);
+    memset(v, 0, sizeof(ValueType) * m_dof);
+    memset(a, 0, sizeof(ValueType) * m_dof);
+  } else {
+    for (uint16_t i = 0; i < m_dof; i++) {
+      m_interpolator[i].Interpolate(t_, p[i], v[i], a[i]);
+    }
   }
 }
 
-template <typename ValueType, uint32_t DOF>
-void dtPolynomialTrajectory<ValueType, DOF>::_determineCoeff(
-    dtPolyType trajType, const double t0, const double tf,
-    const ContainerType &p0, const ContainerType &pf, const ContainerType &v0,
-    const ContainerType &vf, const ContainerType &a0, const ContainerType &af) {
-  double t = tf - t0;
-  double t2 = t * t;
-  double t3 = t * t2;
-  double t4 = t * t3;
-  double t5 = t * t4;
-
-  switch (_trajType) {
-  case dtPolyType::LINEAR: {
-    dtMath::Matrix2d B;
-    B(0, 0) = 1;
-    B(0, 1) = 0;
-    B(1, 0) = 1;
-    B(1, 1) = t;
-
-    _coeff.resize(2);
-    _coeff[0] = p0[0];
-    _coeff[1] = pf[0];
-
-    B.solve(_coeff);
-  } break;
-
-  case dtPolyType::QUADRATIC: {
-    dtMath::Matrix3d B;
-    B(0, 0) = 1;
-    B(0, 1) = 0;
-    B(0, 2) = 0;
-    B(1, 0) = 0;
-    B(1, 1) = 1;
-    B(1, 2) = 0;
-    B(2, 0) = 1;
-    B(2, 1) = t;
-    B(2, 2) = t2;
-
-    _coeff.resize(3);
-    _coeff[0] = p0[0];
-    _coeff[1] = v0[0];
-    _coeff[2] = pf[0];
-
-    B.solve(_coeff);
-  } break;
-
-  case dtPolyType::CUBIC: {
-    dtMath::Matrix4d B;
-    B(0, 0) = 1;
-    B(0, 1) = 0;
-    B(0, 2) = 0;
-    B(0, 3) = 0;
-    B(1, 0) = 0;
-    B(1, 1) = 1;
-    B(1, 2) = 0;
-    B(1, 3) = 0;
-    B(2, 0) = 1;
-    B(2, 1) = t;
-    B(2, 2) = t2;
-    B(2, 3) = t3;
-    B(3, 0) = 0;
-    B(3, 1) = 1;
-    B(3, 2) = 2 * t;
-    B(3, 3) = 3 * t2;
-
-    _coeff.resize(4);
-    _coeff[0] = p0[0];
-    _coeff[1] = v0[0];
-    _coeff[2] = pf[0];
-    _coeff[3] = vf[0];
-
-    B.solve(_coeff);
-  } break;
-
-  case dtPolyType::QUINTIC: {
-    dtMath::Matrix6d B;
-    B(0, 0) = 1;
-    B(0, 1) = 0;
-    B(0, 2) = 0;
-    B(0, 3) = 0;
-    B(0, 4) = 0;
-    B(0, 5) = 0;
-    B(1, 0) = 0;
-    B(1, 1) = 1;
-    B(1, 2) = 0;
-    B(1, 3) = 0;
-    B(1, 4) = 0;
-    B(1, 5) = 0;
-    B(2, 0) = 0;
-    B(2, 1) = 0;
-    B(2, 2) = 2;
-    B(2, 3) = 0;
-    B(2, 4) = 0;
-    B(2, 5) = 0;
-    B(3, 0) = 1;
-    B(3, 1) = t;
-    B(3, 2) = t2;
-    B(3, 3) = t3;
-    B(3, 4) = t4;
-    B(3, 5) = t5;
-    B(4, 0) = 0;
-    B(4, 1) = 1;
-    B(4, 2) = 2 * t;
-    B(4, 3) = 3 * t2;
-    B(4, 4) = 4 * t3;
-    B(4, 5) = 5 * t4;
-    B(5, 0) = 0;
-    B(5, 1) = 0;
-    B(5, 2) = 2;
-    B(5, 3) = 6 * t;
-    B(5, 4) = 12 * t2;
-    B(5, 5) = 20 * t3;
-
-    _coeff.resize(6);
-    _coeff[0] = p0[0];
-    _coeff[1] = v0[0];
-    _coeff[2] = a0[0];
-    _coeff[3] = pf[0];
-    _coeff[4] = vf[0];
-    _coeff[5] = af[0];
-
-    B.solve(_coeff);
-  } break;
-
-  case dtPolyType::JERK: {
-    dtMath::Matrix6d B;
-    B(0, 0) = 1;
-    B(0, 1) = 0;
-    B(0, 2) = 0;
-    B(0, 3) = 0;
-    B(0, 4) = 0;
-    B(0, 5) = 0;
-    B(1, 0) = 0;
-    B(1, 1) = 1;
-    B(1, 2) = 0;
-    B(1, 3) = 0;
-    B(1, 4) = 0;
-    B(1, 5) = 0;
-    B(2, 0) = 0;
-    B(2, 1) = 0;
-    B(2, 2) = 0;
-    B(2, 3) = 6;
-    B(2, 4) = 0;
-    B(2, 5) = 0;
-    B(3, 0) = 1;
-    B(3, 1) = t;
-    B(3, 2) = t2;
-    B(3, 3) = t3;
-    B(3, 4) = t4;
-    B(3, 5) = t5;
-    B(4, 0) = 0;
-    B(4, 1) = 1;
-    B(4, 2) = 2 * t;
-    B(4, 3) = 3 * t2;
-    B(4, 4) = 4 * t3;
-    B(4, 5) = 5 * t4;
-    B(5, 0) = 0;
-    B(5, 1) = 0;
-    B(5, 2) = 0;
-    B(5, 3) = 6;
-    B(5, 4) = 24 * t;
-    B(5, 5) = 60 * t2;
-
-    _coeff.resize(6);
-    _coeff[0] = p0[0];
-    _coeff[1] = v0[0];
-    _coeff[2] = a0[0];
-    _coeff[3] = pf[0];
-    _coeff[4] = vf[0];
-    _coeff[5] = af[0];
-
-    // enforcing zero jerk condition
-    _coeff[2] = 0.0;
-    _coeff[5] = 0.0;
-
-    B.solve(_coeff);
-  } break;
-
-  case dtPolyType::NONE:
-  default:
-    break;
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Reconfigure() {
+  for (uint16_t i = 0; i < m_dof; i++) {
+    m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_vi[i],
+                                this->m_vf[i], this->m_ai[i], this->m_af[i],
+                                this->m_duration);
   }
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetTimeOffset(
+    const ValueType timeOffset) {
+  m_ti = timeOffset;
+  m_tf = m_ti + m_duration;
+  Reconfigure();
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetDuration(
+    const ValueType duration) {
+  m_duration = duration;
+  m_tf = m_ti + m_duration;
+  Reconfigure();
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetInitialParam(
+    const ContRefType pi, const ContRefType vi, const ContRefType ai) {
+  if (pi)
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  if (vi)
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+  if (ai)
+    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+  Reconfigure();
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetTargetParam(
+    const ContRefType pf, const ContRefType vf, const ContRefType af) {
+  if (pf)
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  if (vf)
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+  if (af)
+    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+  Reconfigure();
 }
 
 } // namespace dtCore

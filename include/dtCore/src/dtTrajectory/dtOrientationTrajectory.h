@@ -32,21 +32,21 @@ namespace dtCore {
 
 template <typename ValueType> class dtOrientationTrajectory {
 public:
-    typedef Eigen::Matrix<ValueType, 3, 3> ContainerType;
+  typedef ValueType ValType;
+  typedef Eigen::Matrix<ValueType, 3, 3> ContType;
+  typedef Eigen::Matrix<ValueType, 3, 3> &ContRefType;
 
-  public:
-    dtOrientationTrajectory();
-    dtOrientationTrajectory(const double t0, const double tf,
-                            const ContainerType &initial,
-                            const ContainerType &final);
-    virtual ~dtOrientationTrajectory();
+public:
+  dtOrientationTrajectory();
+  dtOrientationTrajectory(const ValueType t0, const ValueType tf,
+                          const ContRefType initial, const ContRefType final);
+  virtual ~dtOrientationTrajectory();
 
-  public:
-    virtual void interpolate(const double t, ContainerType &current) const;
+public:
+  virtual void Interpolate(const ValueType t, ContRefType current) const;
 
-  protected:
-    virtual void _determineCoeff(const ContainerType &initial,
-                                 const ContainerType &final);
+protected:
+  virtual void Reconfigure(const ContRefType initial, const ContRefType final);
 };
 
 } // namespace dtCore

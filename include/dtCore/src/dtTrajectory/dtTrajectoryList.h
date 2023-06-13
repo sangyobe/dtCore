@@ -84,14 +84,17 @@ public:
   dtTrajectoryList() {}
   virtual ~dtTrajectoryList() {}
 
-  void add(const TrajType &traj);
-  void interpolate(double t, typename TrajType::ContainerType &p,
-                   typename TrajType::ContainerType &v,
-                   typename TrajType::ContainerType &a) const;
-  void interpolate(double t, typename TrajType::ContainerType &p) const;
+  void Clear();
+  void Add(const typename TrajType::ValType t, const TrajType &traj);
+  void Interpolate(const typename TrajType::ValType t,
+                   typename TrajType::ContRefType p,
+                   typename TrajType::ContRefType v,
+                   typename TrajType::ContRefType a) const;
+  void Interpolate(const typename TrajType::ValType t,
+                   typename TrajType::ContRefType p) const;
 
 private:
-  std::list<TrajType> trajList_;
+  std::list<TrajType> m_trajList;
 };
 
 } // namespace dtCore

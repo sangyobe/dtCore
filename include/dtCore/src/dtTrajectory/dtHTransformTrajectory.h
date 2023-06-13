@@ -34,21 +34,21 @@ namespace dtCore {
 
 template <typename ValueType> class dtHTransformTrajectory {
 public:
-  typedef Eigen::Matrix<ValueType, 4, 4> ContainerType;
+  typedef ValueType ValType;
+  typedef Eigen::Matrix<ValueType, 4, 4> ContType;
+  typedef Eigen::Matrix<ValueType, 4, 4> &ContRefType;
 
 public:
   dtHTransformTrajectory();
-  dtHTransformTrajectory(const double t0, const double tf,
-                         const ContainerType &initial,
-                         const ContainerType &final);
+  dtHTransformTrajectory(const ValueType t0, const ValueType tf,
+                         const ContRefType initial, const ContRefType final);
   virtual ~dtHTransformTrajectory();
 
 public:
-  virtual void interpolate(const double t, ContainerType &current) const;
+  virtual void Interpolate(const ValueType t, ContRefType current) const;
 
 protected:
-  virtual void _determineCoeff(const ContainerType &initial,
-                               const ContainerType &final);
+  virtual void Reconfigure(const ContRefType initial, const ContRefType final);
 };
 
 } // namespace dtCore

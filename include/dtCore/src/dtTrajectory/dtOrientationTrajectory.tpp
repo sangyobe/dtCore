@@ -5,18 +5,18 @@ dtOrientationTrajectory<ValueType>::dtOrientationTrajectory() {}
 
 template <typename ValueType>
 dtOrientationTrajectory<ValueType>::dtOrientationTrajectory(
-    const double t0, const double tf, const ContainerType &initial,
-    const ContainerType &final) {}
+    const ValueType t0, const ValueType tf, const ContRefType initial,
+    const ContRefType final) {}
 
 template <typename ValueType>
 dtOrientationTrajectory<ValueType>::~dtOrientationTrajectory() {}
 
 template <typename ValueType>
-void dtOrientationTrajectory<ValueType>::interpolate(
-    const double t, ContainerType &current) const {}
+void dtOrientationTrajectory<ValueType>::Interpolate(
+    const ValueType t, ContRefType current) const {}
 
 template <typename ValueType>
-void dtOrientationTrajectory<ValueType>::_determineCoeff(
-    const ContainerType &initial, const ContainerType &final) {}
+void dtOrientationTrajectory<ValueType>::Reconfigure(const ContRefType initial,
+                                                     const ContRefType final) {}
 
 } // namespace dtCore
