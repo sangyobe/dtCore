@@ -80,6 +80,28 @@
 namespace dtCore {
 
 template <typename TrajType> class dtTrajectoryList {
+  class Cont {
+  public:
+    Cont(const typename TrajType::ValType k, const TrajType &v)
+        : m_key(k), m_value(v) {}
+    void Print() {
+      // std::cout << "(" << m_key << ", " << m_value << ")" << std::endl;
+    }
+    typename TrajType::ValType key() const { return m_key; }
+    TrajType value() const { return m_value; }
+
+    bool operator<(Cont &rhs) { return (m_key < rhs.key()); }
+    bool operator<=(Cont &rhs) { return (m_key <= rhs.key()); }
+    bool operator==(Cont &rhs) { return (m_key == rhs.key()); }
+    bool operator>(Cont &rhs) { return (m_key > rhs.key()); }
+    bool operator>=(Cont &rhs) { return (m_key >= rhs.key()); }
+    bool operator<(typename TrajType::ValType &key) { return (m_key < key); }
+
+  private:
+    typename TrajType::ValType m_key;
+    TrajType m_value;
+  };
+
 public:
   dtTrajectoryList() {}
   virtual ~dtTrajectoryList() {}
@@ -94,7 +116,11 @@ public:
                    typename TrajType::ContRefType p) const;
 
 private:
-  std::list<TrajType> m_trajList;
+  void GetAt(const typename TrajType::ValType t, typename TrajType::ValType &t0,
+             TrajType &traj);
+
+private:
+  std::list<Cont> m_trajList;
 };
 
 } // namespace dtCore

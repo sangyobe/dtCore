@@ -27,7 +27,7 @@ void Test_PolynomialTrajectory() {
   // 1st-order
   std::cout << "-------------------------------------------" << std::endl;
   std::cout << "- 1st-order polynomial --------------------" << std::endl;
-  dtPolynomialTrajectory<double, 3, 1> traj1(td, pi, pf, vi, vf, ai, af);
+  dtPolynomialTrajectory<double, 3, 1> traj1(td, pi, pf);
   traj1.SetTimeOffset(0.0);
 
   tc = ti;
@@ -41,7 +41,7 @@ void Test_PolynomialTrajectory() {
   // 3rd-order
   std::cout << "-------------------------------------------" << std::endl;
   std::cout << "- 3rd-order polynomial --------------------" << std::endl;
-  dtPolynomialTrajectory<double, 3, 3> traj3(td, pi, pf, vi, vf, ai, af);
+  dtPolynomialTrajectory<double, 3, 3> traj3(td, pi, pf, vi, vf);
   // traj3.SetTimeOffset(0.0);
 
   tc = ti;
