@@ -12,7 +12,9 @@ namespace dtCore {
 /**
  * dtPolynomial : N-th polynomial interpolator
  */
-template <typename ValueType, uint16_t m_order = 1> class dtPolynomial {
+template <typename ValueType, uint16_t m_order = 1> 
+class dtPolynomial 
+{
 public:
   dtPolynomial();
   virtual ~dtPolynomial();
