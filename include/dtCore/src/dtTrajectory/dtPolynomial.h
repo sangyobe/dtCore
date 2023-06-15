@@ -20,8 +20,9 @@ public:
   virtual ~dtPolynomial();
 
 public:
-  virtual void Interpolate(const ValueType t, ValueType &p, ValueType &v,
-                           ValueType &a) const;
+  virtual void Interpolate(const ValueType t, ValueType &p) const;
+  virtual void Interpolate(const ValueType t, ValueType &p, ValueType &v) const;
+  virtual void Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const;
 
   virtual void Configure(const ValueType p0, const ValueType pf,
                          const ValueType v0, const ValueType vf,
@@ -30,9 +31,6 @@ public:
 
 private:
   ValueType m_coeff[m_order + 1];
-  ValueType m_duration;
-  ValueType m_p0;
-  ValueType m_pf;
 };
 
 } // namespace dtCore

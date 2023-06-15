@@ -51,33 +51,49 @@ public:
   typedef ValueType *ContRefType;
 
 public:
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                         const ContRefType pf, const ValueType timeOffset = 0);
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                         const ContRefType pf, const ContRefType vi,
-                         const ContRefType vf, const ValueType timeOffset = 0);
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                         const ContRefType pf, const ContRefType vi,
-                         const ContRefType vf, const ContRefType ai,
-                         const ContRefType af, const ValueType timeOffset = 0);
+  dtPolynomialTrajectory();
+  dtPolynomialTrajectory(const ValueType duration,
+                         const ContRefType pi, const ContRefType pf, 
+                         const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, 
+                         const ContRefType pi, const ContRefType pf, 
+                         const ContRefType vi, const ContRefType vf, 
+                         const ValueType timeOffset = 0);
+  dtPolynomialTrajectory(const ValueType duration, 
+                         const ContRefType pi, const ContRefType pf, 
+                         const ContRefType vi, const ContRefType vf, 
+                         const ContRefType ai, const ContRefType af, 
+                         const ValueType timeOffset = 0);
   ~dtPolynomialTrajectory();
 
 public:
-  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, 
-                           ContRefType a) const;
+  virtual void Interpolate(const ValueType t, ContRefType p) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const;
 
-  virtual void Reconfigure();
+  virtual void ReConfigure();
 
-  void SetTimeOffset(const ValueType timeOffset);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf,
+                const ValueType timeOffset = 0);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf,
+                const ContRefType vi, const ContRefType vf,
+                const ValueType timeOffset = 0);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf,
+                const ContRefType vi, const ContRefType vf,
+                const ContRefType ai, const ContRefType af,
+                const ValueType timeOffset = 0);
   void SetDuration(const ValueType duration);
-  void SetParam(const ContRefType pi, const ContRefType pf, 
-                const ContRefType vi,const ContRefType vf, 
-                const ContRefType ai, const ContRefType af);
+  void SetPoint(const ContRefType pi, const ContRefType pf,
+                const ContRefType vi = nullptr, const ContRefType vf = nullptr,
+                const ContRefType ai = nullptr, const ContRefType af = nullptr);
+  void SetTimeOffset(const ValueType timeOffset);
 
 private:
-  ValueType m_duration;
   ValueType m_ti;
-  ValueType m_tf;
+  ValueType m_duration;
   ValueType m_pi[m_dof];
   ValueType m_pf[m_dof];
   ValueType m_vi[m_dof];

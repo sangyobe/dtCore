@@ -29,6 +29,29 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
     const ValueType duration, const ContRefType pi, const ContRefType pf,
+    const ValueType timeOffset)
+    : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
+
+  static_assert(m_dof > 0,
+                "Trajectory dimension(m_dof) should be greater than zero.");
+
+  static_assert(m_order == 1 || m_order == 3 || m_order == 5 ||
+                    m_order == 7,
+                "Invalid degree of polynomial.");
+
+  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  memset(m_vi, 0, sizeof(ValueType) * m_dof);
+  memset(m_vf, 0, sizeof(ValueType) * m_dof);
+  memset(m_ai, 0, sizeof(ValueType) * m_dof);
+  memset(m_af, 0, sizeof(ValueType) * m_dof);
+
+  Reconfigure();
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
+    const ValueType duration, const ContRefType pi, const ContRefType pf,
     const ContRefType vi, const ContRefType vf, const ValueType timeOffset)
     : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
 

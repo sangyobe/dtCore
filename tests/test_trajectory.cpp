@@ -23,46 +23,32 @@ void Test_PolynomialTrajectory() {
   double tc;
   double p[3], v[3], a[3]; // output
 
-  // 1st-order
-  std::cout << "-------------------------------------------" << std::endl;
-  std::cout << "- 1st-order polynomial --------------------" << std::endl;
-  dtPolynomialTrajectory<double, 3, 1> traj1(td, pi, pf);
-  traj1.SetTimeOffset(0.0);
+  // 7th-order
+  dtPolynomialTrajectory<double, 3, 7> traj7;
+  for (int i = 0; i < 2000; i++)
+  {
+    // robot command
+    if (i == 0)
+    {
+      std::cout << "-------------------------------------------" << std::endl;
+      std::cout << "- 7th-order polynomial --------------------" << std::endl;
+      traj7.SetParam(td, pi, pf, vi, vf, ai, af);
+      traj7.ReConfigure();
+    }
 
-  tc = ti;
-  while (tc <= tf) {
-    traj1.Interpolate(tc, p, v, a);
-    std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2]
-              << ")" << std::endl;
-    tc += 1.0;
-  }
+    if (i == 500)
+    {
+      traj7.SetParam(td, p, pf, v, vf, a, af, 0.01*(i - 1));
+      traj7.ReConfigure();
+    }
 
-  // 3rd-order
-  std::cout << "-------------------------------------------" << std::endl;
-  std::cout << "- 3rd-order polynomial --------------------" << std::endl;
-  dtPolynomialTrajectory<double, 3, 3> traj3(td, pi, pf, vi, vf);
-  // traj3.SetTimeOffset(0.0);
-
-  tc = ti;
-  while (tc <= tf) {
-    traj3.Interpolate(tc, p, v, a);
-    std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2]
-              << ")" << std::endl;
-    tc += 1.0;
-  }
-
-  // 5th-order
-  std::cout << "-------------------------------------------" << std::endl;
-  std::cout << "- 5th-order polynomial --------------------" << std::endl;
-  dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af);
-  // traj5.SetTimeOffset(0.0);
-
-  tc = ti;
-  while (tc <= tf) {
-    traj5.Interpolate(tc, p, v, a);
-    std::cout << "(" << tc << ", " << p[0] << ", " << p[1] << ", " << p[2]
-              << ")" << std::endl;
-    tc += 1.0;
+    // robot status
+    traj7.Interpolate(0.01*i, p, v, a);
+    std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2]
+                        << " " << v[0] << " " << v[1] << " " << v[2]
+                        << " " << a[0] << " " << a[1] << " " << a[2]
+              << std::endl;
+              
   }
 }
 
