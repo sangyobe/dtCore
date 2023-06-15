@@ -3,8 +3,8 @@ namespace dtCore {
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of dtPolynomialTrajectory
 //
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
     const ValueType duration, const ContRefType pi, const ContRefType pf,
     const ValueType timeOffset)
     : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
@@ -12,8 +12,8 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   static_assert(m_dof > 0,
                 "Trajectory dimension(m_dof) should be greater than zero.");
 
-  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
-                    m_degree == 7,
+  static_assert(m_order == 1 || m_order == 3 || m_order == 5 ||
+                    m_order == 7,
                 "Invalid degree of polynomial.");
 
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -26,8 +26,8 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
     const ValueType duration, const ContRefType pi, const ContRefType pf,
     const ContRefType vi, const ContRefType vf, const ValueType timeOffset)
     : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
@@ -35,8 +35,8 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   static_assert(m_dof > 0,
                 "Trajectory dimension(m_dof) should be greater than zero.");
 
-  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
-                    m_degree == 7,
+  static_assert(m_order == 1 || m_order == 3 || m_order == 5 ||
+                    m_order == 7,
                 "Invalid degree of polynomial.");
 
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -49,8 +49,8 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(
     const ValueType duration, const ContRefType pi, const ContRefType pf,
     const ContRefType vi, const ContRefType vf, const ContRefType ai,
     const ContRefType af, const ValueType timeOffset)
@@ -59,8 +59,8 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   static_assert(m_dof > 0,
                 "Trajectory dimension(m_dof) should be greater than zero.");
 
-  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
-                    m_degree == 7,
+  static_assert(m_order == 1 || m_order == 3 || m_order == 5 ||
+                    m_order == 7,
                 "Invalid degree of polynomial.");
 
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -73,11 +73,11 @@ dtPolynomialTrajectory<ValueType, m_dof, m_degree>::dtPolynomialTrajectory(
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtPolynomialTrajectory<ValueType, m_dof, m_degree>::~dtPolynomialTrajectory() {}
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtPolynomialTrajectory<ValueType, m_dof, m_order>::~dtPolynomialTrajectory() {}
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Interpolate(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(
     const ValueType t, ContRefType p, ContRefType v, ContRefType a) const {
   ValueType t_ = t - this->m_ti;
   if (t_ < 0) {
@@ -99,8 +99,8 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Interpolate(
   }
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Reconfigure() {
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Reconfigure() {
   for (uint16_t i = 0; i < m_dof; i++) {
     m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_vi[i],
                                 this->m_vf[i], this->m_ai[i], this->m_af[i],
@@ -108,24 +108,24 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::Reconfigure() {
   }
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetTimeOffset(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTimeOffset(
     const ValueType timeOffset) {
   m_ti = timeOffset;
   m_tf = m_ti + m_duration;
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetDuration(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetDuration(
     const ValueType duration) {
   m_duration = duration;
   m_tf = m_ti + m_duration;
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetInitialParam(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitialParam(
     const ContRefType pi, const ContRefType vi, const ContRefType ai) {
   if (pi)
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -136,8 +136,8 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetInitialParam(
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetTargetParam(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(
     const ContRefType pf, const ContRefType vf, const ContRefType af) {
   if (pf)
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -151,27 +151,27 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_degree>::SetTargetParam(
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of dtBezierTrajectory
 //
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtBezierTrajectory<ValueType, m_dof, m_degree>::dtBezierTrajectory(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtBezierTrajectory<ValueType, m_dof, m_order>::dtBezierTrajectory(
     const ValueType duration, const ContRefType pi, const ContRefType pf,
     const ContRefType pc, const ValueType timeOffset)
     : m_duration(duration), m_ti(timeOffset), m_tf(timeOffset + duration) {
-  static_assert(m_degree > 0, "Invalid degree of bezier.");
+  static_assert(m_order > 0, "Invalid degree of bezier.");
 
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
   memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  if (pc && m_degree > 1) {
-    memcpy(m_pc, pc, sizeof(ValueType) * m_dof * (m_degree - 1));
+  if (pc && m_order > 1) {
+    memcpy(m_pc, pc, sizeof(ValueType) * m_dof * (m_order - 1));
   }
 
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-dtBezierTrajectory<ValueType, m_dof, m_degree>::~dtBezierTrajectory() {}
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+dtBezierTrajectory<ValueType, m_dof, m_order>::~dtBezierTrajectory() {}
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::Interpolate(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::Interpolate(
     const ValueType t, ContRefType p, ContRefType v, ContRefType a) const {
   ValueType t_ = t - this->m_ti;
   if (t_ < 0) {
@@ -193,51 +193,51 @@ void dtBezierTrajectory<ValueType, m_dof, m_degree>::Interpolate(
   }
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::Reconfigure() {
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::Reconfigure() {
   for (uint16_t i = 0; i < m_dof; i++) {
     m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_pc[i],
                                 this->m_duration);
   }
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::SetTimeOffset(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::SetTimeOffset(
     const ValueType timeOffset) {
   m_ti = timeOffset;
   m_tf = m_ti + m_duration;
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::SetDuration(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::SetDuration(
     const ValueType duration) {
   m_duration = duration;
   m_tf = m_ti + m_duration;
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::SetInitialParam(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::SetInitialParam(
     const ContRefType pi) {
   if (pi)
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::SetTargetParam(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::SetTargetParam(
     const ContRefType pf) {
   if (pf)
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
   Reconfigure();
 }
 
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-void dtBezierTrajectory<ValueType, m_dof, m_degree>::SetControlParam(
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtBezierTrajectory<ValueType, m_dof, m_order>::SetControlParam(
     const ContRefType pc) {
   if (pc)
-    memcpy(m_pc, pc, sizeof(ValueType) * m_dof * (m_degree - 1));
+    memcpy(m_pc, pc, sizeof(ValueType) * m_dof * (m_order - 1));
   Reconfigure();
 }
 

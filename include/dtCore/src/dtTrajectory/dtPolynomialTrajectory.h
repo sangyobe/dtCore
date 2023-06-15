@@ -43,37 +43,36 @@ namespace dtCore {
 /**
  * dtPolynomialTrajectory
  */
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-class dtPolynomialTrajectory {
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+class dtPolynomialTrajectory 
+{
 public:
   typedef ValueType ValType;
-  typedef ValueType *ContType;
   typedef ValueType *ContRefType;
 
 public:
   dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ValueType timeOffset = 0);
+                         const ContRefType pf, const ValueType timeOffset = 0);
   dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ContRefType vi,
-                   const ContRefType vf, const ValueType timeOffset = 0);
+                         const ContRefType pf, const ContRefType vi,
+                         const ContRefType vf, const ValueType timeOffset = 0);
   dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ContRefType vi,
-                   const ContRefType vf, const ContRefType ai,
-                   const ContRefType af, const ValueType timeOffset = 0);
+                         const ContRefType pf, const ContRefType vi,
+                         const ContRefType vf, const ContRefType ai,
+                         const ContRefType af, const ValueType timeOffset = 0);
   ~dtPolynomialTrajectory();
 
 public:
-  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, 
                            ContRefType a) const;
 
   virtual void Reconfigure();
 
   void SetTimeOffset(const ValueType timeOffset);
   void SetDuration(const ValueType duration);
-  void SetInitialParam(const ContRefType pi, const ContRefType vi,
-                       const ContRefType ai);
-  void SetTargetParam(const ContRefType pf, const ContRefType vf,
-                      const ContRefType af);
+  void SetParam(const ContRefType pi, const ContRefType pf, 
+                const ContRefType vi,const ContRefType vf, 
+                const ContRefType ai, const ContRefType af);
 
 private:
   ValueType m_duration;
@@ -85,7 +84,8 @@ private:
   ValueType m_vf[m_dof];
   ValueType m_ai[m_dof];
   ValueType m_af[m_dof];
-  dtPolynomial<ValueType, m_degree> m_interpolator[m_dof];
+
+  dtPolynomial<ValueType, m_order> m_interpolator[m_dof];
 };
 
 } // namespace dtCore

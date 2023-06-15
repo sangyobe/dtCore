@@ -33,10 +33,6 @@ foreach(_target test_trajectory)
     ${_target}
     "${_target}.cpp"
   )
-  # target_link_libraries(
-  #   ${_target}
-  #   dtcore
-  # )
   target_include_directories(
     ${_target}
     PRIVATE

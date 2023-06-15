@@ -12,7 +12,7 @@ namespace dtCore {
 /**
  * dtPolynomial : N-th polynomial interpolator
  */
-template <typename ValueType, uint16_t m_degree = 1> class dtPolynomial {
+template <typename ValueType, uint16_t m_order = 1> class dtPolynomial {
 public:
   dtPolynomial();
   virtual ~dtPolynomial();
@@ -24,10 +24,10 @@ public:
   virtual void Configure(const ValueType p0, const ValueType pf,
                          const ValueType v0, const ValueType vf,
                          const ValueType a0, const ValueType af,
-                         const ValueType duration = 1.0);
+                         const ValueType duration);
 
 private:
-  ValueType m_coeff[m_degree + 1];
+  ValueType m_coeff[m_order + 1];
   ValueType m_duration;
   ValueType m_p0;
   ValueType m_pf;

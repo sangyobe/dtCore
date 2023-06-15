@@ -1,17 +1,17 @@
 namespace dtCore {
 
-template <typename ValueType, uint16_t m_degree>
-dtPolynomial<ValueType, m_degree>::dtPolynomial() {
-  static_assert(m_degree == 1 || m_degree == 3 || m_degree == 5 ||
-                    m_degree == 7,
+template <typename ValueType, uint16_t m_order>
+dtPolynomial<ValueType, m_order>::dtPolynomial() {
+  static_assert(m_order == 1 || m_order == 3 || m_order == 5 ||
+                    m_order == 7,
                 "Invalid degree of polynomial.");
 }
 
-template <typename ValueType, uint16_t m_degree>
-dtPolynomial<ValueType, m_degree>::~dtPolynomial() {}
+template <typename ValueType, uint16_t m_order>
+dtPolynomial<ValueType, m_order>::~dtPolynomial() {}
 
-template <typename ValueType, uint16_t m_degree>
-void dtPolynomial<ValueType, m_degree>::Interpolate(const ValueType t,
+template <typename ValueType, uint16_t m_order>
+void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t,
                                                     ValueType &p, ValueType &v,
                                                     ValueType &a) const {
   if (t < 0) {
@@ -24,7 +24,7 @@ void dtPolynomial<ValueType, m_degree>::Interpolate(const ValueType t,
     return;
   }
 
-  switch (m_degree) {
+  switch (m_order) {
   case 1: {
     p = m_coeff[0] + m_coeff[1] * t;
     v = m_coeff[1];
@@ -59,8 +59,8 @@ void dtPolynomial<ValueType, m_degree>::Interpolate(const ValueType t,
   }
 }
 
-template <typename ValueType, uint16_t m_degree>
-void dtPolynomial<ValueType, m_degree>::Configure(
+template <typename ValueType, uint16_t m_order>
+void dtPolynomial<ValueType, m_order>::Configure(
     const ValueType p0, const ValueType pf, const ValueType v0,
     const ValueType vf, const ValueType a0, const ValueType af,
     const ValueType duration) {
@@ -68,7 +68,7 @@ void dtPolynomial<ValueType, m_degree>::Configure(
   m_p0 = p0;
   m_pf = pf;
 
-  switch (m_degree) {
+  switch (m_order) {
   case 1:
     m_coeff[0] = p0;
     m_coeff[1] = (pf - p0) / duration;

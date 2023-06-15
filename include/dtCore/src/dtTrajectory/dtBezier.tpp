@@ -1,40 +1,40 @@
 namespace dtCore {
 
-template <typename ValueType, uint16_t m_degree>
-dtBezier<ValueType, m_degree>::dtBezier() {
-  static_assert(m_degree >= 1 && m_degree <= 3,
+template <typename ValueType, uint16_t m_order>
+dtBezier<ValueType, m_order>::dtBezier() {
+  static_assert(m_order >= 1 && m_order <= 3,
                 "Invalid degree of bezier curve.");
 }
 
-template <typename ValueType, uint16_t m_degree>
-dtBezier<ValueType, m_degree>::~dtBezier() {}
+template <typename ValueType, uint16_t m_order>
+dtBezier<ValueType, m_order>::~dtBezier() {}
 
-template <typename ValueType, uint16_t m_degree>
-void dtBezier<ValueType, m_degree>::Interpolate(const ValueType t, ValueType &p,
+template <typename ValueType, uint16_t m_order>
+void dtBezier<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p,
                                                 ValueType &v,
                                                 ValueType &a) const {
   if (t < 0)
     p = m_p[0];
   else if (t > 1.0)
-    p = m_p[m_degree];
+    p = m_p[m_order];
   else {
     ValueType tmp = m_p[0];
-    // for (uint16_t i = 0; i < m_degree + 1; i++) {
+    // for (uint16_t i = 0; i < m_order + 1; i++) {
     //   tmp += m_p[i] * (1 - t)
     // }
     p = tmp;
   }
 }
 
-template <typename ValueType, uint16_t m_degree>
-void dtBezier<ValueType, m_degree>::Configure(const ValueType p0,
+template <typename ValueType, uint16_t m_order>
+void dtBezier<ValueType, m_order>::Configure(const ValueType p0,
                                               const ValueType pf,
                                               const ValueType *pc,
                                               ValueType duration) {
   m_duration = duration;
   m_p[0] = p0;
-  memcpy(&m_p[1], pc, sizeof(ValueType) * m_degree);
-  m_p[m_degree] = pf;
+  memcpy(&m_p[1], pc, sizeof(ValueType) * m_order);
+  m_p[m_order] = pf;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

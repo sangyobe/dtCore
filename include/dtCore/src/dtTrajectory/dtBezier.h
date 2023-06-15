@@ -14,7 +14,7 @@ namespace dtCore {
 /**
  * dtBezier : N-th Bezier interpolator
  */
-template <typename ValueType, uint16_t m_degree> class dtBezier {
+template <typename ValueType, uint16_t m_order> class dtBezier {
 public:
   dtBezier();
   virtual ~dtBezier();
@@ -29,8 +29,8 @@ public:
 private:
   ValueType m_duration;
   ValueType
-      m_p[m_degree + 1]; // contains initial, final and control points.
-                         // m_p[0]: initial value, m_p[m_degree]: final value
+      m_p[m_order + 1]; // contains initial, final and control points.
+                         // m_p[0]: initial value, m_p[m_order]: final value
 };
 
 } // namespace dtCore

@@ -40,7 +40,7 @@ namespace dtCore {
 /**
  * dtBezierTrajectory
  */
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 class dtBezierTrajectory {
 public:
   typedef ValueType ValType;
@@ -71,8 +71,8 @@ private:
   ValueType m_tf;
   ValueType m_pi[m_dof];
   ValueType m_pf[m_dof];
-  dtBezier<ValueType, m_degree> m_interpolator[m_dof];
-  ValueType m_pc[m_dof][m_degree - 1];
+  dtBezier<ValueType, m_order> m_interpolator[m_dof];
+  ValueType m_pc[m_dof][m_order - 1];
 };
 
 } // namespace dtCore

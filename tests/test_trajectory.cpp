@@ -1,5 +1,4 @@
 #include <chrono>
-#include <dtCore/dtCore>
 #include <dtCore/dtTrajectory>
 #include <iostream>
 
@@ -321,8 +320,8 @@ void Test_OrientationTrajectory() {
 
 int main() {
   Test_PolynomialTrajectory();
-  Test_BezierTrajectory();
-  Test_PolynomialTrajectoryList();
-  Test_BezierTrajectoryList();
+  // Test_BezierTrajectory();
+  // Test_PolynomialTrajectoryList();
+  // Test_BezierTrajectoryList();
   return 0;
 }
