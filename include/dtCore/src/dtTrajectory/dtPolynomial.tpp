@@ -3,10 +3,7 @@ namespace dtCore {
 template <typename ValueType, uint16_t m_order>
 dtPolynomial<ValueType, m_order>::dtPolynomial() 
 {
-    static_assert(ValueType == float || ValueType == double,
-                  "Invalid value type.")
-    static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7,
-                  "Invalid degree of polynomial.");
+    static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
 }
 
 template <typename ValueType, uint16_t m_order>
@@ -14,7 +11,7 @@ dtPolynomial<ValueType, m_order>::~dtPolynomial() {}
 
 /*! \details Calculates the desired position(p) corresponding to the time(t) entered. 
     \param[in] t current time (sec)
-    \param[out] p desired position
+    \param[out] p desired position (x)
 */
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) const 
@@ -66,8 +63,8 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
 
 /*! \details Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     \param[in] t current time (sec)
-    \param[out] p desired position
-    \param[out] v desired velocity
+    \param[out] p desired position (x)
+    \param[out] v desired velocity (x/sec)
 */
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v) const 
@@ -129,9 +126,9 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
 
 /*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
     \param[in] t current time (sec)
-    \param[out] p desired position
-    \param[out] v desired velocity
-    \param[out] a desired acceleration
+    \param[out] p desired position (x)
+    \param[out] v desired velocity (x/sec)
+    \param[out] a desired acceleration (x/sec^2)
 */
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const 
