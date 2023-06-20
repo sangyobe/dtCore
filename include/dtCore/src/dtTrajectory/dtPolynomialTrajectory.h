@@ -13,25 +13,19 @@
  * The degree of freedom can be specified as a template variable.
  * The order(n) of polynomial can be specified as a template variable.
  *
- * \code
- * #include <dtCore/dtTrajectory>
+ * p(t) (v(t), a(t))
+ *  |
+ *  |                                                   pf (vf, af) 
+ *  |                                            ...   ___o
+ *  |                                        .            |
+ *  |                                      /              |
+ *  |                       pi (vi, ai)  .                |
+ *  |                         o___ ...                    |
+ *  |                         |                           |
+ *  |                         |                           |
+ *  +-------------------------------------------------------------- t
+ *  t0 <--- time offset --->  ti   <--- duration --->    tf
  *
- * double t0 = 0.0;
- * double tf = 10.0;
- * dtVector<double, 3> pi, pf, vi, vf, ai, af;
- * pi << 0.0, 5.0, -10.0;
- * pf << 5.0, -5.0, 0.0;
- * vi.Zero();
- * vf.Zero();
- * ai.Zero();
- * af.Zero();
- * dtPolynomialTrajectory<double, 3, 3> traj(t0, tf, pi, pf, vi, vf, ai, af);
- *
- * double tc = 3.0;
- * dtVector<double, 3> p, v, a;
- * traj.interpolate(tc, p, v, a);
- *
- * \endcode
  */
 
 #include "dtPolynomial.h"

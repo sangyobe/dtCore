@@ -195,7 +195,7 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
     }
 }
 
-/*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
+/*! \details Configure the coefficients of the polynomial from the parameters entered.
     \param[in] p0 init position (x)
     \param[in] pf target position (x)
     \param[in] v0 init velocity (x/sec)
