@@ -48,22 +48,51 @@ public:
   typedef ValueType *ContRefType;
 
 public:
-  dtBezierTrajectory(const ValueType duration, const ContRefType pi,
-                     const ContRefType pf, const ContRefType pc,
+  dtBezierTrajectory(const ValueType duration, 
+                     const ContRefType pi, const ContRefType pf, 
+                     const ContRefType pc, const uint8_t pcSize,
+                     const ValueType timeOffset = 0);
+  dtBezierTrajectory(const ValueType duration, 
+                     const ContRefType pi, const ContRefType pf, 
+                     const ContRefType vi, const ContRefType vf, 
+                     const ContRefType pc, const uint8_t pcSize,
+                     const ValueType timeOffset = 0);
+  dtBezierTrajectory(const ValueType duration, 
+                     const ContRefType pi, const ContRefType pf, 
+                     const ContRefType vi, const ContRefType vf, 
+                     const ContRefType ai, const ContRefType af, 
+                     const ContRefType pc, const uint8_t pcSize,
                      const ValueType timeOffset = 0);
   ~dtBezierTrajectory();
 
 public:
-  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
-                           ContRefType a) const;
+  virtual void Interpolate(const ValueType t, ContRefType p) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const;
+  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const;
 
   virtual void Reconfigure();
 
-  void SetTimeOffset(const ValueType timeOffset);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf, 
+                const ContRefType pc, const uint8_t pcSize,
+                const ValueType timeOffset = 0);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf, 
+                const ContRefType vi, const ContRefType vf, 
+                const ContRefType pc, const uint8_t pcSize,
+                const ValueType timeOffset = 0);
+  void SetParam(const ValueType duration, 
+                const ContRefType pi, const ContRefType pf, 
+                const ContRefType vi, const ContRefType vf, 
+                const ContRefType ai, const ContRefType af, 
+                const ContRefType pc, const uint8_t pcSize,
+                const ValueType timeOffset = 0);
+
   void SetDuration(const ValueType duration);
-  void SetInitialParam(const ContRefType pi);
-  void SetTargetParam(const ContRefType pf);
-  void SetControlParam(const ContRefType pc);
+  void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr);
+  void SetTargetParam(const ContRefType pf, const ContRefType vf = nullptr, const ContRefType af = nullptr);
+  void SetControlParam(const ContRefType pc, const uint8_t pcSize);
+  void SetTimeOffset(const ValueType timeOffset);
 
 private:
   ValueType m_duration;
@@ -71,8 +100,13 @@ private:
   ValueType m_tf;
   ValueType m_pi[m_dof];
   ValueType m_pf[m_dof];
+  ValueType m_vi[m_dof];
+  ValueType m_vf[m_dof];
+  ValueType m_ai[m_dof];
+  ValueType m_af[m_dof];
   dtBezier<ValueType, m_order> m_interpolator[m_dof];
   ValueType m_pc[m_dof][m_order - 1];
+  uint8_t m_pcSize;
 };
 
 } // namespace dtCore

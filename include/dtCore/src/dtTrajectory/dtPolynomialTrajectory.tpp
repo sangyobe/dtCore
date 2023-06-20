@@ -224,16 +224,47 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTimeOffset(const Valu
 }
 
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
-void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetPoint(const ContRefType pi, const ContRefType pf,
-                                                                 const ContRefType vi, const ContRefType vf,
-                                                                 const ContRefType ai, const ContRefType af) 
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContRefType pi, const ContRefType vi, const ContRefType ai) 
 {
-    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);    
+    if (vi)
+    {
+        memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    }
+    else
+    {
+        memset(m_vi, 0, sizeof(ValueType) * m_dof);
+    }
+    if (ai)
+    {
+        memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+    }
+    else
+    {
+        memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    }
+}
+
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const ContRefType pf, const ContRefType vf, const ContRefType af) 
+{
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
-    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    if (vf)
+    {
+        memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    }
+    else
+    {
+        memset(m_vf, 0, sizeof(ValueType) * m_dof);
+    }
+    if (af)
+    {
+        memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    }
+    else
+    {
+        memset(m_af, 0, sizeof(ValueType) * m_dof);
+    }
 }
 
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>

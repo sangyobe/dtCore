@@ -4,3 +4,4 @@
 #include "src/dtTrajectory/dtPolynomialTrajectory.h"
 #include "src/dtTrajectory/dtTrajectoryList.h"
 #include "src/dtTrajectory/dtVectorPolynomialTrajectory.h"
+#include "src/dtTrajectory/dtScurveTrajectory.h"

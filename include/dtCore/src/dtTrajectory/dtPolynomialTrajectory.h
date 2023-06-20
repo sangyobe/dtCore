@@ -86,9 +86,8 @@ public:
                 const ContRefType ai, const ContRefType af,
                 const ValueType timeOffset = 0);
   void SetDuration(const ValueType duration);
-  void SetPoint(const ContRefType pi, const ContRefType pf,
-                const ContRefType vi = nullptr, const ContRefType vf = nullptr,
-                const ContRefType ai = nullptr, const ContRefType af = nullptr);
+  void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr);
+  void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr);
   void SetTimeOffset(const ValueType timeOffset);
 
 private:
