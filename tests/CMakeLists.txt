@@ -28,7 +28,7 @@ MESSAGE(STATUS "Eigen3 was found at ${EIGEN3_INCLUDE_DIR}")
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
 # Test targets
-foreach(_target test_trajectory)
+foreach(_target examplePoly)
   add_executable(
     ${_target}
     "${_target}.cpp"
