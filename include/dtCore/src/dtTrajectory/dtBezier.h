@@ -33,12 +33,12 @@ public:
     void Configure(const ValueType p0, const ValueType pf,
                    const ValueType v0, const ValueType vf,
                    const ValueType a0, const ValueType af,
-                   const ValueType *pc, const uint8_t pcSize, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+                   const ValueType *pc, const uint8_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
 
 private:
     ValueType BinomialCoeff(const int n, const int k) const; //!< Calculate binomial coefficients.
 
-    uint16_t m_num; //!< Bezier control point num (pcSize + Init parameter (3) + Target paramter (3))
+    uint16_t m_num; //!< Bezier control point num (pcNum + Init parameter (3) + Target paramter (3))
     ValueType m_duration; //!< Bezier trajectory duration
     ValueType m_p[m_maxNum + 6]; //!< Bezier control point
     ValueType m_posCoeff[m_maxNum + 6]; //!< Binomial coefficient for position

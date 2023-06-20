@@ -1,8 +1,9 @@
 namespace dtCore {
 
 template <typename ValueType, uint16_t m_maxNum>
-dtBezier<ValueType, m_maxNum>::dtBezier() {
-  static_assert(m_maxNum >= 1, "Invalid degree of bezier curve.");
+dtBezier<ValueType, m_maxNum>::dtBezier() 
+{
+    static_assert(m_maxNum >= 1, "Invalid degree of bezier curve.");
 }
 
 template <typename ValueType, uint16_t m_maxNum>
@@ -86,21 +87,21 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     \param[in] a0 init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
     \param[in] pc control point (x)
-    \param[in] pcSize pc size
+    \param[in] pcNum pc size
     \param[in] duration polynomial trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_maxNum>
 void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueType pf,
                                              const ValueType v0, const ValueType vf,
                                              const ValueType a0, const ValueType af,
-                                             const ValueType *pc, const uint8_t pcSize, const ValueType duration) 
+                                             const ValueType *pc, const uint8_t pcNum, const ValueType duration) 
 {
-    m_num = pcSize + 6;
+    m_num = pcNum + 6;
     m_duration = duration;
     m_p[0] = p0;
     m_p[1] = p0 + v0 / (m_num - 1);
     m_p[2] = p0 + 2 * v0 / (m_num - 1) + a0 / ((m_num - 1) * (m_num - 2));
-    memcpy(&m_p[3], pc, sizeof(ValueType) * pcSize);
+    memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum);
     m_p[m_num - 3] = pf - 2 * vf / (m_num - 1) - af / ((m_num - 1) * (m_num - 2));
     m_p[m_num - 2] = pf - vf / (m_num - 1);
     m_p[m_num - 1] = pf;
