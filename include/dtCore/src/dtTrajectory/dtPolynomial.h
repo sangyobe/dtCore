@@ -11,7 +11,7 @@ namespace dtCore {
 
 /*! \brief dtPolynomial: 1 dof, N'th polynomial trajectory
     \details
-    This class generates 1 degree of freedom and n'th polynomial trajectory.
+    This class provides 1 degree of freedom and n'th polynomial trajectory.
     \param[in] ValueType float or double
     \param[in] m_order n'th polynomial
 */
@@ -30,7 +30,7 @@ public:
   virtual void Configure(const ValueType p0, const ValueType pf,
                          const ValueType v0, const ValueType vf,
                          const ValueType a0, const ValueType af,
-                         const ValueType duration); //!< Obtain the coefficients of the polynomial from the parameters entered.
+                         const ValueType duration); //!< Configure the coefficients of the polynomial from the parameters entered.
 
 private:
   ValueType m_coeff[m_order + 1]; //!< the coefficients of the polynomial
