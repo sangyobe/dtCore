@@ -12,6 +12,10 @@ dtPolynomial<ValueType, m_order>::dtPolynomial()
 template <typename ValueType, uint16_t m_order>
 dtPolynomial<ValueType, m_order>::~dtPolynomial() {}
 
+/*! \details Calculates the desired position(p) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position
+*/
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) const 
 {
@@ -60,6 +64,11 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
     }
 }
 
+/*! \details Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position
+    \param[out] v desired velocity
+*/
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v) const 
 {
@@ -118,6 +127,12 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
     }
 }
 
+/*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position
+    \param[out] v desired velocity
+    \param[out] a desired acceleration
+*/
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const 
 {
@@ -183,6 +198,15 @@ void dtPolynomial<ValueType, m_order>::Interpolate(const ValueType t, ValueType 
     }
 }
 
+/*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
+    \param[in] p0 init position (x)
+    \param[in] pf target position (x)
+    \param[in] v0 init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] a0 init acceleration (x/sec^2)
+    \param[in] af target acceleration (x/sec^2)
+    \param[in] duration polynomial trajectory duration (sec)
+*/
 template <typename ValueType, uint16_t m_order>
 void dtPolynomial<ValueType, m_order>::Configure(const ValueType p0, const ValueType pf, 
                                                  const ValueType v0, const ValueType vf, 
