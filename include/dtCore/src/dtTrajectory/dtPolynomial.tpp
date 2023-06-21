@@ -214,47 +214,91 @@ void dtPolynomial<ValueType, m_order>::Configure(const ValueType p0, const Value
     switch (m_order) {
     case 1:
     {
-        m_coeff[0] = p0;
-        m_coeff[1] = (pf - p0) / t;
+        if (t > m_tolerance)
+        {
+            m_coeff[0] = p0;
+            m_coeff[1] = (pf - p0) / t;
+        }
+        else
+        {
+            m_coeff[0] = p0;
+            m_coeff[1] = 0;
+        }
     } break;
     case 3:
     {
-        const ValueType t2 = t * t;
-        const ValueType t3 = t * t2;
-        m_coeff[0] = p0;
-        m_coeff[1] = v0;
-        m_coeff[2] = (( 3 * pf - 3 * p0) - (vf + 2 * v0) * t) / t2;
-        m_coeff[3] = ((-2 * pf + 2 * p0) + (vf +     v0) * t) / t3;
+        if (t > m_tolerance)
+        {
+            const ValueType t2 = t * t;
+            const ValueType t3 = t * t2;
+            m_coeff[0] = p0;
+            m_coeff[1] = v0;
+            m_coeff[2] = (( 3 * pf - 3 * p0) - (vf + 2 * v0) * t) / t2;
+            m_coeff[3] = ((-2 * pf + 2 * p0) + (vf +     v0) * t) / t3;
+        }
+        else
+        {
+            m_coeff[0] = p0;
+            m_coeff[1] = 0;
+            m_coeff[2] = 0;
+            m_coeff[3] = 0;
+        }
     } break;
     case 5:
     {
-        const ValueType t2 = t * t;
-        const ValueType t3 = t * t2;
-        const ValueType t4 = t * t3;
-        const ValueType t5 = t * t4;
-        m_coeff[0] = p0;
-        m_coeff[1] = v0;
-        m_coeff[2] = 0.5 * a0;
-        m_coeff[3] = (( 10 * pf - 10 * p0) - (4 * vf + 6 * v0) * t + (0.5 * af - 1.5 * a0) * t2) / t3;
-        m_coeff[4] = ((-15 * pf + 15 * p0) + (7 * vf + 8 * v0) * t - (      af - 1.5 * a0) * t2) / t4;
-        m_coeff[5] = ((  6 * pf -  6 * p0) - (3 * vf + 3 * v0) * t + (0.5 * af - 0.5 * a0) * t2) / t5;
+        if (t > m_tolerance)
+        {
+            const ValueType t2 = t * t;
+            const ValueType t3 = t * t2;
+            const ValueType t4 = t * t3;
+            const ValueType t5 = t * t4;
+            m_coeff[0] = p0;
+            m_coeff[1] = v0;
+            m_coeff[2] = 0.5 * a0;
+            m_coeff[3] = (( 10 * pf - 10 * p0) - (4 * vf + 6 * v0) * t + (0.5 * af - 1.5 * a0) * t2) / t3;
+            m_coeff[4] = ((-15 * pf + 15 * p0) + (7 * vf + 8 * v0) * t - (      af - 1.5 * a0) * t2) / t4;
+            m_coeff[5] = ((  6 * pf -  6 * p0) - (3 * vf + 3 * v0) * t + (0.5 * af - 0.5 * a0) * t2) / t5;
+        }
+        else
+        {
+            m_coeff[0] = p0;
+            m_coeff[1] = 0;
+            m_coeff[2] = 0;
+            m_coeff[3] = 0;
+            m_coeff[4] = 0;
+            m_coeff[5] = 0;
+        }
     } break;
     case 7:
     {
-        const ValueType t2 = t * t;
-        const ValueType t3 = t * t2;
-        const ValueType t4 = t * t3;
-        const ValueType t5 = t * t4;
-        const ValueType t6 = t * t5;
-        const ValueType t7 = t * t6;
-        m_coeff[0] = p0;
-        m_coeff[1] = v0;
-        m_coeff[2] = 0.5 * a0;
-        m_coeff[3] = 0;
-        m_coeff[4] = (( 35 * pf - 35 * p0) - (15 * vf + 20 * v0) * t + (2.5 * af - 5.0 * a0) * t2) / t4;
-        m_coeff[5] = ((-84 * pf + 84 * p0) + (39 * vf + 45 * v0) * t - (  7 * af -  10 * a0) * t2) / t5;
-        m_coeff[6] = ( (70 * pf - 70 * p0) - (34 * vf + 36 * v0) * t + (6.5 * af - 7.5 * a0) * t2) / t6;
-        m_coeff[7] = ((-20 * pf + 20 * p0) + (10 * vf + 10 * v0) * t - (  2 * af -   2 * a0) * t2) / t7;
+        if (t > m_tolerance)
+        {
+            const ValueType t2 = t * t;
+            const ValueType t3 = t * t2;
+            const ValueType t4 = t * t3;
+            const ValueType t5 = t * t4;
+            const ValueType t6 = t * t5;
+            const ValueType t7 = t * t6;
+            m_coeff[0] = p0;
+            m_coeff[1] = v0;
+            m_coeff[2] = 0.5 * a0;
+            m_coeff[3] = 0;
+            m_coeff[4] = (( 35 * pf - 35 * p0) - (15 * vf + 20 * v0) * t + (2.5 * af - 5.0 * a0) * t2) / t4;
+            m_coeff[5] = ((-84 * pf + 84 * p0) + (39 * vf + 45 * v0) * t - (  7 * af -  10 * a0) * t2) / t5;
+            m_coeff[6] = ( (70 * pf - 70 * p0) - (34 * vf + 36 * v0) * t + (6.5 * af - 7.5 * a0) * t2) / t6;
+            m_coeff[7] = ((-20 * pf + 20 * p0) + (10 * vf + 10 * v0) * t - (  2 * af -   2 * a0) * t2) / t7;
+        }
+        else
+        {
+            m_coeff[0] = p0;
+            m_coeff[1] = 0;
+            m_coeff[2] = 0;
+            m_coeff[3] = 0;
+            m_coeff[4] = 0;
+            m_coeff[5] = 0;
+            m_coeff[6] = 0;
+            m_coeff[7] = 0;
+        }
     } break;
     default:
        assert(false && "Invalid degree of polynomial.");

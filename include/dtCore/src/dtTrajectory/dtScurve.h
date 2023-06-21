@@ -7,8 +7,6 @@
 #ifndef __DTCORE_DTSCURVE_H__
 #define __DTCORE_DTSCURVE_H__
 
-#include <limits> // 
-
 namespace dtCore {
 
 /*! \brief dtScurve: 1 dof, n'th s-curve trajectory

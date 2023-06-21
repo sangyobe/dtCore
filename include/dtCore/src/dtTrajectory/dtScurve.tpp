@@ -385,8 +385,8 @@ void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueTy
         }
     } break;
     default:
-      // assert(false, "Invalid degree of polynomial.");
-      break;
+        assert(false && "Invalid degree of polynomial.");
+    break;
     }
 }
 
