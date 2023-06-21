@@ -3,13 +3,16 @@ namespace dtCore {
 template <typename ValueType, uint16_t m_order>
 dtScurve<ValueType, m_order>::dtScurve()
 {
-  static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7,
-                "Invalid degree of polynomial.");
+  static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of s-curve.");
 }
 
 template <typename ValueType, uint16_t m_order>
 dtScurve<ValueType, m_order>::~dtScurve() {}
 
+/*! \details Calculates the desired position(p) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position (x)
+*/
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) const 
 {
@@ -71,11 +74,16 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) 
     } break;
 
     default:
-        // assert(false, "Invalid degree of polynomial.");
+        assert(false && "Invalid degree of polynomial.");
         break;
     }
 }
 
+/*! \details Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position (x)
+    \param[out] v desired velocity (x/sec)
+*/
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v) const 
 {
@@ -147,11 +155,17 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     } break;
 
     default:
-        // assert(false, "Invalid degree of polynomial.");
-        break;
+        assert(false && "Invalid degree of polynomial.");
+    break;
     }
 }
 
+/*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
+    \param[in] t current time (sec)
+    \param[out] p desired position (x)
+    \param[out] v desired velocity (x/sec)
+    \param[out] a desired acceleration (x/sec^2)
+*/
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const 
 {
@@ -235,6 +249,17 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     }
 }
 
+/*! \details Configure the coefficients of the polynomial from the parameters entered.
+    \param[in] p0 init position (x)
+    \param[in] pf target position (x)
+    \param[in] v0 init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] a0 init acceleration (x/sec^2)
+    \param[in] af target acceleration (x/sec^2)
+    \param[in] duration s-curve trajectory duration (sec)
+    \param[in] duration s-curve trajectory acceleration duration (sec)
+    \param[in] duration s-curve trajectory deceleration duration (sec)
+*/
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType pf, 
                                              const ValueType v0, const ValueType vf, 
@@ -254,6 +279,16 @@ void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType
     Coefficient(pd, pf, vm, vf,  0, af, decDuration, m_decCoeff);
 }
 
+/*! \details Calculate s-curve coefficient.
+    \param[in] p0 init position (x)
+    \param[in] pf target position (x)
+    \param[in] v0 init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] a0 init acceleration (x/sec^2)
+    \param[in] af target acceleration (x/sec^2)
+    \param[in] t duration (sec)
+    \param[out] coeff s-curve trajectory coefficient
+*/
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueType pf,
                                                const ValueType v0, const ValueType vf,
@@ -288,7 +323,7 @@ void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueTy
         else
         {
             coeff[0] = p0;
-            coeff[1] = v0;
+            coeff[1] = 0;
             coeff[2] = 0;
             coeff[3] = 0;
         }
@@ -311,7 +346,7 @@ void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueTy
         else
         {
             coeff[0] = p0;
-            coeff[1] = v0;
+            coeff[1] = 0;
             coeff[2] = 0;
             coeff[3] = 0;
             coeff[4] = 0;
@@ -340,7 +375,7 @@ void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueTy
         else
         {
             coeff[0] = p0;
-            coeff[1] = v0;
+            coeff[1] = 0;
             coeff[2] = 0;
             coeff[3] = 0;
             coeff[4] = 0;

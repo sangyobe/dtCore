@@ -7,30 +7,25 @@
 #ifndef __DTCORE_DTBEZIERTRAJECTORY_H__
 #define __DTCORE_DTBEZIERTRAJECTORY_H__
 
-/**
+/** \defgroup dtTrajectory
  *
- * dtBezierTrajectory provides ....
+ * dtBezierTrajectory provides n'th bezier trajectory with one or more degrees of freedom.
+ * The degree of freedom can be specified as a template variable. ////
+ * The order(n) of polynomial can be specified as a template variable. ////
  *
- * \code
- * #include <dtCore/dtTrajectory>
+ * p(t) (v(t), a(t))
+ *  |                                   pc[0]
+ *  |                                     o                                         pf (vf, af) 
+ *  |                                                         pc[pcNum - 1]           o
+ *  |                                                               o                 |
+ *  |                                            pc[1]    ...                         |
+ *  |                       pi (vi, ai)            o                                  |
+ *  |                         o                                                       |
+ *  |                         |                                                       |
+ *  |                         |                                                       |
+ *  +-------------------------------------------------------------------------------------------------- t
+ *  t0 <--- time offset --->  ti        <---          duration         --->          tf
  *
- * double t0 = 0.0;
- * double tf = 10.0;
- * dtVector<double, 3> pi, pf, vi, vf, ai, af;
- * pi << 0.0, 5.0, -10.0;
- * pf << 5.0, -5.0, 0.0;
- * vi.Zero();
- * vf.Zero();
- * ai.Zero();
- * af.Zero();
- * dtPolynomialTrajectory<double, 3> traj(dtPolyType::CUBIC, t0, tf, pi, pf, vi,
- * vf, ai, af);
- *
- * double tc = 3.0;
- * dtVector<double, 3> p, v, a;
- * traj.interpolate(tc, p, v, a);
- *
- * \endcode
  */
 
 #include "dtBezier.h"
