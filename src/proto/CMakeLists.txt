@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 
-find_program(_PROTOBUF_PROTOC protoc)
-set(_PROTOBUF_LIBPROTOBUF libprotobuf)
-message(STATUS "protoc: ${_PROTOBUF_PROTOC}")
-
 # Get protobuf/grpc generated file output path
 function (get_pb_out_path pb_proto pb_src_dir pb_bin_dir pb_out_path)
     get_filename_component(pb_proto_path "${pb_proto}" PATH)
@@ -37,12 +33,13 @@ foreach(pb_src ${PB_SRCS})
     # message(STATUS "pb_grpc_hdr: ${pb_grpc_hdr}")
 
     add_custom_command(
-      OUTPUT "${pb_proto_src}" "${pb_proto_hdr}"
+      OUTPUT "${pb_proto_src}" "${pb_proto_hdr}" "${pb_grpc_src}" "${pb_grpc_hdr}"
       COMMAND ${_PROTOBUF_PROTOC}
-      ARGS
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
         -I "${CMAKE_CURRENT_SOURCE_DIR}"
         -I "${pb_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${pb_src}"
       DEPENDS
         "${pb_src}"
@@ -65,13 +62,11 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # art_protocol
 add_library(art_protocol
-  #${pb_grpc_srcs}
-  #${pb_grpc_hdrs}
+  ${pb_grpc_srcs}
+  ${pb_grpc_hdrs}
   ${pb_proto_srcs}
   ${pb_proto_hdrs})
 target_link_libraries(art_protocol
-  #${_PROTOBUF_LIBPROTOBUF})
-  #libprotobuf.a
-)
-
-
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  ${_PROTOBUF_LIBPROTOBUF})
