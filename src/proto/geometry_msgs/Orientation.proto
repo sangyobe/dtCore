@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package art_protocol.geometry_msgs;
+
+message Euler {
+    double r = 1;
+    double p = 2;
+    double y = 3;
+}
+
+message Quaternion {
+    double x = 1;
+    double y = 2;
+    double z = 3;
+    double w = 4;
+}
