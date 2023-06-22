@@ -48,7 +48,7 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     pos += m_posCoeff[m_num - 1] * pow(tc, m_num - 1) * pow(1 - tc, 0) * m_p[m_num - 1];
 
     p = pos;
-    v = vel;
+    v = vel * m_durationInv;
 }
 
 /*! \details Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
@@ -76,8 +76,8 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     vel += m_velCoeff[m_num - 2] * pow(tc, m_num - 2) * pow(1 - tc, 0) * (m_p[m_num - 1] - m_p[m_num - 2]) * (m_num - 1);
 
     p = pos;
-    v = vel;
-    a = acc;
+    v = vel * m_durationInv;
+    a = acc * m_durationInv * m_durationInv;
 }
 
 /*! \details Configure the control points and coefficients of the bezier trajectory from the parameters entered.
@@ -102,12 +102,13 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
 
     m_num = pcNum + 6;
     m_duration = duration;
+    m_durationInv = 1 / m_duration;
     m_p[0] = p0;
-    m_p[1] = p0 + v0 / (m_num - 1);
-    m_p[2] = p0 + 2 * v0 / (m_num - 1) + a0 / ((m_num - 1) * (m_num - 2));
+    m_p[1] = p0 + m_duration* v0 / (m_num - 1);
+    m_p[2] = p0 + 2 * m_duration * v0 / (m_num - 1) + m_duration * m_duration* a0 / ((m_num - 1) * (m_num - 2));
     memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum);
-    m_p[m_num - 3] = pf - 2 * vf / (m_num - 1) - af / ((m_num - 1) * (m_num - 2));
-    m_p[m_num - 2] = pf - vf / (m_num - 1);
+    m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) - m_duration * m_duration * af / ((m_num - 1) * (m_num - 2));
+    m_p[m_num - 2] = pf - m_duration * vf / (m_num - 1);
     m_p[m_num - 1] = pf;
 
     for (uint16_t i = 0; i < m_num - 2; i++)

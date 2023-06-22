@@ -42,6 +42,7 @@ private:
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     uint16_t m_num; //!< Bezier control point num (pcNum + Init parameter (3) + Target paramter (3))
     ValueType m_duration; //!< Bezier trajectory duration
+    ValueType m_durationInv; //!< Bezier trajectory duration's inverse
     ValueType m_p[m_maxNum + 6]; //!< Bezier control point
     ValueType m_posCoeff[m_maxNum + 6]; //!< Binomial coefficient for position
     ValueType m_velCoeff[m_maxNum + 5]; //!< Binomial coefficient for velocity

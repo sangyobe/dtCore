@@ -19,31 +19,23 @@ void ScurveTrajectory1() {
   double p[3], v[3], a[3]; // output
 
   // 7th-order
-  dtScurveTrajectory<double, 3, 7> traj7;
+  dtScurveTrajectory<double, 3, 5> traj5;
   for (uint16_t i = 0; i < 2000; i++)
   {
     // robot command
     if (i == 0)
     {
-      std::cout << "-------------------------------------------" << std::endl;
-      std::cout << "- 5th-order s-curve -----------------------" << std::endl;
-      traj7.SetDuration(td, 0.2*td);
-      traj7.SetInitParam(pi, vi, ai);
-      traj7.SetTargetParam(pf, vf, af);
-      traj7.Configure();
-    }
-
-    if (i == 500)
-    {
-      traj7.SetParam(td, 0.2*td, p, pf, v, vf, a, af, 0.01*(i - 1));
-      traj7.Configure();
+      traj5.SetDuration(td, 0.2*td);
+      traj5.SetInitParam(pi, vi, ai);
+      traj5.SetTargetParam(pf, vf, af);
+      traj5.SetTimeOffset(2);
+      traj5.Configure();
     }
 
     // robot status
-    traj7.Interpolate(0.01*i, p, v, a);
+    traj5.Interpolate(0.01*i, p, v, a);
     std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
               << std::endl;
-              
   }
 }
 
@@ -64,7 +56,7 @@ void ScurveTrajectory2() {
   double p[3], v[3], a[3]; // output
 
   // 5th-order
-  dtScurveTrajectory<double, 3, 5> traj5(vLimit, aLimit, pi, pf, vi, vf, ai, af);
+  dtScurveTrajectory<double, 3, 5> traj5(vLimit, aLimit, pi, pf, vi, vf, ai, af, 2);
   for (uint16_t i = 0; i < 2000; i++)
   {
     // robot status
@@ -77,6 +69,6 @@ void ScurveTrajectory2() {
 
 int main ()
 {
-    // ScurveTrajectory1();
-    ScurveTrajectory2();
+    ScurveTrajectory1();
+    // ScurveTrajectory2();
 }
