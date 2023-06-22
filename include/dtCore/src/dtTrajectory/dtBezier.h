@@ -9,6 +9,7 @@
 
 #include <cstring> // memcpy
 #include <cmath>
+#include <assert.h>
 
 namespace dtCore {
 
@@ -16,7 +17,7 @@ namespace dtCore {
     \details
     This class provides 1 degree of freedom and n'th bezier trajectory.
     \param[in] ValueType float or double
-    \param[in] m_maxNum n'th bezier
+    \param[in] m_maxNum max input control point num
 */
 template <typename ValueType, uint16_t m_maxNum> 
 class dtBezier 
@@ -33,11 +34,12 @@ public:
     void Configure(const ValueType p0, const ValueType pf,
                    const ValueType v0, const ValueType vf,
                    const ValueType a0, const ValueType af,
-                   const ValueType *pc, const uint8_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+                   const ValueType *pc, const uint16_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
 
 private:
-    ValueType BinomialCoeff(const int n, const int k) const; //!< Calculate binomial coefficients.
+    ValueType BinomialCoeff(const uint16_t n, const uint16_t k) const; //!< Calculate binomial coefficients.
 
+    ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     uint16_t m_num; //!< Bezier control point num (pcNum + Init parameter (3) + Target paramter (3))
     ValueType m_duration; //!< Bezier trajectory duration
     ValueType m_p[m_maxNum + 6]; //!< Bezier control point

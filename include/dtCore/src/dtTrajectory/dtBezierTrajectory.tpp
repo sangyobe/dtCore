@@ -31,7 +31,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory()
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueType duration, 
                                                                    const ContRefType pi, const ContRefType pf,
-                                                                   const ContRefType pc, const uint8_t pcNum,
+                                                                   const ContRefType pc, const uint16_t pcNum,
                                                                    const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
@@ -44,9 +44,9 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
     memset(m_ai, 0, sizeof(ValueType) * m_dof);
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 
-    for (int i = 0; i < m_dof; i++)
+    for (uint16_t i = 0; i < m_dof; i++)
     {
-        for (int j = 0; j < pcNum; j++)
+        for (uint16_t j = 0; j < pcNum; j++)
         {
             m_pc[i][j] = pc[m_dof*j + i]; 
         }
@@ -70,7 +70,7 @@ template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueType duration, 
                                                                   const ContRefType pi, const ContRefType pf, 
                                                                   const ContRefType vi, const ContRefType vf, 
-                                                                  const ContRefType pc, const uint8_t pcNum,
+                                                                  const ContRefType pc, const uint16_t pcNum,
                                                                   const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
@@ -82,9 +82,9 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
   memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
   memset(m_ai, 0, sizeof(ValueType) * m_dof);
   memset(m_af, 0, sizeof(ValueType) * m_dof);
-  for (int i = 0; i < m_dof; i++)
+  for (uint16_t i = 0; i < m_dof; i++)
   {
-      for (int j = 0; j < pcNum; j++)
+      for (uint16_t j = 0; j < pcNum; j++)
       {
           m_pc[i][j] = pc[m_dof*j + i]; 
       }
@@ -110,7 +110,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
                                                                   const ContRefType pi, const ContRefType pf, 
                                                                   const ContRefType vi, const ContRefType vf, 
                                                                   const ContRefType ai, const ContRefType af, 
-                                                                  const ContRefType pc, const uint8_t pcNum,
+                                                                  const ContRefType pc, const uint16_t pcNum,
                                                                   const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
@@ -122,9 +122,9 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
   memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
   memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
   memcpy(m_af, af, sizeof(ValueType) * m_dof);
-  for (int i = 0; i < m_dof; i++)
+  for (uint16_t i = 0; i < m_dof; i++)
   {
-      for (int j = 0; j < pcNum; j++)
+      for (uint16_t j = 0; j < pcNum; j++)
       {
           m_pc[i][j] = pc[m_dof*j + i]; 
       }
@@ -232,7 +232,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Reconfigure()
     }
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -244,7 +244,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Reconfigure()
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType duration, 
                                                              const ContRefType pi, const ContRefType pf, 
-                                                             const ContRefType pc, const uint8_t pcNum,
+                                                             const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -254,9 +254,9 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   memset(m_ai, 0, sizeof(ValueType) * m_dof);
   memset(m_af, 0, sizeof(ValueType) * m_dof);
 
-  for (int i = 0; i < m_dof; i++)
+  for (uint16_t i = 0; i < m_dof; i++)
   {
-      for (int j = 0; j < pcNum; j++)
+      for (uint16_t j = 0; j < pcNum; j++)
       {
           m_pc[i][j] = pc[m_dof*j + i]; 
       }
@@ -264,7 +264,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   m_pcNum = pcNum;
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -279,7 +279,7 @@ template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType duration, 
                                                              const ContRefType pi, const ContRefType pf, 
                                                              const ContRefType vi, const ContRefType vf, 
-                                                             const ContRefType pc, const uint8_t pcNum,
+                                                             const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -288,9 +288,9 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
   memset(m_ai, 0, sizeof(ValueType) * m_dof);
   memset(m_af, 0, sizeof(ValueType) * m_dof);
-  for (int i = 0; i < m_dof; i++)
+  for (uint16_t i = 0; i < m_dof; i++)
   {
-      for (int j = 0; j < pcNum; j++)
+      for (uint16_t j = 0; j < pcNum; j++)
       {
           m_pc[i][j] = pc[m_dof*j + i]; 
       }
@@ -298,7 +298,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   m_pcNum = pcNum;  
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -315,7 +315,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ContRefType pi, const ContRefType pf, 
                                                              const ContRefType vi, const ContRefType vf, 
                                                              const ContRefType ai, const ContRefType af, 
-                                                             const ContRefType pc, const uint8_t pcNum,
+                                                             const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
   memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
@@ -324,9 +324,9 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
   memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
   memcpy(m_af, af, sizeof(ValueType) * m_dof);
-  for (int i = 0; i < m_dof; i++)
+  for (uint16_t i = 0; i < m_dof; i++)
   {
-      for (int j = 0; j < pcNum; j++)
+      for (uint16_t j = 0; j < pcNum; j++)
       {
           m_pc[i][j] = pc[m_dof*j + i]; 
       }
@@ -334,7 +334,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
   m_pcNum = pcNum;
 }
 
-/*! \details  Enter trajectory duration for the ReConfigure function.
+/*! \details  Enter trajectory duration for the Configure function.
     \param[in] duration trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
@@ -343,7 +343,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetDuration(const ValueType
   m_duration = duration;
 }
 
-/*! \details Enter init parameter for the ReConfigure function.
+/*! \details Enter init parameter for the Configure function.
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
@@ -370,7 +370,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetInitParam(const ContRefT
     }
 }
 
-/*! \details Enter target parameter for the ReConfigure function.
+/*! \details Enter target parameter for the Configure function.
     \param[in] pf target position (x)
     \param[in] vf target velocity (x/sec)
     \param[in] af target acceleration (x/sec^2)
@@ -397,24 +397,30 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTargetParam(const ContRe
     }
 }
 
-/*! \details Enter input contorl parameter for the ReConfigure function.
+/*! \details Enter input contorl parameter for the Configure function.
     \param[in] pc input control point (x)
     \param[in] pcNum number of input control point
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
-void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc, const uint8_t pcNum) 
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc, const uint16_t pcNum) 
 {
     m_pcNum = pcNum;
-    memcpy(m_pc, pc, sizeof(ValueType) * m_dof * pcNum);
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
 }
 
-/*! \details Enter trajectory delay for the ReConfigure function.
+/*! \details Enter trajectory delay for the Configure function.
     \param[in] timeOffset trajectory delay (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTimeOffset(const ValueType timeOffset) 
 {
-  m_ti = timeOffset;
+    m_ti = timeOffset;
 }
 
 } // namespace dtCore

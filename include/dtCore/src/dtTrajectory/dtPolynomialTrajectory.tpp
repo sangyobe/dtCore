@@ -34,6 +34,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -42,7 +43,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     memset(m_ai, 0, sizeof(ValueType) * m_dof);
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 
-    ReConfigure();
+    Configure();
 }
 
 /*! \details Configure the coefficients of the polynomial from the parameters entered.
@@ -63,6 +64,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -71,7 +73,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     memset(m_ai, 0, sizeof(ValueType) * m_dof);
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 
-    ReConfigure();
+    Configure();
 }
 
 /*! \details Configure the coefficients of the polynomial from the parameters entered.
@@ -94,6 +96,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 1 || m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -102,7 +105,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
 
-    ReConfigure();
+    Configure();
 }
 
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -199,7 +202,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueT
              (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
-void dtPolynomialTrajectory<ValueType, m_dof, m_order>::ReConfigure()
+void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Configure()
 {
     for (uint16_t i = 0; i < m_dof; i++) 
     {
@@ -210,7 +213,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::ReConfigure()
     }
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -220,8 +223,11 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::ReConfigure()
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType duration, 
                                                                  const ContRefType pi, const ContRefType pf,
-                                                                 const ValueType timeOffset) 
+                                                                 const ValueType timeOffset)
+                                                                 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
 
@@ -233,7 +239,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memset(m_af, 0, sizeof(ValueType) * m_dof);   
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -248,6 +254,8 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
                                                                  const ContRefType vi, const ContRefType vf,
                                                                  const ValueType timeOffset) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
 
@@ -259,7 +267,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Enter parameters for the ReConfigure function.
+/*! \details Enter parameters for the Configure function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -276,6 +284,8 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
                                                                  const ContRefType ai, const ContRefType af,
                                                                  const ValueType timeOffset) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
 
@@ -287,16 +297,17 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
 }
 
-/*! \details  Enter trajectory duration for the ReConfigure function.
+/*! \details  Enter trajectory duration for the Configure function.
     \param[in] duration trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueType duration) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     m_duration = duration;
 }
 
-/*! \details Enter init parameter for the ReConfigure function.
+/*! \details Enter init parameter for the Configure function.
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
@@ -323,7 +334,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContR
     }
 }
 
-/*! \details Enter target parameter for the ReConfigure function.
+/*! \details Enter target parameter for the Configure function.
     \param[in] pf target position (x)
     \param[in] vf target velocity (x/sec)
     \param[in] af target acceleration (x/sec^2)
@@ -350,7 +361,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const Con
     }
 }
 
-/*! \details Enter trajectory delay for the ReConfigure function.
+/*! \details Enter trajectory delay for the Configure function.
     \param[in] timeOffset trajectory delay (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>

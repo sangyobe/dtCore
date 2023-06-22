@@ -7,6 +7,9 @@
 #ifndef __DTCORE_DTPOLYNOMIAL_H__
 #define __DTCORE_DTPOLYNOMIAL_H__
 
+#include <cmath>
+#include <assert.h>
+
 namespace dtCore {
 
 /*! \brief dtPolynomial: 1 dof, N'th polynomial trajectory
@@ -28,9 +31,9 @@ public:
     virtual void Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
     virtual void Configure(const ValueType p0, const ValueType pf,
-                          const ValueType v0, const ValueType vf,
-                          const ValueType a0, const ValueType af,
-                          const ValueType duration); //!< Configure the coefficients of the polynomial from the parameters entered.
+                           const ValueType v0, const ValueType vf,
+                           const ValueType a0, const ValueType af,
+                           const ValueType duration); //!< Configure the coefficients of the polynomial from the parameters entered.
 
 private:
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero

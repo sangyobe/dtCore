@@ -3,7 +3,7 @@ namespace dtCore {
 template <typename ValueType, uint16_t m_order>
 dtScurve<ValueType, m_order>::dtScurve()
 {
-  static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of s-curve.");
+    static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of s-curve.");
 }
 
 template <typename ValueType, uint16_t m_order>
@@ -16,22 +16,22 @@ dtScurve<ValueType, m_order>::~dtScurve() {}
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) const 
 {
-    ValueType coeff[m_order + 1] = {0.0, };
+    ValueType coeff[m_order + 1];
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
         t_ = t;
-        memcpy(coeff, m_accCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
         t_ = t - m_accDuration;
-        memcpy(coeff, m_conCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
         t_ = t - (m_duration - m_decDuration);
-        memcpy(coeff, m_decCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
 
     switch (m_order) {
@@ -87,22 +87,22 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) 
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v) const 
 {
-    ValueType coeff[m_order + 1] = {0.0, };
+    ValueType coeff[m_order + 1];
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
         t_ = t;
-        memcpy(coeff, m_accCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
         t_ = t - m_accDuration;
-        memcpy(coeff, m_conCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
         t_ = t - (m_duration - m_decDuration);
-        memcpy(coeff, m_decCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
 
     switch (m_order) {
@@ -169,24 +169,24 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const 
 {
-    ValueType coeff[m_order + 1] = {0.0, };
+    ValueType coeff[m_order + 1];
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
         t_ = t;
-        memcpy(coeff, m_accCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
         t_ = t - m_accDuration;
-        memcpy(coeff, m_conCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
         t_ = t - (m_duration - m_decDuration);
-        memcpy(coeff, m_decCoeff, (m_order + 1) * sizeof(ValueType));
+        memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
-        
+
     switch (m_order) {
     case 1: 
     {
@@ -244,8 +244,8 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     } break;
 
     default:
-        // assert(false, "Invalid degree of polynomial.");
-        break;
+        assert(false && "Invalid degree of polynomial.");
+    break;
     }
 }
 
@@ -264,19 +264,19 @@ template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType pf, 
                                              const ValueType v0, const ValueType vf, 
                                              const ValueType a0, const ValueType af,
-                                             const ValueType vm, const ValueType duration, 
+                                             const ValueType velLinear, const ValueType duration, 
                                              const ValueType accDuration, const ValueType decDuration) 
 {
     m_duration = duration;
     m_accDuration = accDuration;
     m_decDuration = decDuration;
     
-    const ValueType pa = p0 + 0.5 * (v0 + vm) * accDuration;
-    const ValueType pd = pf - 0.5 * (vm + vf) * decDuration;
+    const ValueType pa = p0 + 0.5 * (v0 + velLinear) * accDuration;
+    const ValueType pd = pf - 0.5 * (velLinear + vf) * decDuration;
 
-    Coefficient(p0, pa, v0, vm, a0,  0, accDuration, m_accCoeff);
-    Coefficient(pa, pd, vm, vm,  0,  0, duration - accDuration - decDuration, m_conCoeff);
-    Coefficient(pd, pf, vm, vf,  0, af, decDuration, m_decCoeff);
+    CalculateCoefficient(p0, pa, v0, velLinear, a0,  0, accDuration, m_accCoeff);
+    CalculateCoefficient(pa, pd, velLinear, velLinear,  0,  0, duration - accDuration - decDuration, m_conCoeff);
+    CalculateCoefficient(pd, pf, velLinear, vf,  0, af, decDuration, m_decCoeff);
 }
 
 /*! \details Calculate s-curve coefficient.
@@ -290,10 +290,10 @@ void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType
     \param[out] coeff s-curve trajectory coefficient
 */
 template <typename ValueType, uint16_t m_order>
-void dtScurve<ValueType, m_order>::Coefficient(const ValueType p0, const ValueType pf,
-                                               const ValueType v0, const ValueType vf,
-                                               const ValueType a0, const ValueType af,
-                                               const ValueType t, ValueType *coeff)
+void dtScurve<ValueType, m_order>::CalculateCoefficient(const ValueType p0, const ValueType pf,
+                                                        const ValueType v0, const ValueType vf,
+                                                        const ValueType a0, const ValueType af,
+                                                        const ValueType t, ValueType *coeff)
 {
     switch (m_order) {
     case 1:

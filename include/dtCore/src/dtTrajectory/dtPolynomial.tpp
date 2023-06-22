@@ -210,6 +210,8 @@ void dtPolynomial<ValueType, m_order>::Configure(const ValueType p0, const Value
                                                  const ValueType a0, const ValueType af,
                                                  const ValueType duration) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    
     const ValueType t = duration;
     switch (m_order) {
     case 1:

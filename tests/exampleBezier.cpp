@@ -11,11 +11,12 @@ void BezierTrajectory()
     double vi[3] = {0.0, 5.0,  5.0};
     double ai[3] = {0.0, 0.0,  0.0};
     double pc3[3*5] = {20.0, 20.0, -10.0,
-                    0.0,  0.0, 30.0,
-                    15.0, 10.0, 10.0,
-                    10.0, 10.0, 10.0,
-                    0.0, 10.0, 10.0};
-    double af[3] = {0.0, 0.0,  0.0};
+                       0.0,  0.0, 30.0,
+                       15.0, 10.0, 10.0,
+                       10.0, 10.0, 10.0,
+                       0.0, 10.0, 10.0};
+    //TODO: 2차원 배열 받게하는거?
+    double af[3] = {0.0, 0.0, 0.0};
     double vf[3] = {10.0, 0.0, -5.0};
     double pf[3] = {5.0, -5.0, 0.0};
     double tc;
@@ -25,6 +26,7 @@ void BezierTrajectory()
     std::cout << "- nth-order bezier ------------------------" << std::endl;
 
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+    //TODO: contorl point 넣는 방법 주석처리
     dtBezierTrajectory<double, 3, 10> traj3(10, pi, pf, vi, vf, ai, af, pc3, 5);
 
     for (tc = 0; tc <= td; tc += 0.001) 

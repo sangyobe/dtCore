@@ -1,8 +1,8 @@
 
-inline Scalar at(int i, int j) const { return this->operator()(i, j); }
-inline Scalar &at(int i, int j) { return this->operator()(i, j); }
-inline Scalar at(int i) const { return this->operator[](i); }
-inline Scalar &at(int i) { return this->operator[](i); }
+inline Scalar at(uint16_t i, uint16_t j) const { return this->operator()(i, j); }
+inline Scalar &at(uint16_t i, uint16_t j) { return this->operator()(i, j); }
+inline Scalar at(uint16_t i) const { return this->operator[](i); }
+inline Scalar &at(uint16_t i) { return this->operator[](i); }
 
 // const CwiseUnaryOp<internal::scalar_add_op<Scalar>, Derived>
 // operator+(const Scalar& scalar) const
@@ -47,8 +47,8 @@ template <typename OtherDerived>
 inline void set(const std::vector<long> &rperm, const std::vector<long> &cperm,
                 const Eigen::MatrixBase<OtherDerived> &rhs) {
   assert(rhs.rows() >= rperm.size() && rhs.cols() >= cperm.size());
-  for (int j = 0; j < cperm.size(); j++)
-    for (int i = 0; i < rperm.size(); i++)
+  for (uint16_t j = 0; j < cperm.size(); j++)
+    for (uint16_t i = 0; i < rperm.size(); i++)
       this->operator()(rperm[i], cperm[j]) = rhs(i, j);
 }
 /**
@@ -63,8 +63,8 @@ inline void set(const std::vector<long> &rperm, const long &c, const long &n,
                 const Eigen::MatrixBase<OtherDerived> &rhs) {
   assert(cols() >= c + n);
   assert(rhs.rows() >= rperm.size() && rhs.cols() >= n);
-  for (int j = 0; j < n; j++)
-    for (int i = 0; i < rperm.size(); i++)
+  for (uint16_t j = 0; j < n; j++)
+    for (uint16_t i = 0; i < rperm.size(); i++)
       this->operator()(rperm[i], c + j) = rhs(i, j);
 }
 /**
@@ -79,8 +79,8 @@ inline void set(const long &r, const long &m, const std::vector<long> &cperm,
                 const Eigen::MatrixBase<OtherDerived> &rhs) {
   assert(rows() >= r + m);
   assert(rhs.rows() >= m && rhs.cols() >= cperm.size());
-  for (int j = 0; j < cperm.size(); j++)
-    for (int i = 0; i < m; i++)
+  for (uint16_t j = 0; j < cperm.size(); j++)
+    for (uint16_t i = 0; i < m; i++)
       this->operator()(r + i, cperm[j]) = rhs(i, j);
 }
 
@@ -116,7 +116,7 @@ template <typename Type> inline void set(const Type *values) {
 //{
 //	assert(rows() == cols() == 3);
 //
-//	int i;
+//	uint16_t i;
 //	for (i = 0; i < 3; i++)
 //	{
 //		if (std::fabs(col(i).dot(col(i)) - 1) >= threshold) break; //
@@ -135,7 +135,7 @@ template <typename Type> inline void set(const Type *values) {
 // self: mxm, invertable, general or symmetric positive definite
 template <typename OtherDerived>
 inline void solve(Eigen::MatrixBase<OtherDerived> &mat,
-                  const int type = 0 /* GENERAL */) const {
+                  const uint16_t type = 0 /* GENERAL */) const {
   if (type == 0)
     mat = lu().solve(mat);
   else /* if (type == POSITIVEDEFINITE) */

@@ -26,7 +26,7 @@
 
 //   // 7th-order
 //   dtPolynomialTrajectory<double, 3, 7> traj7;
-//   for (int i = 0; i < 2000; i++)
+//   for (uint16_t i = 0; i < 2000; i++)
 //   {
 //     // robot command
 //     if (i == 0)
@@ -34,13 +34,13 @@
 //       std::cout << "-------------------------------------------" << std::endl;
 //       std::cout << "- 7th-order polynomial --------------------" << std::endl;
 //       traj7.SetParam(td, pi, pf, vi, vf, ai, af);
-//       traj7.ReConfigure();
+//       traj7.Configure();
 //     }
 
 //     if (i == 500)
 //     {
 //       traj7.SetParam(td, p, pf, v, vf, a, af, 0.01*(i - 1));
-//       traj7.ReConfigure();
+//       traj7.Configure();
 //     }
 
 //     // robot status
@@ -128,7 +128,7 @@
 //   double pf[3] = {5.0, -5.0, 0.0};
 
 //   double pl[3] = {5.0, 5.0, 5.0};
-//   double al[3] = {20.0, 20.0, 20.0};
+//   double aLimit[3] = {20.0, 20.0, 20.0};
 
 //   double tc;
 //   double p[3], v[3], a[3];
@@ -136,7 +136,7 @@
 //   std::cout << "-------------------------------------------" << std::endl;
 //   std::cout << "- nth-order s-curve -----------------------" << std::endl;
 //   // dtScurveTrajectory<double, 3, 5> traj(td, 2, pi, pf, vi, vf, ai, af);
-//   dtScurveTrajectory<double, 3, 5> traj(pl, al, pi, pf, vi, vf, ai, af);
+//   dtScurveTrajectory<double, 3, 5> traj(pl, aLimit, pi, pf, vi, vf, ai, af);
 //   for (tc = 0; tc <= td; tc += 0.01) 
 //   {
 //     traj.Interpolate(tc, p, v, a);
@@ -323,7 +323,7 @@
 // //   std::cout << "(" << tc << ", " << Rc << ")" << std::endl;
 // // }
 
-// int main() {
+// uint16_t main() {
 //   // Test_PolynomialTrajectory();
 //   // Test_BezierTrajectory();
 //   Test_ScurveTrajectory();

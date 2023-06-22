@@ -13,13 +13,13 @@
  * The degree of freedom can be specified as a template variable.
  * The order(n) of polynomial can be specified as a template variable.
  *
- * p(t) (v(t), a(t))
+ * p(t)
  *  |
- *  |                                                   pf (vf, af) 
+ *  |                                                     pf 
  *  |                                            ...   ___o
  *  |                                        .            |
  *  |                                      /              |
- *  |                       pi (vi, ai)  .                |
+ *  |                         pi  .                       |
  *  |                         o___ ...                    |
  *  |                         |                           |
  *  |                         |                           |
@@ -33,7 +33,7 @@
 
 namespace dtCore {
 
-/*! \brief dtPolynomialTrajectory: M dof, N'th polynomial trajectory
+/*! \brief dtPolynomialTrajectory: m dof, n'th polynomial trajectory
     \details
     This class provides m degree of freedom and n'th polynomial trajectory.
     \param[in] ValueType float or double
@@ -52,11 +52,11 @@ public:
     dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
                           const ValueType timeOffset = 0); //!< Configure the coefficients of the polynomial from the parameters entered.
-    dtPolynomialTrajectory(const ValueType duration, 
+    dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
                           const ContRefType vi, const ContRefType vf, 
                           const ValueType timeOffset = 0); //!< Configure the coefficients of the polynomial from the parameters entered.
-    dtPolynomialTrajectory(const ValueType duration, 
+    dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
                           const ContRefType vi, const ContRefType vf, 
                           const ContRefType ai, const ContRefType af, 
@@ -68,26 +68,28 @@ public:
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    virtual void ReConfigure(); //!< Reconfigure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
+    //TODO: debug set 후에 warning
+    virtual void Configure(); //!< Reconfigure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
 
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
                   const ContRefType ai, const ContRefType af,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
-    void SetDuration(const ValueType duration); //!< Enter trajectory duration for the ReConfigure function.
-    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the ReConfigure function.
-    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the ReConfigure function.
-    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+    void SetDuration(const ValueType duration); //!< Enter trajectory duration for the Configure function.
+    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure function.
+    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure function.
+    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure function.
 
 private:
+    ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
     ValueType m_duration; //!< trajectory duration (sec)
     ValueType m_pi[m_dof]; //!< init position (x)

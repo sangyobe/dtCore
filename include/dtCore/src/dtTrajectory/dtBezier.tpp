@@ -17,9 +17,10 @@ template <typename ValueType, uint16_t m_maxNum>
 void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p) const 
 {
     ValueType pos = 0;
+    // 내부 주석 달기
     const ValueType tc = t / m_duration;
     
-    for (int i = 0; i < m_num; i++)
+    for (uint16_t i = 0; i < m_num; i++)
     {
         pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
     }
@@ -39,7 +40,7 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     ValueType vel = 0;
     const ValueType tc = t / m_duration;
     
-    for (int i = 0; i < m_num - 1; i++)
+    for (uint16_t i = 0; i < m_num - 1; i++)
     {
         pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
         vel += m_velCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1) ;
@@ -64,7 +65,7 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     ValueType acc = 0;
     const ValueType tc = t / m_duration;
     
-    for (int i = 0; i < m_num - 2; i++)
+    for (uint16_t i = 0; i < m_num - 2; i++)
     {
         pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
         vel += m_velCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1);
@@ -92,10 +93,13 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
 */
 template <typename ValueType, uint16_t m_maxNum>
 void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueType pf,
-                                             const ValueType v0, const ValueType vf,
-                                             const ValueType a0, const ValueType af,
-                                             const ValueType *pc, const uint8_t pcNum, const ValueType duration) 
+                                              const ValueType v0, const ValueType vf,
+                                              const ValueType a0, const ValueType af,
+                                              const ValueType *pc, const uint16_t pcNum, const ValueType duration)
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(pcNum > 0 && "Bezier input control point num should be greater than zero");
+
     m_num = pcNum + 6;
     m_duration = duration;
     m_p[0] = p0;
@@ -106,7 +110,7 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
     m_p[m_num - 2] = pf - vf / (m_num - 1);
     m_p[m_num - 1] = pf;
 
-    for (int i = 0; i < m_num - 2; i++)
+    for (uint16_t i = 0; i < m_num - 2; i++)
     {
         m_posCoeff[i] = BinomialCoeff(m_num - 1, i);
         m_velCoeff[i] = BinomialCoeff(m_num - 2, i);
@@ -122,11 +126,11 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
     \param[in] k kth out of n
 */
 template <typename ValueType, uint16_t m_maxNum>
-ValueType dtBezier<ValueType, m_maxNum>::BinomialCoeff(const int n, const int k) const
+ValueType dtBezier<ValueType, m_maxNum>::BinomialCoeff(const uint16_t n, const uint16_t k) const
 {
     if (n < k) return 0;
 
-    int min, max;
+    uint16_t min, max;
     ValueType bc = 1;
 
     if ((n - k) >= k)
@@ -140,7 +144,7 @@ ValueType dtBezier<ValueType, m_maxNum>::BinomialCoeff(const int n, const int k)
         min = n - k;  
     }
 
-    for (int i = 1; i <= min; i++)
+    for (uint16_t i = 1; i <= min; i++)
     {
         bc *= (ValueType)(max + i) / (ValueType)i;
     }

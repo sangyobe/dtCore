@@ -14,11 +14,11 @@
  * The order(n) of polynomial can be specified as a template variable.
  *
  * v(t)
- *  |--vl--
+ *  |--vLimit--
  *  |                     ___________ vm____________
  *  |                    /                          \
  *  |                   /|                           \
- *  |                  / | al                         \
+ *  |                  / | aLimit                         \
  *  |                 /__|                             \
  *  |                / 1                                \
  *  |               /                                    \
@@ -62,14 +62,14 @@ public:
                       const ContRefType vi, const ContRefType vf,
                       const ContRefType ai, const ContRefType af,
                       const ValueType timeOffset = 0); //!< Configure the coefficients of the s-curve from the parameters entered.
-    dtScurveTrajectory(const ContRefType vl, const ContRefType al,
+    dtScurveTrajectory(const ContRefType vLimit, const ContRefType aLimit,
                       const ContRefType pi, const ContRefType pf,
                       const ValueType timeOffset = 0); //!< Configure the coefficients of the s-curve from the parameters entered.
-    dtScurveTrajectory(const ContRefType vl, const ContRefType al,
+    dtScurveTrajectory(const ContRefType vLimit, const ContRefType aLimit,
                       const ContRefType pi, const ContRefType pf,
                       const ContRefType vi, const ContRefType vf,
                       const ValueType timeOffset = 0); //!< Configure the coefficients of the s-curve from the parameters entered.
-    dtScurveTrajectory(const ContRefType vl, const ContRefType al,
+    dtScurveTrajectory(const ContRefType vLimit, const ContRefType aLimit,
                       const ContRefType pi, const ContRefType pf,
                       const ContRefType vi, const ContRefType vf,
                       const ContRefType ai, const ContRefType af,
@@ -81,41 +81,42 @@ public:
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    virtual void ReConfigure(); //!< Reconfigure the coefficients of s-curve through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset, SetLimit).
+    virtual void Configure(); //!< Reconfigure the coefficients of s-curve through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset, SetLimit).
 
     void SetParam(const ValueType duration, const ValueType accDuration, 
                   const ContRefType pi, const ContRefType pf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
     void SetParam(const ValueType duration, const ValueType accDuration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
     void SetParam(const ValueType duration, const ValueType accDuration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
                   const ContRefType ai, const ContRefType af,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
-    void SetParam(const ContRefType vl, const ContRefType al,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+    void SetParam(const ContRefType vLimit, const ContRefType aLimit,
                   const ContRefType pi, const ContRefType pf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
-    void SetParam(const ContRefType vl, const ContRefType al,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+    void SetParam(const ContRefType vLimit, const ContRefType aLimit,
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
-    void SetParam(const ContRefType vl, const ContRefType al,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+    void SetParam(const ContRefType vLimit, const ContRefType aLimit,
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
                   const ContRefType ai, const ContRefType af,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the ReConfigure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
 
-    void SetDuration(const ValueType duration, const ValueType accDuration); //!< Enter trajectory duration for the ReConfigure function.
-    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the ReConfigure function.
-    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the ReConfigure function.
-    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the ReConfigure function.
-    void SetLimit(const ContRefType vl, const ContRefType al); //!< Enter trajectory limit for the ReConfigure function.
-
+    void SetDuration(const ValueType duration, const ValueType accDuration); //!< Enter trajectory duration for the Configure function.
+    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure function.
+    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure function.
+    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure function.
+    void SetLimit(const ContRefType vLimit, const ContRefType aLimit); //!< Enter trajectory limit for the Configure function.
+    ValueType GetDuration() { return m_duration; } //!< Return trajectory duration.
+    
 private:
-    void CalculateMaxVelocity(); //!< Calculate max velocity.
+    void CalculateLinearVelocity(); //!< Calculate max velocity.
     void CalculateDuration(); //!< Calculate s-curve acc, con, dec duration.
 
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
@@ -129,9 +130,8 @@ private:
     ValueType m_vf[m_dof]; //!< target velocity (x/sec)
     ValueType m_ai[m_dof]; //!< init acceleration (x/sec^2)
     ValueType m_af[m_dof]; //!< target accleration (x/sec^2)
-    ValueType m_vm[m_dof]; //!< max velocity (x/sec)
-    ValueType m_vl[m_dof]; //!< limit velocity (x/sec)
-    ValueType m_al[m_dof]; //!< limit accleration (x/sec^2)
+    ValueType m_vLimit[m_dof]; //!< limit velocity (x/sec)
+    ValueType m_aLimit[m_dof]; //!< limit accleration (x/sec^2)
     dtScurve<ValueType, m_order> m_interpolator[m_dof]; //!< dtScurve trajectory
     bool m_isLimitSet = false; //!< Is limit parameter entered?
 };
