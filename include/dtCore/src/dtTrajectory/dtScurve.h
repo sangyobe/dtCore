@@ -7,13 +7,16 @@
 #ifndef __DTCORE_DTSCURVE_H__
 #define __DTCORE_DTSCURVE_H__
 
+#include <cmath>
+#include <assert.h>
+
 namespace dtCore {
 
-/*! \brief dtScurve: 1 dof, n'th s-curve trajectory
+/*! \brief dtScurve: 1 dof, n-th order s-curve trajectory
     \details
-    This class provides 1 degree of freedom and n'th s-curve trajectory.
+    This class provides 1 degree of freedom and n-th order s-curve trajectory.
     \param[in] ValueType float or double
-    \param[in] m_order n'th polynomial
+    \param[in] m_order n-th order
 */
 template <typename ValueType, uint16_t m_order = 1> 
 class dtScurve
@@ -40,11 +43,11 @@ private:
 
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_duration; //!< s-curve trajectory duration
-    ValueType m_accDuration; //!< s-curve trajectory acceleration section duration
-    ValueType m_decDuration; //!< s-curve trajectory deceleration section duration
-    ValueType m_accCoeff[m_order + 1]; //!< the coefficients of the s-curve acceleration section
-    ValueType m_conCoeff[m_order + 1]; //!< the coefficients of the s-curve const velocity section
-    ValueType m_decCoeff[m_order + 1]; //!< the coefficients of the s-curve deceleration section
+    ValueType m_accDuration; //!< s-curve trajectory acceleration duration
+    ValueType m_decDuration; //!< s-curve trajectory deceleration duration
+    ValueType m_accCoeff[m_order + 1]; //!< the coefficients of the s-curve acceleration
+    ValueType m_conCoeff[m_order + 1]; //!< the coefficients of the s-curve const velocity
+    ValueType m_decCoeff[m_order + 1]; //!< the coefficients of the s-curve deceleration
 };
 
 } // namespace dtCore

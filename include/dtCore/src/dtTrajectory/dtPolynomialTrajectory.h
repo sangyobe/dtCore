@@ -33,12 +33,12 @@
 
 namespace dtCore {
 
-/*! \brief dtPolynomialTrajectory: m dof, n'th polynomial trajectory
+/*! \brief dtPolynomialTrajectory: m dof, n-th order polynomial trajectory
     \details
     This class provides m degree of freedom and n'th polynomial trajectory.
     \param[in] ValueType float or double
     \param[in] m_dof m degree of freedom
-    \param[in] m_order n'th polynomial
+    \param[in] m_order n-th order
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 class dtPolynomialTrajectory 
@@ -68,7 +68,7 @@ public:
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    virtual void Configure(); //!< Reconfigure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
+    virtual void Configure(); //!< Configure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
 
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,

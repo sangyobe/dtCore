@@ -205,7 +205,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueT
     }
 }
 
-/*! \details Reconfigure the coefficients of polynomial through parameters entered from functions below
+/*! \details Configure the coefficients of polynomial through parameters entered from functions below
              (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -220,7 +220,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Configure()
     }
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -246,7 +246,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memset(m_af, 0, sizeof(ValueType) * m_dof);   
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -274,7 +274,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -304,7 +304,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
 }
 
-/*! \details  Enter trajectory duration for the Configure function.
+/*! \details  Enter trajectory duration for the Configure() function.
     \param[in] duration trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -314,7 +314,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueT
     m_duration = duration;
 }
 
-/*! \details Enter init parameter for the Configure function.
+/*! \details Enter init parameter for the Configure() function.
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
@@ -342,7 +342,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContR
     }
 }
 
-/*! \details Enter target parameter for the Configure function.
+/*! \details Enter target parameter for the Configure() function.
     \param[in] pf target position (x)
     \param[in] vf target velocity (x/sec)
     \param[in] af target acceleration (x/sec^2)
@@ -370,7 +370,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const Con
     }
 }
 
-/*! \details Enter trajectory delay for the Configure function.
+/*! \details Enter trajectory delay for the Configure() function.
     \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>

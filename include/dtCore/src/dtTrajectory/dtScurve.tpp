@@ -20,16 +20,19 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p) 
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
+        // the acceleration duration of the trajectory.
         t_ = t;
         memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
+        // the const velocity duration of the trajectory.=
         t_ = t - m_accDuration;
         memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
+        // the deceleration duration of the trajectory.
         t_ = t - (m_duration - m_decDuration);
         memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
@@ -91,16 +94,19 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
+        // the acceleration duration of the trajectory.
         t_ = t;
         memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
+        // the const velocity duration of the trajectory.
         t_ = t - m_accDuration;
         memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
+        // the deceleration duration of the trajectory.
         t_ = t - (m_duration - m_decDuration);
         memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
@@ -173,16 +179,19 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     ValueType t_ = 0;
     if (t < m_accDuration)
     {
+        // the acceleration duration of the trajectory.
         t_ = t;
         memcpy(coeff, m_accCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else if (m_accDuration <= t && t < m_duration - m_decDuration)
     {
+        // the const velocity duration of the trajectory.
         t_ = t - m_accDuration;
         memcpy(coeff, m_conCoeff, sizeof(ValueType) * (m_order + 1));
     }
     else
     {
+        // the deceleration duration of the trajectory.
         t_ = t - (m_duration - m_decDuration);
         memcpy(coeff, m_decCoeff, sizeof(ValueType) * (m_order + 1));
     }
@@ -257,8 +266,8 @@ void dtScurve<ValueType, m_order>::Interpolate(const ValueType t, ValueType &p, 
     \param[in] a0 init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
     \param[in] duration s-curve trajectory duration (sec)
-    \param[in] duration s-curve trajectory acceleration duration (sec)
-    \param[in] duration s-curve trajectory deceleration duration (sec)
+    \param[in] accDuration s-curve trajectory acceleration duration (sec)
+    \param[in] decDuration s-curve trajectory deceleration duration (sec)
 */
 template <typename ValueType, uint16_t m_order>
 void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType pf, 
@@ -271,12 +280,12 @@ void dtScurve<ValueType, m_order>::Configure(const ValueType p0, const ValueType
     m_accDuration = accDuration;
     m_decDuration = decDuration;
     
-    const ValueType pa = p0 + 0.5 * (v0 + velLinear) * accDuration;
-    const ValueType pd = pf - 0.5 * (velLinear + vf) * decDuration;
+    const ValueType pa = p0 + 0.5 * (v0 + velLinear) * accDuration; //!< Calculate acceleration end position
+    const ValueType pd = pf - 0.5 * (velLinear + vf) * decDuration; //!< Calculate deceleration start position
 
-    CalculateCoefficient(p0, pa, v0, velLinear, a0,  0, accDuration, m_accCoeff);
-    CalculateCoefficient(pa, pd, velLinear, velLinear,  0,  0, duration - accDuration - decDuration, m_conCoeff);
-    CalculateCoefficient(pd, pf, velLinear, vf,  0, af, decDuration, m_decCoeff);
+    CalculateCoefficient(p0, pa, v0, velLinear, a0,  0, accDuration, m_accCoeff); //!< acceleration
+    CalculateCoefficient(pa, pd, velLinear, velLinear,  0,  0, duration - accDuration - decDuration, m_conCoeff); //!< const velocity
+    CalculateCoefficient(pd, pf, velLinear, vf,  0, af, decDuration, m_decCoeff); //!< deceleration
 }
 
 /*! \details Calculate s-curve coefficient.

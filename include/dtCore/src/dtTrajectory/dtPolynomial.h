@@ -16,7 +16,7 @@ namespace dtCore {
     \details
     This class provides 1 degree of freedom and n-th order polynomial trajectory.
     \param[in] ValueType float or double
-    \param[in] m_order n'th order
+    \param[in] m_order n-th order
 */
 template <typename ValueType, uint16_t m_order = 1> 
 class dtPolynomial

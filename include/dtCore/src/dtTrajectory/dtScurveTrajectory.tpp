@@ -3,6 +3,7 @@ namespace dtCore {
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of dtScurveTrajectory
 //
+
 /*! \details Initialize without input parameter
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -19,12 +20,12 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory()
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -46,14 +47,14 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -76,7 +77,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
@@ -85,7 +86,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueType duration, const ValueType accDuration,
@@ -108,12 +109,12 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -159,14 +160,14 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -213,7 +214,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
@@ -222,7 +223,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefType vLimit, const ContRefType aLimit,
@@ -359,7 +360,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueType 
     }
 }
 
-/*! \details Reconfigure the coefficients of s-curve through parameters entered from functions below 
+/*! \details Configure the coefficients of s-curve through parameters entered from functions below 
              (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset, SetLimit).
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -382,12 +383,12 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Configure()
     }
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -408,14 +409,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -437,7 +438,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
     \param[in] pi init position (x)
@@ -446,7 +447,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType duration, const ValueType accDuration, 
@@ -468,12 +469,12 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -515,14 +516,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     }
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -565,7 +566,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     }
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
     \param[in] pi init position (x)
@@ -574,7 +575,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType vLimit, const ContRefType aLimit,
@@ -617,7 +618,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     }
 }
 
-/*! \details  Enter trajectory duration for the Configure function.
+/*! \details  Enter trajectory duration for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] accDuration trajectory acc/dec duration (sec)
 */
@@ -630,10 +631,11 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueType 
     m_decDuration = accDuration;
 }
 
-/*! \details Enter init parameter for the Configure function.
+/*! \details Enter init parameter for the Configure() function.
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
+    The parameters [vi(init velocity), ai(init acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContRefType pi, const ContRefType vi, const ContRefType ai) 
@@ -657,10 +659,11 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContRefTy
     }
 }
 
-/*! \details Enter target parameter for the Configure function.
+/*! \details Enter target parameter for the Configure() function.
     \param[in] pf target position (x)
     \param[in] vf target velocity (x/sec)
     \param[in] af target acceleration (x/sec^2)
+    The parameters [vf(target velocity), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const ContRefType pf, const ContRefType vf, const ContRefType af) 
@@ -684,7 +687,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const ContRef
     }
 }
 
-/*! \details Enter trajectory delay for the Configure function.
+/*! \details Enter trajectory delay for the Configure() function.
     \param[in] timeOffset trajectory delay (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -693,7 +696,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetTimeOffset(const ValueTyp
     m_ti = timeOffset;
 }
 
-/*! \details Enter trajectory limit for the Configure function.
+/*! \details Enter trajectory limit for the Configure() function.
     \param[in] vLimit trajectory limit velocity (x/sec)
     \param[in] aLimit trajectory limit acceleration (x/sec^2)
 */
