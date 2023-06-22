@@ -10,10 +10,10 @@ void DoubleDof3Order5WithoutDefaultConstructor()
     double td = 10.0; //!< trajectory duration
     double pi[3] = {0.0, 5.0, -10.0}; //!< init position
     double pf[3] = {5.0, -5.0, 0.0}; //!< target position
-    double vi[3] = {0.0, 0.0, 0.0}; //!< init velocity
-    double vf[3] = {0.0, 0.0, 0.0}; //!< target velocity
-    double ai[3] = {0.0, 0.0, 0.0}; //!< init acceleration
-    double af[3] = {0.0, 0.0, 0.0}; //!< target acceleration
+    double vi[3] = {1.0, 0.0, 0.0}; //!< init velocity
+    double vf[3] = {0.0, 1.0, 0.0}; //!< target velocity
+    double ai[3] = {0.0, 0.0, 1.0}; //!< init acceleration
+    double af[3] = {0.0, 0.0, 1.0}; //!< target acceleration
     double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
     dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af); //!< double, 3 dof, 7 order polynomial trajectory
@@ -90,6 +90,8 @@ void DoubleDof3Order7WithDefaultConstructor2()
 
 int main ()
 {
+    //!< Example of three ways to generate polynomial trajectories
+
     DoubleDof3Order5WithoutDefaultConstructor();
     // DoubleDof3Order7WithDefaultConstructor();
     // DoubleDof3Order7WithDefaultConstructor2();
