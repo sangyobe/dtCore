@@ -51,16 +51,16 @@ public:
     dtPolynomialTrajectory(); //!< Initialize without input parameter
     dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
-                          const ValueType timeOffset = 0); //!< Configure the coefficients of the polynomial from the parameters entered.
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
     dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
                           const ContRefType vi, const ContRefType vf, 
-                          const ValueType timeOffset = 0); //!< Configure the coefficients of the polynomial from the parameters entered.
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
     dtPolynomialTrajectory(const ValueType duration,
                           const ContRefType pi, const ContRefType pf, 
                           const ContRefType vi, const ContRefType vf, 
                           const ContRefType ai, const ContRefType af, 
-                          const ValueType timeOffset = 0); //!< Configure the coefficients of the polynomial from the parameters entered.
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
     ~dtPolynomialTrajectory();
 
 public:
@@ -68,25 +68,24 @@ public:
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    //TODO: debug set 후에 warning
     virtual void Configure(); //!< Reconfigure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
 
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf,
                   const ContRefType vi, const ContRefType vf,
                   const ContRefType ai, const ContRefType af,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
-    void SetDuration(const ValueType duration); //!< Enter trajectory duration for the Configure function.
-    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure function.
-    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure function.
-    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetDuration(const ValueType duration); //!< Enter trajectory duration for the Configure() function.
+    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure() function.
+    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure() function.
+    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory offset(delay) for the Configure() function.
 
 private:
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero

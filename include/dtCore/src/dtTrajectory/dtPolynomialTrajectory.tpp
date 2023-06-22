@@ -3,6 +3,7 @@ namespace dtCore {
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of dtPolynomialTrajectory
 //
+
 /*! \details Initialize without input parameter
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -19,11 +20,11 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory()
     memset(m_af, 0, sizeof(ValueType) * m_dof);
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -46,13 +47,13 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -76,7 +77,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     Configure();
 }
 
-/*! \details Configure the coefficients of the polynomial from the parameters entered.
+/*! \details Initialize and configure the coefficients of the polynomial from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -84,7 +85,7 @@ dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const 
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 dtPolynomialTrajectory<ValueType, m_dof, m_order>::dtPolynomialTrajectory(const ValueType duration, 
@@ -122,10 +123,12 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueT
 
     if (t_ < 0) 
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
     } 
     else 
@@ -149,11 +152,13 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueT
 
     if (t_ < 0) 
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
     } 
@@ -177,14 +182,16 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueT
 {
     ValueType t_ = t - this->m_ti;
 
-    if (t_ < 0) 
+    if (t_ < 0)
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
         memset(a, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
         memset(a, 0, sizeof(ValueType) * m_dof);
@@ -217,7 +224,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::Configure()
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -245,7 +252,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     \param[in] pf target position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] vf target velocity (x/sec)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
     The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
@@ -275,7 +282,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType
     \param[in] vf target velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
     \param[in] af target acceleration (x/sec^2)
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType duration, 
@@ -311,6 +318,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueT
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
+    The parameters [vi(init velocity), ai(init acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContRefType pi, const ContRefType vi, const ContRefType ai) 
@@ -338,6 +346,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetInitParam(const ContR
     \param[in] pf target position (x)
     \param[in] vf target velocity (x/sec)
     \param[in] af target acceleration (x/sec^2)
+    The parameters [vf(target velocity), af(target acceleration)] that are not entered are set to zero.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const ContRefType pf, const ContRefType vf, const ContRefType af) 
@@ -362,7 +371,7 @@ void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTargetParam(const Con
 }
 
 /*! \details Enter trajectory delay for the Configure function.
-    \param[in] timeOffset trajectory delay (sec)
+    \param[in] timeOffset trajectory offset(delay) (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtPolynomialTrajectory<ValueType, m_dof, m_order>::SetTimeOffset(const ValueType timeOffset) 

@@ -12,14 +12,14 @@
 
 namespace dtCore {
 
-/*! \brief dtPolynomial: 1 dof, N'th polynomial trajectory
+/*! \brief dtPolynomial: 1 dof, n-th order polynomial trajectory
     \details
-    This class provides 1 degree of freedom and n'th polynomial trajectory.
+    This class provides 1 degree of freedom and n-th order polynomial trajectory.
     \param[in] ValueType float or double
-    \param[in] m_order n'th polynomial
+    \param[in] m_order n'th order
 */
 template <typename ValueType, uint16_t m_order = 1> 
-class dtPolynomial 
+class dtPolynomial
 {
 public:
     dtPolynomial();
@@ -37,7 +37,7 @@ public:
 
 private:
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
-    ValueType m_coeff[m_order + 1]; //!< the coefficients of the polynomial
+    ValueType m_coeff[m_order + 1]; //!< The coefficients of the polynomial
 };
 
 } // namespace dtCore

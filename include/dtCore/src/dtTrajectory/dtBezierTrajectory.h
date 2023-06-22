@@ -64,6 +64,12 @@ public:
                       const ContRefType ai, const ContRefType af, 
                       const ContRefType pc, const uint16_t pcNum,
                       const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
+    dtBezierTrajectory(const ValueType duration, 
+                      const ContRefType pi, const ContRefType pf, 
+                      const ContRefType vi, const ContRefType vf, 
+                      const ContRefType ai, const ContRefType af, 
+                      const ContRefType *pc[m_dof], const uint16_t pcNum,
+                      const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
     ~dtBezierTrajectory();
 
 public:

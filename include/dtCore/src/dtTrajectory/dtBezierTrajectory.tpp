@@ -133,6 +133,47 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
   Reconfigure();
 }
 
+
+/*! \details Configure control points and coefficients of the bezier from the parameters entered.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] vi init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] ai init acceleration (x/sec^2)
+    \param[in] af target acceleration (x/sec^2)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueType duration, 
+                                                                  const ContRefType pi, const ContRefType pf, 
+                                                                  const ContRefType vi, const ContRefType vf, 
+                                                                  const ContRefType ai, const ContRefType af, 
+                                                                  const ContRefType *pc[m_dof], const uint16_t pcNum,
+                                                                  const ValueType timeOffset)
+: m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
+{
+  static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+
+  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+  memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+  memcpy(m_af, af, sizeof(ValueType) * m_dof);
+  for (uint16_t i = 0; i < m_dof; i++)
+  {
+      for (uint16_t j = 0; j < pcNum; j++)
+      {
+          m_pc[i][j] = pc[j][i]; 
+      }
+  }
+
+  Reconfigure();
+}
+
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 dtBezierTrajectory<ValueType, m_dof, m_maxNum>::~dtBezierTrajectory() {}
 

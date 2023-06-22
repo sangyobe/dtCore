@@ -1,114 +1,96 @@
-#include <chrono>
 #include <dtCore/dtTrajectory>
 #include <iostream>
 
 using dtCore::dtPolynomialTrajectory;
 using dtCore::dtTrajectoryList;
 
-void PolynomialTrajectory1() {
-  double ti = 0.0;
-  double tf = 10.0;
-  double pi[3] = {0.0, 5.0, -10.0};
-  double pf[3] = {5.0, -5.0, 0.0};
-  double pf2[3] = {0.0, -5.0, 5.0};
-  double vi[3] = {0.0, 0.0, 0.0};
-  double vf[3] = {0.0, 0.0, 0.0};
-  double ai[3] = {0.0, 0.0, 0.0};
-  double af[3] = {0.0, 0.0, 0.0};
-
-  double td = tf - ti; // interpolation time duration
-  double tc;
-  double p[3], v[3], a[3]; // output
-
-  // 7th-order
-  dtPolynomialTrajectory<double, 3, 7> traj7;
-  for (uint16_t i = 0; i < 2000; i++)
-  {
-    // robot command
-    if (i == 0)
-    {
-      traj7.SetDuration(td);
-      traj7.SetInitParam(pi, vi, ai);
-      traj7.SetTargetParam(pf, vf, af);
-      traj7.Configure();
-    }
-
-    if (i == 500)
-    {
-      traj7.SetParam(td, p, pf2, v, vf, a, af, 0.01*(i - 1));
-      traj7.Configure();
-    }
-
-    // robot status
-    traj7.Interpolate(0.01*i, p, v, a);
-    std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
-              << std::endl;       
-  }
-}
-
-void PolynomialTrajectory2() {
-  double ti = 0.0;
-  double tf = 10.0;
-  double pi[3] = { 0.0,  5.0, -10.0};
-  double pf[3] = { 5.0, -5.0,   0.0};
-  double vi[3] = {-1.0,  1.0,   0.0};
-  double vf[3] = { 1.0,  0.0,  -2.0};
-  double ai[3] = { 0.0,  0.0,   0.0};
-  double af[3] = { 2.0,  4.0,   4.0};
-
-  double td = tf - ti; // interpolation time duration
-  double tc;
-  double p[3], v[3], a[3]; // output
-
-  // 7th-order
-  dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af);
-  for (uint16_t i = 0; i < 1001; i++)
-  {
-    // robot status
-    traj5.Interpolate(0.01*i, p, v, a);
-    std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
-              << std::endl;
-  }
-}
-
-void PolynomialTrajectory3()
+void DoubleDof3Order5WithoutDefaultConstructor() 
 {
-  double ti = 0.0, t1 = 2.0, t2 = 7.0, tf = 10.0;
-  double pi[3] = {0.0, 0.0, 0.0};
-  double p1[3] = {0.5, 1.0, -0.5};
-  double p2[3] = {0.7, 0.5, 0.0};
-  double pf[3] = {1.0, 1.0, 1.0};
-  double vi[3] = {0.0, 0.0, 0.0};
-  double vf[3] = {0.0, 0.0, 0.0};
-  double ai[3] = {0.0, 0.0, 0.0};
-  double af[3] = {0.0, 0.0, 0.0};
+    double ti = 1.0; //!< init time
+    double td = 10.0; //!< trajectory duration
+    double pi[3] = {0.0, 5.0, -10.0}; //!< init position
+    double pf[3] = {5.0, -5.0, 0.0}; //!< target position
+    double vi[3] = {0.0, 0.0, 0.0}; //!< init velocity
+    double vf[3] = {0.0, 0.0, 0.0}; //!< target velocity
+    double ai[3] = {0.0, 0.0, 0.0}; //!< init acceleration
+    double af[3] = {0.0, 0.0, 0.0}; //!< target acceleration
+    double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
-  dtPolynomialTrajectory<double, 3, 3> traj1(t1 - ti, pi, p1);
-  dtPolynomialTrajectory<double, 3, 3> traj2(t2 - t1, p1, p2);
-  dtPolynomialTrajectory<double, 3, 3> traj3(tf - t2, p2, pf);
-  dtTrajectoryList<dtPolynomialTrajectory<double, 3, 3>> trajList;
-  trajList.Add(ti, traj1);
-  trajList.Add(t1, traj2);
-  trajList.Add(t2, traj3);
+    dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af); //!< double, 3 dof, 7 order polynomial trajectory
+                                                                            //!< Init time is set to zero because there is no input for ti.
+    double controlPeriod = 0.01; //!< real time control period (sec)
+    for (int i = 0; i < 1200; i++) //!< real time thread (0 ~ 12 sec)
+    {
+        double tc = 0.01*i; //!< current time
+        traj5.Interpolate(tc, p, v); //!< input: tc, output: p, v
+        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2]
+                  << std::endl;       
+    }
+}
 
-  double tc;
-  double p[3], v[3], a[3]; // output
+void DoubleDof3Order7WithDefaultConstructor() 
+{
+  double ti = 1.0; //!< init time
+  double td = 10.0; //!< trajectory duration
+  double pi[3] = {0.0, 5.0, -10.0}; //!< init position
+  double pf[3] = {5.0, -5.0, 0.0}; //!< target position
+  double vi[3] = {0.0, 0.0, 0.0}; //!< init velocity
+  double vf[3] = {0.0, 0.0, 0.0}; //!< target velocity
+  double ai[3] = {0.0, 0.0, 0.0}; //!< init acceleration
+  double af[3] = {0.0, 0.0, 0.0}; //!< target acceleration
+  double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
-  std::cout << "-------------------------------------------" << std::endl;
-  std::cout << "- Test_PolynomialTrajectoryList -----------" << std::endl;
-  tc = ti;
-  for (int i = 0; i < 1001; i++)
+  dtPolynomialTrajectory<double, 3, 7> traj7; //!< double, 3 dof, 7 order polynomial trajectory
+  double controlPeriod = 0.01; //!< real time control period (sec)
+  for (int i = 0; i < 2000; i++) //!< real time thread (0 ~ 20 sec)
   {
-    trajList.Interpolate(0.01*i, p, v, a);
-    std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2]
-              << std::endl;
-    tc += 1.0;
-  }
+      double tc = 0.01*i; //!< current time
+      if (i == 0)
+      {
+          traj7.SetParam(td, pi, pf, vi, vf, ai, af, tc, ti);
+          traj7.Configure(); //!< without this function, polynomial coefficeints are not configured.
+      }
+
+      traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
+      std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+                << std::endl;       
+    }
+}
+
+void DoubleDof3Order7WithDefaultConstructor2() 
+{
+    double td = 10.0; //!< trajectory duration
+    double pi[3] = {0.0, 5.0, -10.0}; //!< init position
+    double pf[3] = {5.0, -5.0, 0.0}; //!< target position
+    double vi[3] = {0.0, 0.0, 0.0}; //!< init velocity
+    double vf[3] = {0.0, 0.0, 0.0}; //!< target velocity
+    double ai[3] = {0.0, 0.0, 0.0}; //!< init acceleration
+    double af[3] = {0.0, 0.0, 0.0}; //!< target acceleration
+    double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
+
+    dtPolynomialTrajectory<double, 3, 7> traj7; //!< double, 3 dof, 7 order polynomial trajectory
+    double controlPeriod = 0.01; //!< real time control period (sec)
+    for (int i = 0; i < 2000; i++) //!< real time thread (0 ~ 20 sec)
+    {
+        double tc = 0.01*i; //!< current time
+        if (i == 150)
+        {
+            traj7.SetDuration(td);
+            traj7.SetInitParam(pi, vi, ai);
+            traj7.SetTargetParam(pf, vf, af);
+            traj7.SetTimeOffset(tc); //!< Set current time as trajectory init time. (ti = tc = 0.01*i = 1.5sec)
+            traj7.Configure(); //!< without this function, polynomial coefficeints are not configured.
+        }
+
+        traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
+        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+                  << std::endl;       
+    }
 }
 
 int main ()
 {
-    PolynomialTrajectory1();
-    // PolynomialTrajectory2();
-    // PolynomialTrajectory3();
+    DoubleDof3Order5WithoutDefaultConstructor();
+    // DoubleDof3Order7WithDefaultConstructor();
+    // DoubleDof3Order7WithDefaultConstructor2();
 }
