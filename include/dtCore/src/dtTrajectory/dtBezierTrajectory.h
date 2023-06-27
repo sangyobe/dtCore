@@ -50,26 +50,35 @@ public:
 public:
     dtBezierTrajectory(); //!< Initialize without input parameter
     dtBezierTrajectory(const ValueType duration, 
-                      const ContRefType pi, const ContRefType pf, 
-                      const ContRefType pc, const uint16_t pcNum,
-                      const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType pc, const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     dtBezierTrajectory(const ValueType duration, 
-                      const ContRefType pi, const ContRefType pf, 
-                      const ContRefType vi, const ContRefType vf, 
-                      const ContRefType pc, const uint16_t pcNum,
-                      const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType vi, const ContRefType vf, 
+                       const ContRefType pc, const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     dtBezierTrajectory(const ValueType duration, 
-                      const ContRefType pi, const ContRefType pf, 
-                      const ContRefType vi, const ContRefType vf, 
-                      const ContRefType ai, const ContRefType af, 
-                      const ContRefType pc, const uint16_t pcNum,
-                      const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType vi, const ContRefType vf, 
+                       const ContRefType ai, const ContRefType af, 
+                       const ContRefType pc, const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     dtBezierTrajectory(const ValueType duration, 
-                      const ContRefType pi, const ContRefType pf, 
-                      const ContRefType vi, const ContRefType vf, 
-                      const ContRefType ai, const ContRefType af, 
-                      const ContRefType *pc[m_dof], const uint16_t pcNum,
-                      const ValueType timeOffset = 0); //!< Configure control points and coefficients of the bezier from the parameters entered.
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType pc[m_dof], const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
+    dtBezierTrajectory(const ValueType duration, 
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType vi, const ContRefType vf, 
+                       const ContRefType pc[m_dof], const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
+    dtBezierTrajectory(const ValueType duration, 
+                       const ContRefType pi, const ContRefType pf, 
+                       const ContRefType vi, const ContRefType vf, 
+                       const ContRefType ai, const ContRefType af, 
+                       const ContRefType pc[m_dof], const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     ~dtBezierTrajectory();
 
 public:
@@ -77,31 +86,48 @@ public:
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    virtual void Reconfigure(); //!< Reconfigure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetControlParam, SetTimeOffset).
+    virtual void Configure(); //!< Configure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetControlParam, SetTimeOffset).
 
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf, 
                   const ContRefType pc, const uint16_t pcNum,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf, 
                   const ContRefType vi, const ContRefType vf, 
                   const ContRefType pc, const uint16_t pcNum,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf, 
                   const ContRefType vi, const ContRefType vf, 
                   const ContRefType ai, const ContRefType af, 
                   const ContRefType pc, const uint16_t pcNum,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure function.
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf, 
+                  const ContRefType pc[m_dof], const uint16_t pcNum,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf, 
+                  const ContRefType vi, const ContRefType vf, 
+                  const ContRefType pc[m_dof], const uint16_t pcNum,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf, 
+                  const ContRefType vi, const ContRefType vf, 
+                  const ContRefType ai, const ContRefType af, 
+                  const ContRefType pc[m_dof], const uint16_t pcNum,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
 
-    void SetDuration(const ValueType duration);  //!< Enter trajectory duration for the Configure function.
-    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure function.
-    void SetTargetParam(const ContRefType pf, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure function.
-    void SetControlParam(const ContRefType pc, const uint16_t pcNum); //!< Enter input contorl parameter for the Configure function.
-    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure function.
+    void SetDuration(const ValueType duration);  //!< Enter trajectory duration for the Configure() function.
+    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure() function.
+    void SetTargetParam(const ContRefType pf, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure() function.
+    void SetControlParam(const ContRefType pc, const uint16_t pcNum); //!< Enter input contorl parameter for the Configure() function.
+    void SetControlParam(const ContRefType pc[m_dof], const uint16_t pcNum); //!< Enter input contorl parameter for the Configure() function.
+    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure() function.
 
 private:
+    ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
     ValueType m_duration; //!< trajectory duration (sec)
     ValueType m_pi[m_dof]; //!< init position (x)

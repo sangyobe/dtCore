@@ -4,82 +4,78 @@
 
 using dtCore::dtBezierTrajectory;
 
-void BezierTrajectory() 
+void DoubleDof3WithoutDefaultConstructor() 
 {
-    double td = 10.0; // interpolation time duration
-    double pi[3]    = { 0.0,  0.0,   0.0};
-    double vi[3]    = { 0.0,  5.0,   5.0};
-    double ai[3]    = { 0.0,  0.0,   0.0};
-    double pc3[5*3] = {20.0, 20.0, -10.0,
-                        0.0,  0.0,  30.0,
-                       15.0, 10.0,  10.0,
-                       10.0, 10.0,  10.0,
-                        0.0, 10.0,  10.0};
-    double af[3]    = { 0.0,  0.0,   0.0};
-    double vf[3]    = {10.0,  0.0,  -5.0};
-    double pf[3]    = { 5.0, -5.0,   0.0};
-    double tc;
-    double p[3], v[3], a[3];
-    //TODO: 2차원 배열 받게하는거?
+    double ti = 1.0; //!< init time
+    double td = 10.0; //!< trajectory duration
+    double pi[3]   = { 0.0,  0.0,   0.0}; //!< init position
+    double pf[3]   = { 5.0, -5.0,   0.0}; //!< target position
+    double vi[3]   = { 0.0,  5.0,   5.0}; //!< init velocity
+    double vf[3]   = {10.0,  0.0,  -5.0}; //!< target velocity
+    double ai[3]   = { 0.0,  0.0,   0.0}; //!< init acceleration
+    double af[3]   = { 0.0,  0.0,   0.0}; //!< target acceleration
+    double pc[5*3] = {20.0, 20.0, -10.0, //!< 1-st control point {20.0, 20.0, -10.0}
+                       0.0,  0.0,  30.0, //!< 2-nd control point { 0.0,  0.0,  30.0}
+                      15.0, 10.0,  10.0, //!< 3-rd control point {15.0, 10.0,  10.0}
+                      10.0, 10.0,  10.0, //!< 4-th control point {10.0, 10.0,  10.0}
+                       0.0, 10.0,  10.0  //!< 5-th control point { 0.0, 10.0,  10.0}
+                     }; //!< input control point
+    double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
-    //TODO: contorl point 넣는 방법 주석처리
-    dtBezierTrajectory<double, 3, 10> traj3(10, pi, pf, vi, vf, ai, af, pc3, 5);
+    dtBezierTrajectory<double, 3, 10> traj(td, pi, pf, vi, vf, ai, af, pc, ti); // double, 3 dof, max 10 input control point num bezier trajectory
 
-    for (tc = 0; tc <= td; tc += 0.001) 
+    for (int i = 0; i < 1200; i++) //!< real time thread (0 ~ 12 sec)
     {
-        traj3.Interpolate(tc, p, v, a);
-        std::cout << tc << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2] << std::endl;
+        double tc = 0.01*i; //!< current time
+        traj.Interpolate(tc, p, v); //!< input: tc, output: p, v
+        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2]
+                  << std::endl;
     }
 }
 
-void BezierTrajectory2() 
+void DoubleDof3WithDefaultConstructor() 
 {
+    double ti = 1.0; //!< init time
     double td = 10.0; // interpolation time duration
-    double pi[3]    = { 0.0,    0.0,  0.0};
-    double vi[3]    = { 10.0, -10.0, 10.0};
-    double ai[3]    = { 0.0,    0.0,  0.0};
+    double pi[3]     = {  0.0,   0.0,  0.0}; //!< init position
+    double vi[3]     = { 10.0, -10.0, 10.0}; //!< target position
+    double ai[3]     = {  0.0,   0.0,  0.0}; //!< init velocity
+    double pf[3]     = { 60.0,  30.0, 40.0}; //!< target velocity
+    double vf[3]     = {  5.0,   5.0, -5.0}; //!< init acceleration
+    double af[3]     = {  0.0,   0.0,  0.0}; //!< target acceleration
+    double pc[10][3] = {{ 0.0,  -3.0, 24.0}, //!<  1-st control point { 0.0,  -3.0, 24.0}
+                        { 0.0,  -3.0, 24.0}, //!<  2-nd control point { 0.0,  -3.0, 24.0}
+                        { 0.0,  -3.0, 40.0}, //!<  3-rd control point { 0.0,  -3.0, 40.0}
+                        {30.0,  15.0, 80.0}, //!<  4-th control point {30.0,  15.0, 80.0}
+                        {30.0,  15.0, 88.0}, //!<  5-th control point {30.0,  15.0, 88.0}
+                        {30.0,  15.0, 88.0}, //!<  6-th control point {30.0,  15.0, 88.0}
+                        {30.0,  15.0, 80.0}, //!<  7-th control point {30.0,  15.0, 88.0}
+                        {60.0,  39.0, 84.0}, //!<  8-th control point {60.0,  39.0, 84.0}
+                        {60.0,  39.0, 60.0}, //!<  9-th control point {60.0,  39.0, 60.0}
+                        {60.0,  39.0, 60.0}, //!< 10-th control point {60.0,  39.0, 60.0}
+                       }; //!< input control point
+    uint16_t pcNum = 10;
+    double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
-    double pf[3]    = { 60.0, 30.0, 40.0};
-    double vf[3]    = { 5.0,  5.0,  -5.0};
-    double af[3]    = { 0.0,  0.0,   0.0};
-
-    // double pc3[10*3] = {0, -3, 24,
-    //                    0, -3, 24,
-    //                    0, -3, 40,
-    //                    30, 15, 80,
-    //                    30, 15, 88,
-    //                    30, 15, 88,
-    //                    30, 15, 80,
-    //                    60, 39, 84,
-    //                    60, 39, 60,
-    //                    60, 39, 60,
-    //                 };
-    double pc3[10][3] = {{0, -3, 24},
-                       {0, -3, 24},
-                       {0, -3, 40},
-                       {30, 15, 80},
-                       {30, 15, 88},
-                       {30, 15, 88},
-                       {30, 15, 80},
-                       {60, 39, 84},
-                       {60, 39, 60},
-                       {60, 39, 60},
-                    };
-    double tc;
-    double p[3], v[3], a[3];
-    //TODO: 2차원 배열 받게하는거?
-
-    //TODO: contorl point 넣는 방법 주석처리
-    dtBezierTrajectory<double, 3, 10> traj3(10, pi, pf, vi, vf, ai, af, *pc3, 10);
-
-    for (tc = 0; tc <= td; tc += 0.001) 
+    dtBezierTrajectory<double, 3, 11> traj; // double, 3 dof, max 10 input control point num bezier trajectory
+    double controlPeriod = 0.01; //!< real time control period (sec)
+    for (int i = 0; i < 2000; i++) //!< real time thread (0 ~ 20 sec)
     {
-        traj3.Interpolate(tc, p, v, a);
-        std::cout << tc << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2] << std::endl;
+        double tc = controlPeriod*i; //!< current time
+        if (i == 0)
+        {
+            traj.SetParam(td, pi, pf, vi, vf, ai, af, *pc, pcNum);
+            traj.Configure(); //!< without this function, polynomial coefficeints are not configured.
+        }
+
+        traj.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
+        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+                  << std::endl;       
     }
 }
 
 int main ()
 {
-    BezierTrajectory2();
+    // DoubleDof3WithoutDefaultConstructor();
+    DoubleDof3WithDefaultConstructor();
 }

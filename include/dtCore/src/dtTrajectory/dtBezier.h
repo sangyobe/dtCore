@@ -12,13 +12,14 @@
 #include <assert.h>
 #include <cstdint>
 #include <limits>
+
 namespace dtCore {
 
-/*! \brief dtBezier: 1 dof, N'th bezier trajectory
+/*! \brief dtBezier: 1 dof, max (n+6)-th order bezier trajectory
     \details
     This class provides 1 degree of freedom and n'th bezier trajectory.
     \param[in] ValueType float or double
-    \param[in] m_maxNum max input control point num
+    \param[in] m_maxNum max input control point num (n)
 */
 template <typename ValueType, uint16_t m_maxNum> 
 class dtBezier 
@@ -38,7 +39,7 @@ public:
                    const ValueType *pc, const uint16_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
 
 private:
-    ValueType BinomialCoeff(const uint16_t n, const uint16_t k) const; //!< Calculate binomial coefficients.
+    ValueType CalculateBinomialCoeff(const uint16_t n, const uint16_t k) const; //!< Calculate binomial coefficients.
 
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     uint16_t m_num; //!< Bezier control point num (pcNum + Init parameter (3) + Target paramter (3))

@@ -3,6 +3,7 @@ namespace dtCore {
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of dtBezierTrajectory
 //
+
 /*! \details Initialize without input parameter
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
@@ -16,10 +17,10 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory()
     memset(m_vf, 0, sizeof(ValueType) * m_dof);
     memset(m_ai, 0, sizeof(ValueType) * m_dof);
     memset(m_af, 0, sizeof(ValueType) * m_dof);
-    memeset(m_pc, 0, sizeof(ValueType) * m_dof * (m_maxNum + 6));
+    memset(m_pc, 0, sizeof(ValueType) * m_dof * (m_maxNum + 6));
 }
 
-/*! \details Configure control points and coefficients of the bezier from the parameters entered.
+/*! \details Initialize and configure control points and coefficients of the bezier from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -36,6 +37,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -43,7 +45,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
     memset(m_vf, 0, sizeof(ValueType) * m_dof);
     memset(m_ai, 0, sizeof(ValueType) * m_dof);
     memset(m_af, 0, sizeof(ValueType) * m_dof);
-
+    // Transpose input control point.
     for (uint16_t i = 0; i < m_dof; i++)
     {
         for (uint16_t j = 0; j < pcNum; j++)
@@ -52,10 +54,10 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
-    Reconfigure();
+    Configure();
 }
 
-/*! \details Configure control points and coefficients of the bezier from the parameters entered.
+/*! \details Initialize and configure control points and coefficients of the bezier from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -74,26 +76,28 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
                                                                   const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
-  static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-  memset(m_ai, 0, sizeof(ValueType) * m_dof);
-  memset(m_af, 0, sizeof(ValueType) * m_dof);
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[m_dof*j + i]; 
-      }
-  }
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
 
-  Reconfigure();
+    Configure();
 }
 
-/*! \details Configure control points and coefficients of the bezier from the parameters entered.
+/*! \details Initialize and configure control points and coefficients of the bezier from the parameters entered.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -114,25 +118,103 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
                                                                   const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
-  static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-  memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
-  memcpy(m_af, af, sizeof(ValueType) * m_dof);
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[m_dof*j + i]; 
-      }
-  }
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
 
-  Reconfigure();
+    Configure();    
 }
 
+/*! \details Initialize and configure control points and coefficients of the bezier from the parameters entered.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+    The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueType duration, 
+                                                                   const ContRefType pi, const ContRefType pf,
+                                                                   const ContRefType pc[m_dof], const uint16_t pcNum,
+                                                                   const ValueType timeOffset)
+: m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
+{
+    static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memset(m_vi, 0, sizeof(ValueType) * m_dof);
+    memset(m_vf, 0, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+
+    Configure();
+}
+
+/*! \details Initialize and configure control points and coefficients of the bezier from the parameters entered.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] vi init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+    The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueType duration, 
+                                                                  const ContRefType pi, const ContRefType pf, 
+                                                                  const ContRefType vi, const ContRefType vf, 
+                                                                  const ContRefType pc[m_dof], const uint16_t pcNum,
+                                                                  const ValueType timeOffset)
+: m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
+{
+    static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+
+    Configure();
+}
 
 /*! \details Configure control points and coefficients of the bezier from the parameters entered.
     \param[in] duration trajectory duration (sec)
@@ -151,27 +233,29 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
                                                                   const ContRefType pi, const ContRefType pf, 
                                                                   const ContRefType vi, const ContRefType vf, 
                                                                   const ContRefType ai, const ContRefType af, 
-                                                                  const ContRefType *pc[m_dof], const uint16_t pcNum,
+                                                                  const ContRefType pc[m_dof], const uint16_t pcNum,
                                                                   const ValueType timeOffset)
 : m_duration(duration), m_ti(timeOffset), m_pcNum(pcNum)
 {
-  static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    static_assert(m_maxNum > 0, "Invalid degree of bezier.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-  memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
-  memcpy(m_af, af, sizeof(ValueType) * m_dof);
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[j][i]; 
-      }
-  }
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
 
-  Reconfigure();
+    Configure();
 }
 
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
@@ -187,18 +271,20 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Interpolate(const ValueType
     ValueType t_ = t - this->m_ti;
     if (t_ < 0) 
     {
-      memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
+        // before trajectory start
+        memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
-      memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
+        // after trajectory end
+        memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
     } 
     else 
     {
-      for (uint16_t i = 0; i < m_dof; i++) 
-      {
-        m_interpolator[i].Interpolate(t_, p[i]);
-      }
+        for (uint16_t i = 0; i < m_dof; i++) 
+        {
+            m_interpolator[i].Interpolate(t_, p[i]);
+        }
     }
 }
 
@@ -213,20 +299,22 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Interpolate(const ValueType
     ValueType t_ = t - this->m_ti;
     if (t_ < 0) 
     {
-      memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
-      memset(v, 0, sizeof(ValueType) * m_dof);
+        // before trajectory start
+        memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
+        memset(v, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
-      memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
-      memset(v, 0, sizeof(ValueType) * m_dof);
+        // after trajectory end
+        memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
+        memset(v, 0, sizeof(ValueType) * m_dof);
     } 
     else 
     {
-      for (uint16_t i = 0; i < m_dof; i++) 
-      {
-        m_interpolator[i].Interpolate(t_, p[i], v[i]);
-      }
+        for (uint16_t i = 0; i < m_dof; i++) 
+        {
+            m_interpolator[i].Interpolate(t_, p[i], v[i]);
+        }
     }
 }
 
@@ -242,30 +330,32 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Interpolate(const ValueType
     ValueType t_ = t - this->m_ti;
     if (t_ < 0) 
     {
-      memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
-      memset(v, 0, sizeof(ValueType) * m_dof);
-      memset(a, 0, sizeof(ValueType) * m_dof);
+        // before trajectory start
+        memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
+        memset(v, 0, sizeof(ValueType) * m_dof);
+        memset(a, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
-      memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
-      memset(v, 0, sizeof(ValueType) * m_dof);
-      memset(a, 0, sizeof(ValueType) * m_dof);
+        // after trajectory end
+        memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
+        memset(v, 0, sizeof(ValueType) * m_dof);
+        memset(a, 0, sizeof(ValueType) * m_dof);
     } 
     else 
     {
-      for (uint16_t i = 0; i < m_dof; i++) 
-      {
-        m_interpolator[i].Interpolate(t_, p[i], v[i], a[i]);
-      }
+        for (uint16_t i = 0; i < m_dof; i++) 
+        {
+            m_interpolator[i].Interpolate(t_, p[i], v[i], a[i]);
+        }
     }
 }
 
-/*! \details Reconfigure the coefficients of polynomial through parameters entered from functions below 
+/*! \details Configure the coefficients of polynomial through parameters entered from functions below 
              (SetParam, SetDuration, SetInitParam, SetTargetParam, SetControlParam, SetTimeOffset).
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
-void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Reconfigure() 
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Configure() 
 {
     for (uint16_t i = 0; i < m_dof; i++) 
     {
@@ -273,7 +363,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Reconfigure()
     }
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -288,24 +378,28 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memset(m_vi, 0, sizeof(ValueType) * m_dof);
-  memset(m_vf, 0, sizeof(ValueType) * m_dof);
-  memset(m_ai, 0, sizeof(ValueType) * m_dof);
-  memset(m_af, 0, sizeof(ValueType) * m_dof);
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
 
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[m_dof*j + i]; 
-      }
-  }
-  m_pcNum = pcNum;
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memset(m_vi, 0, sizeof(ValueType) * m_dof);
+    memset(m_vf, 0, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
+    m_pcNum = pcNum;
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -323,23 +417,28 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-  memset(m_ai, 0, sizeof(ValueType) * m_dof);
-  memset(m_af, 0, sizeof(ValueType) * m_dof);
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[m_dof*j + i]; 
-      }
-  }
-  m_pcNum = pcNum;  
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
+    m_pcNum = pcNum;  
 }
 
-/*! \details Enter parameters for the Configure function.
+/*! \details Enter parameters for the Configure() function.
     \param[in] duration trajectory duration (sec)
     \param[in] pi init position (x)
     \param[in] pf target position (x)
@@ -359,23 +458,144 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ContRefType pc, const uint16_t pcNum,
                                                              const ValueType timeOffset)
 {
-  memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
-  memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
-  memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
-  memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
-  memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
-  memcpy(m_af, af, sizeof(ValueType) * m_dof);
-  for (uint16_t i = 0; i < m_dof; i++)
-  {
-      for (uint16_t j = 0; j < pcNum; j++)
-      {
-          m_pc[i][j] = pc[m_dof*j + i]; 
-      }
-  }
-  m_pcNum = pcNum;
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[m_dof*j + i]; 
+        }
+    }
+    m_pcNum = pcNum;
 }
 
-/*! \details  Enter trajectory duration for the Configure function.
+/*! \details Enter parameters for the Configure() function.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+    The parameters [vi(init velocity), vf(target velocity), ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType duration, 
+                                                             const ContRefType pi, const ContRefType pf, 
+                                                             const ContRefType pc[m_dof], const uint16_t pcNum,
+                                                             const ValueType timeOffset)
+{
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memset(m_vi, 0, sizeof(ValueType) * m_dof);
+    memset(m_vf, 0, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+    m_pcNum = pcNum;
+}
+
+/*! \details Enter parameters for the Configure() function.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] vi init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+    The parameters [ai(init acceleration), af(target acceleration)] that are not entered are set to zero.
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType duration, 
+                                                             const ContRefType pi, const ContRefType pf, 
+                                                             const ContRefType vi, const ContRefType vf, 
+                                                             const ContRefType pc[m_dof], const uint16_t pcNum,
+                                                             const ValueType timeOffset)
+{
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memset(m_ai, 0, sizeof(ValueType) * m_dof);
+    memset(m_af, 0, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+    m_pcNum = pcNum;  
+}
+
+/*! \details Enter parameters for the Configure() function.
+    \param[in] duration trajectory duration (sec)
+    \param[in] pi init position (x)
+    \param[in] pf target position (x)
+    \param[in] vi init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] vi init acceleration (x/sec^2)
+    \param[in] vf target acceleration (x/sec^2)
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+    \param[in] timeOffset trajectory delay (sec)
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType duration, 
+                                                             const ContRefType pi, const ContRefType pf, 
+                                                             const ContRefType vi, const ContRefType vf, 
+                                                             const ContRefType ai, const ContRefType af, 
+                                                             const ContRefType pc[m_dof], const uint16_t pcNum,
+                                                             const ValueType timeOffset)
+{
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+
+    m_duration = duration;
+    m_ti = timeOffset;
+    memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+    memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+    memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+    memcpy(m_af, af, sizeof(ValueType) * m_dof);
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+    m_pcNum = pcNum;
+}
+
+/*! \details  Enter trajectory duration for the Configure() function.
     \param[in] duration trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
@@ -384,7 +604,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetDuration(const ValueType
   m_duration = duration;
 }
 
-/*! \details Enter init parameter for the Configure function.
+/*! \details Enter init parameter for the Configure() function.
     \param[in] pi init position (x)
     \param[in] vi init velocity (x/sec)
     \param[in] ai init acceleration (x/sec^2)
@@ -438,14 +658,14 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTargetParam(const ContRe
     }
 }
 
-/*! \details Enter input contorl parameter for the Configure function.
+/*! \details Enter input contorl parameter for the Configure() function.
     \param[in] pc input control point (x)
     \param[in] pcNum number of input control point
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc, const uint16_t pcNum) 
 {
-    m_pcNum = pcNum;
+    // Transpose input control point.
     for (uint16_t i = 0; i < m_dof; i++)
     {
         for (uint16_t j = 0; j < pcNum; j++)
@@ -453,9 +673,28 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContR
             m_pc[i][j] = pc[m_dof*j + i]; 
         }
     }
+    m_pcNum = pcNum;
 }
 
-/*! \details Enter trajectory delay for the Configure function.
+/*! \details Enter input contorl parameter for the Configure() function.
+    \param[in] pc input control point (x)
+    \param[in] pcNum number of input control point
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
+void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc[m_dof], const uint16_t pcNum) 
+{
+    // Transpose input control point.
+    for (uint16_t i = 0; i < m_dof; i++)
+    {
+        for (uint16_t j = 0; j < pcNum; j++)
+        {
+            m_pc[i][j] = pc[j][i]; 
+        }
+    }
+    m_pcNum = pcNum;
+}
+
+/*! \details Enter trajectory delay for the Configure() function.
     \param[in] timeOffset trajectory delay (sec)
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>

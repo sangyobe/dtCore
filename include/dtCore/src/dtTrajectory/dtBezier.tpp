@@ -17,12 +17,11 @@ template <typename ValueType, uint16_t m_maxNum>
 void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p) const 
 {
     ValueType pos = 0;
-    // 내부 주석 달기
-    const ValueType tc = t / m_duration;
+    const ValueType ctrlParam = t / m_duration;
     
     for (uint16_t i = 0; i < m_num; i++)
     {
-        pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
+        pos += m_posCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 1 - i) * m_p[i];
     }
 
     p = pos;
@@ -38,14 +37,14 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
 {
     ValueType pos = 0;
     ValueType vel = 0;
-    const ValueType tc = t / m_duration;
+    const ValueType ctrlParam = t / m_duration;
     
     for (uint16_t i = 0; i < m_num - 1; i++)
     {
-        pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
-        vel += m_velCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1) ;
+        pos += m_posCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 1 - i) * m_p[i];
+        vel += m_velCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1) ;
     }
-    pos += m_posCoeff[m_num - 1] * pow(tc, m_num - 1) * pow(1 - tc, 0) * m_p[m_num - 1];
+    pos += m_posCoeff[m_num - 1] * pow(ctrlParam, m_num - 1) * pow(1 - ctrlParam, 0) * m_p[m_num - 1];
 
     p = pos;
     v = vel * m_durationInv;
@@ -63,17 +62,17 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
     ValueType pos = 0;
     ValueType vel = 0;
     ValueType acc = 0;
-    const ValueType tc = t / m_duration;
+    const ValueType ctrlParam = t / m_duration;
     
     for (uint16_t i = 0; i < m_num - 2; i++)
     {
-        pos += m_posCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 1 - i) * m_p[i];
-        vel += m_velCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1);
-        acc += m_accCoeff[i] * pow(tc, i) * pow(1 - tc, m_num - 3 - i) * ((m_p[i + 2] - m_p[i + 1]) - (m_p[i + 1] - m_p[i])) * (m_num - 1) * (m_num - 2) ;
+        pos += m_posCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 1 - i) * m_p[i];
+        vel += m_velCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 2 - i) * (m_p[i + 1] - m_p[i]) * (m_num - 1);
+        acc += m_accCoeff[i] * pow(ctrlParam, i) * pow(1 - ctrlParam, m_num - 3 - i) * ((m_p[i + 2] - m_p[i + 1]) - (m_p[i + 1] - m_p[i])) * (m_num - 1) * (m_num - 2) ;
     }
-    pos += m_posCoeff[m_num - 2] * pow(tc, m_num - 2) * pow(1 - tc, 1) * m_p[m_num - 2];
-    pos += m_posCoeff[m_num - 1] * pow(tc, m_num - 1) * pow(1 - tc, 0) * m_p[m_num - 1];
-    vel += m_velCoeff[m_num - 2] * pow(tc, m_num - 2) * pow(1 - tc, 0) * (m_p[m_num - 1] - m_p[m_num - 2]) * (m_num - 1);
+    pos += m_posCoeff[m_num - 2] * pow(ctrlParam, m_num - 2) * pow(1 - ctrlParam, 1) * m_p[m_num - 2];
+    pos += m_posCoeff[m_num - 1] * pow(ctrlParam, m_num - 1) * pow(1 - ctrlParam, 0) * m_p[m_num - 1];
+    vel += m_velCoeff[m_num - 2] * pow(ctrlParam, m_num - 2) * pow(1 - ctrlParam, 0) * (m_p[m_num - 1] - m_p[m_num - 2]) * (m_num - 1);
 
     p = pos;
     v = vel * m_durationInv;
@@ -103,31 +102,32 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
     m_num = pcNum + 6;
     m_duration = duration;
     m_durationInv = 1 / m_duration;
-    m_p[0] = p0;
-    m_p[1] = p0 + m_duration* v0 / (m_num - 1);
-    m_p[2] = p0 + 2 * m_duration * v0 / (m_num - 1) + m_duration * m_duration* a0 / ((m_num - 1) * (m_num - 2));
-    memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum);
-    m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) - m_duration * m_duration * af / ((m_num - 1) * (m_num - 2));
-    m_p[m_num - 2] = pf - m_duration * vf / (m_num - 1);
-    m_p[m_num - 1] = pf;
+    m_p[0] = p0; //!< Set the control point for the init position
+    m_p[1] = p0 + m_duration* v0 / (m_num - 1); //!< Set the control point for the init velocity
+    m_p[2] = p0 + 2 * m_duration * v0 / (m_num - 1) + m_duration * m_duration* a0 / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the init acceleration
+    memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
+    m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) - m_duration * m_duration * af / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the target acceleration
+    m_p[m_num - 2] = pf - m_duration * vf / (m_num - 1); //!< Set the control point for the target velocity
+    m_p[m_num - 1] = pf; //!< Set the control point for the target position
 
+    // Calculate bezier coefficients
     for (uint16_t i = 0; i < m_num - 2; i++)
     {
-        m_posCoeff[i] = BinomialCoeff(m_num - 1, i);
-        m_velCoeff[i] = BinomialCoeff(m_num - 2, i);
-        m_accCoeff[i] = BinomialCoeff(m_num - 3, i);
+        m_posCoeff[i] = CalculateBinomialCoeff(m_num - 1, i);
+        m_velCoeff[i] = CalculateBinomialCoeff(m_num - 2, i);
+        m_accCoeff[i] = CalculateBinomialCoeff(m_num - 3, i);
     }
-    m_posCoeff[m_num - 2] = BinomialCoeff(m_num - 1, m_num - 2);
-    m_velCoeff[m_num - 2] = BinomialCoeff(m_num - 2, m_num - 2);
-    m_posCoeff[m_num - 1] = BinomialCoeff(m_num - 1, m_num - 1);
+    m_posCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 1, m_num - 2);
+    m_velCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 2, m_num - 2);
+    m_posCoeff[m_num - 1] = CalculateBinomialCoeff(m_num - 1, m_num - 1);
 }
 
 /*! \details Calculate binomial coefficients.
-    \param[in] n n'th binomial
-    \param[in] k kth out of n
+    \param[in] n n-th binomial
+    \param[in] k k-th out of n
 */
 template <typename ValueType, uint16_t m_maxNum>
-ValueType dtBezier<ValueType, m_maxNum>::BinomialCoeff(const uint16_t n, const uint16_t k) const
+ValueType dtBezier<ValueType, m_maxNum>::CalculateBinomialCoeff(const uint16_t n, const uint16_t k) const
 {
     if (n < k) return 0;
 
