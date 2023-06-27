@@ -9,9 +9,9 @@
 
 #include <cstring> // memcpy
 #include <cmath>
-#include <assert.h>
 #include <cstdint>
 #include <limits>
+#include <assert.h>
 
 namespace dtCore {
 

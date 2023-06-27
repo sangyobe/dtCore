@@ -7,7 +7,10 @@
 #ifndef __DTCORE_DTSCURVE_H__
 #define __DTCORE_DTSCURVE_H__
 
+#include <cstring> // memcpy
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <assert.h>
 
 namespace dtCore {
