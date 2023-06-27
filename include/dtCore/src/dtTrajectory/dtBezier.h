@@ -10,7 +10,8 @@
 #include <cstring> // memcpy
 #include <cmath>
 #include <assert.h>
-
+#include <cstdint>
+#include <limits>
 namespace dtCore {
 
 /*! \brief dtBezier: 1 dof, N'th bezier trajectory

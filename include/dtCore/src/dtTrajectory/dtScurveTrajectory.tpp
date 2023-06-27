@@ -36,6 +36,9 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -66,6 +69,9 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -98,6 +104,9 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
 {
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -126,7 +135,6 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
 
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memset(m_vi, 0, sizeof(ValueType) * m_dof);
@@ -135,11 +143,14 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     memset(m_af, 0, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -147,13 +158,18 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 
@@ -180,7 +196,6 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
     
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
@@ -189,11 +204,14 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     memset(m_af, 0, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -201,13 +219,18 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 
@@ -236,7 +259,6 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     static_assert(m_dof > 0, "Trajectory dimension(m_dof) should be greater than zero.");
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
 
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
@@ -245,11 +267,14 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -257,13 +282,18 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ContRefT
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 
@@ -284,10 +314,12 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueType 
 
     if (t_ < 0) 
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
     } 
     else 
@@ -311,11 +343,13 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueType 
 
     if (t_ < 0) 
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
     } 
@@ -341,12 +375,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueType 
 
     if (t_ < 0) 
     {
+        // before trajectory start
         memcpy(p, this->m_pi, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
         memset(a, 0, sizeof(ValueType) * m_dof);
     } 
     else if (t_ > this->m_duration) 
     {
+        // after trajectory end
         memcpy(p, this->m_pf, sizeof(ValueType) * m_dof);
         memset(v, 0, sizeof(ValueType) * m_dof);
         memset(a, 0, sizeof(ValueType) * m_dof);
@@ -366,7 +402,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Interpolate(const ValueType 
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::Configure()
 {
-    if (m_isLimitSet)
+    if (m_isLimitSet) //!< The last parameter you entered is a parameter related to velocity, acceleration limits
     {
         CalculateLinearVelocity();
         CalculateDuration();
@@ -374,6 +410,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::Configure()
 
     for (uint16_t i = 0; i < m_dof; i++) 
     {
+        // Calculate new velocity limits
         m_vLimit[i] = (m_pf[i] - m_pi[i] - 0.5 * m_vi[i] * m_accDuration - 0.5 * m_vf[i] * m_decDuration) / (m_duration - 0.5 * (m_accDuration + m_decDuration));
         m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], 
                                     this->m_vi[i], this->m_vf[i], 
@@ -396,6 +433,10 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
                                                              const ContRefType pi, const ContRefType pf,
                                                              const ValueType timeOffset) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
     m_accDuration = accDuration;
@@ -425,6 +466,10 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
                                                              const ContRefType vi, const ContRefType vf,
                                                              const ValueType timeOffset) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
     m_accDuration = accDuration;
@@ -456,6 +501,10 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
                                                                  const ContRefType ai, const ContRefType af,
                                                                  const ValueType timeOffset) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+
     m_ti = timeOffset;
     m_duration = duration;
     m_accDuration = accDuration;
@@ -484,7 +533,6 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
 {
     m_ti = timeOffset;
     m_isLimitSet = true;
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memset(m_vi, 0, sizeof(ValueType) * m_dof);
@@ -493,11 +541,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     memset(m_af, 0, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -505,13 +556,18 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 }
@@ -534,7 +590,6 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
 {
     m_ti = timeOffset;
     m_isLimitSet = true;
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
@@ -543,11 +598,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     memset(m_af, 0, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -555,13 +613,18 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 }
@@ -586,7 +649,6 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
 {
     m_ti = timeOffset;
     m_isLimitSet = true;
-    memcpy(m_vLimit, vLimit, sizeof(ValueType) * m_dof);
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
     memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
@@ -595,11 +657,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     memcpy(m_af, af, sizeof(ValueType) * m_dof);
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -607,13 +672,18 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 }
@@ -625,6 +695,10 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ContRefType v
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueType duration, const ValueType accDuration) 
 {
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+
     m_isLimitSet = false;
     m_duration = duration;
     m_accDuration = accDuration;
@@ -706,11 +780,14 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetLimit(const ContRefType v
     m_isLimitSet = true;
     switch (m_order)
     {
+    // Velocity, acceleration limits can be entered as positive or negative.
+    // Calculate average acceleration limit
     case 5:
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 2.0 / 3.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 2.0 / 3.0;
         }
     } break;
 
@@ -718,26 +795,33 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetLimit(const ContRefType v
     {
         for (uint16_t i = 0; i < m_dof; i++)
         {
-            m_aLimit[i] = aLimit[i] * 8.0 / 15.0;
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]) * 8.0 / 15.0;
         }
     } break;
     
     default:
     {
-        memcpy(m_aLimit, aLimit, sizeof(ValueType) * m_dof);
+        for (uint16_t i = 0; i < m_dof; i++)
+        {
+            m_vLimit[i] = abs(vLimit[i]);
+            m_aLimit[i] = abs(aLimit[i]);
+        }
     } break;
     }
 }
 
-/*! \details Calculate max velocity.
+/*! \details Calculate linear velocity.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::CalculateLinearVelocity()
 {
     ValueType minDistance[m_dof] = {0, };
     for (uint16_t i = 0; i < m_dof; i++)
-    {
+    {   
+        // Calculate minimum distance required to reach the target velocity from the init velocity while maintaining the limite acceleration
         minDistance[i] = 0.5 * (m_vi[i] + m_vf[i]) * abs(m_vi[i] - m_vf[i]) / m_aLimit[i];
+        // Compare the limit velocity with the maximum velocity that meets the acceleration limit and distance
         if (minDistance[i] <= (m_pf[i] - m_pi[i]))
         {
             ValueType vm = sqrt(0.5 * (pow(m_vi[i], 2) + pow(m_vf[i], 2)) + (m_pf[i] - m_pi[i]) * m_aLimit[i]);
@@ -751,7 +835,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::CalculateLinearVelocity()
     }
 }
 
-/*! \details Calculate s-curve acc, con, dec duration.
+/*! \details Calculate the longest acceleration, constant velocity, and deceleration durations for the entire degree of freedom.
 */
 template <typename ValueType, uint16_t m_dof, uint16_t m_order>
 void dtScurveTrajectory<ValueType, m_dof, m_order>::CalculateDuration()

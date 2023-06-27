@@ -16,7 +16,7 @@ void DoubleDof3Order5WithoutDefaultConstructor()
     double af[3] = {0.0, 0.0, 1.0}; //!< target acceleration
     double p[3], v[3], a[3]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
-    dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af); //!< double, 3 dof, 7 order polynomial trajectory
+    dtPolynomialTrajectory<double, 3, 5> traj5(td, pi, pf, vi, vf, ai, af); //!< double, 3 dof, 5 order polynomial trajectory
                                                                             //!< Init time is set to zero because there is no input for ti.
     double controlPeriod = 0.01; //!< real time control period (sec)
     for (int i = 0; i < 1200; i++) //!< real time thread (0 ~ 12 sec)
@@ -47,7 +47,7 @@ void DoubleDof3Order7WithDefaultConstructor()
       double tc = 0.01*i; //!< current time
       if (i == 0)
       {
-          traj7.SetParam(td, pi, pf, vi, vf, ai, af, tc, ti);
+          traj7.SetParam(td, pi, pf, vi, vf, ai, af, ti);
           traj7.Configure(); //!< without this function, polynomial coefficeints are not configured.
       }
 

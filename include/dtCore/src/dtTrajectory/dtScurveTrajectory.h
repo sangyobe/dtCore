@@ -117,8 +117,9 @@ public:
     
 private:
     void CalculateLinearVelocity(); //!< Calculate linear velocity.
-    void CalculateDuration(); //!< Calculate s-curve acceleration, const velocity, deceleration duration.
+    void CalculateDuration(); //!< Calculate the longest acceleration, constant velocity, and deceleration durations for the entire degree of freedom.
 
+    ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
     ValueType m_duration; //!< trajectory duration (sec)
     ValueType m_accDuration; //!< trajectory acceleration duration (sec)
