@@ -38,6 +38,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -78,6 +79,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -120,6 +122,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -157,6 +160,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -197,6 +201,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -239,6 +244,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
 {
     static_assert(m_maxNum > 0, "Invalid degree of bezier.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -379,6 +385,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -418,6 +425,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -459,6 +467,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -495,6 +504,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -534,6 +544,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -575,6 +586,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
                                                              const ValueType timeOffset)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
 
     m_duration = duration;
     m_ti = timeOffset;
@@ -601,7 +613,8 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetDuration(const ValueType duration) 
 {
-  m_duration = duration;
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    m_duration = duration;
 }
 
 /*! \details Enter init parameter for the Configure() function.
@@ -665,6 +678,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTargetParam(const ContRe
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc, const uint16_t pcNum) 
 {
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
     // Transpose input control point.
     for (uint16_t i = 0; i < m_dof; i++)
     {
@@ -683,6 +697,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContR
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetControlParam(const ContRefType pc[m_dof], const uint16_t pcNum) 
 {
+    assert(m_maxNum >= pcNum && "input control point num should be smaller than m_maxNum(max input control point num)");
     // Transpose input control point.
     for (uint16_t i = 0; i < m_dof; i++)
     {

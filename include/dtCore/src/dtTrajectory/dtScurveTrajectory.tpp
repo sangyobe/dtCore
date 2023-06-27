@@ -38,7 +38,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -71,7 +71,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -106,7 +106,7 @@ dtScurveTrajectory<ValueType, m_dof, m_order>::dtScurveTrajectory(const ValueTyp
     static_assert(m_order == 3 || m_order == 5 || m_order == 7, "Invalid degree of polynomial.");
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
@@ -435,7 +435,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     m_ti = timeOffset;
     m_duration = duration;
@@ -468,7 +468,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     m_ti = timeOffset;
     m_duration = duration;
@@ -503,7 +503,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetParam(const ValueType dur
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     m_ti = timeOffset;
     m_duration = duration;
@@ -697,7 +697,7 @@ void dtScurveTrajectory<ValueType, m_dof, m_order>::SetDuration(const ValueType 
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(accDuration > m_tolerance && "Trajectory acceleration duration should be greater than zero");
-    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be greater than zero");
+    assert(duration - 2 * accDuration >= m_tolerance && "Trajectory acceleration duration should be smaller than half of duration");
 
     m_isLimitSet = false;
     m_duration = duration;
