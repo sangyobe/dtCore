@@ -20,7 +20,7 @@ SET(EIGEN3_ROOT_DIR "$ENV{EIGEN3_ROOT}")
 IF(NOT EIGEN3_ROOT_DIR)
     MESSAGE(FATAL_ERROR "Please point the environment variable EIGEN3_ROOT to the include directory of your Eigen3 installation.")
 ENDIF()
-find_package(Eigen3 3.4.0 REQUIRED)
+find_package(Eigen3 3.3.7 REQUIRED)
 if(NOT Eigen3_FOUND)
     MESSAGE(FATAL_ERROR "Eigen3 not found.")
 endif()
@@ -29,6 +29,5 @@ INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
 # Target Art Protocol
 #add_subdirectory(dtcore)
-
 
 add_subdirectory(tests)

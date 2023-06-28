@@ -25,9 +25,9 @@ template <typename TrajType>
 void dtTrajectoryList<TrajType>::Interpolate(
     const typename TrajType::ValType t, typename TrajType::ContRefType p,
     typename TrajType::ContRefType v, typename TrajType::ContRefType a) const {
-  //   typename TrajType::ValType t0;
-  //   TrajType traj;
-  //   GetAt(t, t0, traj);
+    // typename TrajType::ValType t0;
+    // TrajType traj;
+    // GetAt(t, t0, traj);
 
   typename std::list<Cont>::const_iterator itr = m_trajList.begin();
   if (itr != m_trajList.end()) {
@@ -48,12 +48,14 @@ void dtTrajectoryList<TrajType>::GetAt(const typename TrajType::ValType t,
                                        TrajType &traj) {
   typename std::list<Cont>::iterator itr = m_trajList.begin();
 
-  if (itr != m_trajList.end()) {
+  if (itr != m_trajList.end()) 
+  {
     t0 = (*itr).key();
     traj = (*itr).value();
   }
 
-  while (itr != m_trajList.end()) {
+  while (itr != m_trajList.end()) 
+  {
     if ((*itr) < index) {
       t0 = (*itr).key();
       traj = (*itr).value();
