@@ -9,30 +9,23 @@
 
 /** \defgroup dtTrajectory
  *
- * dtPolynomialTrajectory provides trajectory interpolation for one joint
- * using polynomial interpolator. Degree of polynomial can be specified
- * as a template variable.
+ * dtPolynomialTrajectory provides n'th polynomial trajectory with one or more degrees of freedom.
+ * The degree of freedom can be specified as a template variable.
+ * The order(n) of polynomial can be specified as a template variable.
  *
- * \code
- * #include <dtCore/dtTrajectory>
+ * p(t)
+ *  |
+ *  |                                                     pf 
+ *  |                                            ...   ___o
+ *  |                                        .            |
+ *  |                                      /              |
+ *  |                         pi  .                       |
+ *  |                         o___ ...                    |
+ *  |                         |                           |
+ *  |                         |                           |
+ *  +-------------------------------------------------------------- t
+ *  t0 <--- time offset --->  ti   <--- duration --->    tf
  *
- * double t0 = 0.0;
- * double tf = 10.0;
- * dtVector<double, 3> pi, pf, vi, vf, ai, af;
- * pi << 0.0, 5.0, -10.0;
- * pf << 5.0, -5.0, 0.0;
- * vi.Zero();
- * vf.Zero();
- * ai.Zero();
- * af.Zero();
- * dtPolynomialTrajectory<double, 3> traj(dtPolyType::CUBIC, t0, tf, pi, pf, vi,
- * vf, ai, af);
- *
- * double tc = 3.0;
- * dtVector<double, 3> p, v, a;
- * traj.interpolate(tc, p, v, a);
- *
- * \endcode
  */
 
 #include "dtPolynomial.h"
@@ -40,52 +33,72 @@
 
 namespace dtCore {
 
-/**
- * dtPolynomialTrajectory
- */
-template <typename ValueType, uint16_t m_dof, uint16_t m_degree>
-class dtPolynomialTrajectory {
+/*! \brief dtPolynomialTrajectory: m dof, n-th order polynomial trajectory
+    \details
+    This class provides m degree of freedom and n'th polynomial trajectory.
+    \param[in] ValueType float or double
+    \param[in] m_dof m degree of freedom
+    \param[in] m_order n-th order
+*/
+template <typename ValueType, uint16_t m_dof, uint16_t m_order>
+class dtPolynomialTrajectory 
+{
 public:
-  typedef ValueType ValType;
-  typedef ValueType *ContType;
-  typedef ValueType *ContRefType;
-
-public:
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ValueType timeOffset = 0);
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ContRefType vi,
-                   const ContRefType vf, const ValueType timeOffset = 0);
-  dtPolynomialTrajectory(const ValueType duration, const ContRefType pi,
-                   const ContRefType pf, const ContRefType vi,
-                   const ContRefType vf, const ContRefType ai,
-                   const ContRefType af, const ValueType timeOffset = 0);
-  ~dtPolynomialTrajectory();
+    typedef ValueType ValType;
+    typedef ValueType *ContRefType;
 
 public:
-  virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v,
-                           ContRefType a) const;
+    dtPolynomialTrajectory(); //!< Initialize without input parameter
+    dtPolynomialTrajectory(const ValueType duration,
+                          const ContRefType pi, const ContRefType pf, 
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
+    dtPolynomialTrajectory(const ValueType duration,
+                          const ContRefType pi, const ContRefType pf, 
+                          const ContRefType vi, const ContRefType vf, 
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
+    dtPolynomialTrajectory(const ValueType duration,
+                          const ContRefType pi, const ContRefType pf, 
+                          const ContRefType vi, const ContRefType vf, 
+                          const ContRefType ai, const ContRefType af, 
+                          const ValueType timeOffset = 0); //!< Initialize and configure the coefficients of the polynomial from the parameters entered.
+    ~dtPolynomialTrajectory();
 
-  virtual void Reconfigure();
+public:
+    virtual void Interpolate(const ValueType t, ContRefType p) const; //!< Calculates the desired position(p) corresponding to the time(t) entered. 
+    virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
+    virtual void Interpolate(const ValueType t, ContRefType p, ContRefType v, ContRefType a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-  void SetTimeOffset(const ValueType timeOffset);
-  void SetDuration(const ValueType duration);
-  void SetInitialParam(const ContRefType pi, const ContRefType vi,
-                       const ContRefType ai);
-  void SetTargetParam(const ContRefType pf, const ContRefType vf,
-                      const ContRefType af);
+    virtual void Configure(); //!< Configure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetTimeOffset).
+
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf,
+                  const ContRefType vi, const ContRefType vf,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetParam(const ValueType duration, 
+                  const ContRefType pi, const ContRefType pf,
+                  const ContRefType vi, const ContRefType vf,
+                  const ContRefType ai, const ContRefType af,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
+    void SetDuration(const ValueType duration); //!< Enter trajectory duration for the Configure() function.
+    void SetInitParam(const ContRefType pi, const ContRefType vi = nullptr, const ContRefType ai = nullptr); //!< Enter init parameter for the Configure() function.
+    void SetTargetParam(const ContRefType pi, const ContRefType vf = nullptr, const ContRefType af = nullptr); //!< Enter target parameter for the Configure() function.
+    void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory offset(delay) for the Configure() function.
 
 private:
-  ValueType m_duration;
-  ValueType m_ti;
-  ValueType m_tf;
-  ValueType m_pi[m_dof];
-  ValueType m_pf[m_dof];
-  ValueType m_vi[m_dof];
-  ValueType m_vf[m_dof];
-  ValueType m_ai[m_dof];
-  ValueType m_af[m_dof];
-  dtPolynomial<ValueType, m_degree> m_interpolator[m_dof];
+    ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
+    ValueType m_ti; //!< trajectory time offset(delay) (sec)
+    ValueType m_duration; //!< trajectory duration (sec)
+    ValueType m_pi[m_dof]; //!< init position (x)
+    ValueType m_pf[m_dof]; //!< target position (x)
+    ValueType m_vi[m_dof]; //!< init velocity (x/sec)
+    ValueType m_vf[m_dof]; //!< target velocity (x/sec)
+    ValueType m_ai[m_dof]; //!< init acceleration (x/sec^2)
+    ValueType m_af[m_dof]; //!< target accleration (x/sec^2)
+
+    dtPolynomial<ValueType, m_order> m_interpolator[m_dof]; //!< dtPolynomial trajectory
 };
 
 } // namespace dtCore
