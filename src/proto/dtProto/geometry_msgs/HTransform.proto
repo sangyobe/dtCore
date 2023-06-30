@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package art_protocol.geometry_msgs;
+
+import "dtProto/geometry_msgs/Vector.proto";
+import "dtProto/geometry_msgs/Matrix.proto";
+
+message HTransform {
+  Matrix3d rotation = 1;
+  Vector3d displacement = 2;
+}

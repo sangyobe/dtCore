@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package art_protocol.geometry_msgs;
 
-import "geometry_msgs/Point.proto";
+import "dtProto/geometry_msgs/Point.proto";
 
 message Wrench {
   Point3d force = 1;

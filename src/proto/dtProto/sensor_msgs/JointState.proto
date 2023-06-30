@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package art_protocol.sensor_msgs;
+
+message JointState {
+  double position = 1;
+  double velocity = 2;
+  double acceleration = 3;
+  double torque = 4;
+}

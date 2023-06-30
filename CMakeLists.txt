@@ -5,6 +5,15 @@ project(dtCore C CXX)
 cmake_policy(VERSION 3.13)
 cmake_policy(SET CMP0077 NEW)
 
+#add_compile_options( -g -Wall )
+
+#set(CMAKE_C_FLAGS "-Wall -std=c99")
+#set(CMAKE_C_FLAGS_DEBUG "-Wall -g")
+#set(CMAKE_C_FLAGS_RELEASE "-Wall -O4 -DNDEBUG")
+#set(CMAKE_CXX_FLAGS "-Wall -std=c++0x -stdlib=libc++")
+#set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g")
+#set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O4 -DNDEBUG")
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

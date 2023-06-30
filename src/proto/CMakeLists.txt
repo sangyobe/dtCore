@@ -15,9 +15,7 @@ set(pb_proto_hdrs "")
 set(pb_grpc_srcs "")
 set(pb_grpc_hdrs "")
 
-message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
 file(GLOB_RECURSE PB_SRCS "./" "*.proto")
-# message(STATUS "PB_SRCS: ${PB_SRCS}")
 foreach(pb_src ${PB_SRCS})
     message(STATUS "pb_src: ${pb_src}")
     get_filename_component(pb_proto_path "${pb_src}" PATH)
@@ -62,11 +60,17 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # art_protocol
 add_library(art_protocol
+  ${pb_proto_srcs}
+  ${pb_proto_hdrs})
+target_link_libraries(art_protocol
+  ${_PROTOBUF_LIBPROTOBUF})
+
+  add_library(art_protocol_grpc
   ${pb_grpc_srcs}
   ${pb_grpc_hdrs}
   ${pb_proto_srcs}
   ${pb_proto_hdrs})
-target_link_libraries(art_protocol
+target_link_libraries(art_protocol_grpc
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})

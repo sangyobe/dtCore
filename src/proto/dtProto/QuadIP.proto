@@ -2,16 +2,16 @@ syntax = "proto3";
 
 package art_protocol.quadip;
 
-import "std_msgs/Header.proto";
-import "std_msgs/SystemInfo.proto";
-import "std_msgs/Heartbeat.proto";
-import "geometry_msgs/Point.proto";
-import "geometry_msgs/Vector.proto";
-import "geometry_msgs/Matrix.proto";
-import "geometry_msgs/Pose.proto";
-import "geometry_msgs/Twist.proto";
-import "geometry_msgs/Orientation.proto";
-import "sensor_msgs/JointState.proto";
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/std_msgs/SystemInfo.proto";
+import "dtProto/std_msgs/Heartbeat.proto";
+import "dtProto/geometry_msgs/Point.proto";
+import "dtProto/geometry_msgs/Vector.proto";
+import "dtProto/geometry_msgs/Matrix.proto";
+import "dtProto/geometry_msgs/Pose.proto";
+import "dtProto/geometry_msgs/Twist.proto";
+import "dtProto/geometry_msgs/Orientation.proto";
+import "dtProto/sensor_msgs/JointState.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/any.proto";
 
@@ -26,7 +26,13 @@ message RobotStateTimeStamped {
   RobotState state = 2;
 }
 
-message JointState { repeated sensor_msgs.JointState joint_state = 1; }
+message JointState {
+  repeated sensor_msgs.JointState joint_state_des =
+      1; // 12 dof, 4 legs(fl,bl,fr,br)
+  repeated sensor_msgs.JointState joint_state_act = 2;
+  repeated double abs_encoder = 3;
+  repeated double inc_encoder = 4;
+}
 
 message JointStateTimeStamped {
   std_msgs.Header header = 1;
