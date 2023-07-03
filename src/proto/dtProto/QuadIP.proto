@@ -4,7 +4,6 @@ package art_protocol.quadip;
 
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/std_msgs/SystemInfo.proto";
-import "dtProto/std_msgs/Heartbeat.proto";
 import "dtProto/geometry_msgs/Point.proto";
 import "dtProto/geometry_msgs/Vector.proto";
 import "dtProto/geometry_msgs/Matrix.proto";

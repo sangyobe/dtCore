@@ -30,18 +30,31 @@ foreach(pb_src ${PB_SRCS})
     # message(STATUS "pb_grpc_src: ${pb_grpc_src}")
     # message(STATUS "pb_grpc_hdr: ${pb_grpc_hdr}")
 
-    add_custom_command(
-      OUTPUT "${pb_proto_src}" "${pb_proto_hdr}" "${pb_grpc_src}" "${pb_grpc_hdr}"
-      COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
-        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-        -I "${CMAKE_CURRENT_SOURCE_DIR}"
-        -I "${pb_proto_path}"
-        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${pb_src}"
-      DEPENDS
-        "${pb_src}"
-    )
+    if(BUILD_dtProto_gRPC)
+      add_custom_command(
+        OUTPUT "${pb_proto_src}" "${pb_proto_hdr}" "${pb_grpc_src}" "${pb_grpc_hdr}"
+        COMMAND ${_PROTOBUF_PROTOC}
+        ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+          --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+          -I "${CMAKE_CURRENT_SOURCE_DIR}"
+          -I "${pb_proto_path}"
+          --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+          "${pb_src}"
+        DEPENDS
+          "${pb_src}"
+      )
+    else()
+      add_custom_command(
+        OUTPUT "${pb_proto_src}" "${pb_proto_hdr}"
+        COMMAND ${_PROTOBUF_PROTOC}
+        ARGS --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+          -I "${CMAKE_CURRENT_SOURCE_DIR}"
+          -I "${pb_proto_path}"
+          "${pb_src}"
+        DEPENDS
+          "${pb_src}"
+      )
+    endif()
     
     list(APPEND pb_proto_srcs "${pb_proto_src}")
     list(APPEND pb_proto_hdrs "${pb_proto_hdr}")
@@ -58,19 +71,42 @@ endforeach()
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-# art_protocol
-add_library(art_protocol
+# dtProto
+add_library(dtproto
   ${pb_proto_srcs}
   ${pb_proto_hdrs})
-target_link_libraries(art_protocol
+target_link_libraries(dtproto
   ${_PROTOBUF_LIBPROTOBUF})
 
-  add_library(art_protocol_grpc
-  ${pb_grpc_srcs}
-  ${pb_grpc_hdrs}
-  ${pb_proto_srcs}
-  ${pb_proto_hdrs})
-target_link_libraries(art_protocol_grpc
-  ${_REFLECTION}
-  ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+# install
+install(TARGETS dtproto 
+        INCLUDES DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+        RUNTIME  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        LIBRARY  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        ARCHIVE  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+install(DIRECTORY            ${CMAKE_CURRENT_BINARY_DIR}/dtProto
+        DESTINATION          ${CMAKE_INSTALL_PREFIX}/include
+)
+
+
+if(BUILD_dtProto_gRPC)
+  add_library(dtproto_grpc
+    ${pb_grpc_srcs}
+    ${pb_grpc_hdrs}
+    ${pb_proto_srcs}
+    ${pb_proto_hdrs})
+  target_link_libraries(dtproto_grpc
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
+
+
+  # install
+  install(TARGETS dtproto_grpc
+          INCLUDES DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+          RUNTIME  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+          LIBRARY  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+          ARCHIVE  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  )
+endif()
