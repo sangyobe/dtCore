@@ -30,8 +30,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 # --------------------------------------------------------
 OPTION(BUILD_DOCS           "Build documents"                         OFF)
 OPTION(BUILD_UNIT_TESTS     "Build unit test or not"                  OFF)
-OPTION(BUILD_EXAMPLES       "Build examples or not"                   OFF)
-OPTION(BUILD_dtProto        "Build dtProto headers and library"       ON)
+OPTION(BUILD_EXAMPLES       "Build examples or not"                   ON)
+OPTION(BUILD_dtProto        "Build dtProto headers and library"       OFF)
 OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
 OPTION(dtCore_USE_EIGEN3    "Use Eigen3 as the default math library"  OFF)
 
