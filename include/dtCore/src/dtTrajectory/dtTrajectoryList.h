@@ -74,7 +74,6 @@
  * \endcode
  */
 
-#include "dtMath/dtMath.h"
 #include <list>
 
 namespace dtCore {
