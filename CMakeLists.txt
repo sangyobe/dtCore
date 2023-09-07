@@ -68,6 +68,8 @@ add_subdirectory(src)
 # Build unit tests
 # --------------------------------------------------------
 if(BUILD_UNIT_TESTS)
+  enable_testing()
+  include(CTest)
   add_subdirectory(tests)
 endif()
 
