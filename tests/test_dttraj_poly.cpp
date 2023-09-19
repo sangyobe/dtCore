@@ -27,10 +27,12 @@ namespace TestTrajectory
                 std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2]
                         << std::endl;       
             }
-            traj.Interpolate(ti+5.0, p, v, a);
-            EXPECT_DOUBLE_EQ(p[0], 2.5);
-            EXPECT_DOUBLE_EQ(p[1], 0.0);
-            EXPECT_DOUBLE_EQ(p[2], -5.0);
+            traj.Interpolate(ti+td, p, v, a);
+            EXPECT_DOUBLE_EQ(p[0], pf[0]);
+            EXPECT_DOUBLE_EQ(p[1], pf[1]);
+            EXPECT_DOUBLE_EQ(p[2], pf[2]);
+            EXPECT_DOUBLE_EQ(v[1], vf[1]);
+            EXPECT_DOUBLE_EQ(a[2], af[2]);
         }
     }
 }

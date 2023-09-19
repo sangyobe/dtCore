@@ -1,0 +1,3 @@
+#include "src/dtDAQ/dtDataSourcePB.hpp"
+#include "src/dtDAQ/dtDataSinkPB.hpp"
+#include "src/dtDAQ/dtDAQManager.h"
