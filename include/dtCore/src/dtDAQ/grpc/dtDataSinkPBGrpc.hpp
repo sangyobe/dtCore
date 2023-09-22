@@ -20,7 +20,12 @@ class dtDataSinkPBGrpc : public dtDataSinkPB<T> {
 public:
     dtDataSinkPBGrpc(const std::string& topic_name) : _pub(topic_name) {}
     void Update(T& msg) {
+        std::cout << "dtDataSinkPBGrpc::Update(T&)" << std::endl;
     }
+
+protected:
+    std::string _pub;
+
 };
 
 }

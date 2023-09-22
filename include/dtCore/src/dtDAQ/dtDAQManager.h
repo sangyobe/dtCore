@@ -19,7 +19,8 @@ class dtDAQManager {
 public:
     virtual ~dtDAQManager() {}
 
-    virtual void Init() = 0;
+    virtual void Initialize() = 0;
+    virtual void Terminate() = 0;
     virtual void AppendDataSource(std::shared_ptr<dtDataSource> src)
     {
         _data_srcs.push_back(src);

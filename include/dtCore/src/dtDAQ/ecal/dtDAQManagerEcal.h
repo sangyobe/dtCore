@@ -21,9 +21,12 @@ public:
     dtDAQManagerEcal() {}
     virtual ~dtDAQManagerEcal() {}
 
-    void Init() {
+    void Initialize() {
         eCAL::Initialize();
         eCAL::Process::SetState(proc_sev_healthy, proc_sev_level1, "sub info");
+    }
+    void Terminate() {
+        
     }
 };
 
