@@ -14,6 +14,8 @@
 | BUILD_DOCS         | Build documents                                    | OFF |
 | BUILD_UNIT_TESTS   | Build unit test or not                             | OFF |
 | BUILD_EXAMPLES     | Build examples or not                              | ON |
+| BUILD_EXAMPLES_eCAL | Build eCAL examples or not                        | OFF |
+| BUILD_EXAMPLES_gRPC | Build gRPC examples or not                        | OFF |
 | BUILD_dtProto      | dtProto 헤더 및 라이브러리(libdtproto.a) 빌드           | OFF  |
 | BUILD_dtProto_gRPC | dtProto gRPC 헤더 및 라이브러리(libdtproto_grpc.a) 빌드 | OFF |
 | dtCore_USE_EIGEN3  | Use Eigen3 as the default math library             | OFF |

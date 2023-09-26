@@ -9,6 +9,14 @@ if(BUILD_dtProto AND BUILD_EXAMPLES_eCAL)
   endforeach()
 endif()
 
+# gRPC example targets
+if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_EXAMPLES_gRPC)
+  file(GLOB EXAMPLE_DIRS "example_grpc_*")
+  foreach(example_dir ${EXAMPLE_DIRS})
+      add_subdirectory(${example_dir})
+  endforeach()
+endif()
+
 # dtTrajectory example targets
 foreach(_target examplePoly exampleBezier exampleScurve)
   add_executable(
