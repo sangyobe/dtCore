@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package art_protocol.geometry_msgs;
+package dtproto.geometry_msgs;
 
 import "dtProto/geometry_msgs/Vector.proto";
 import "dtProto/geometry_msgs/Matrix.proto";

@@ -39,12 +39,12 @@ void PublishMessage(TPub &pub, TMsg &&msg) {
 int main(int argc, char **argv) {
   eCAL::Initialize(argc, argv, "dtProto HB pub");
   eCAL::Process::SetState(proc_sev_healthy, proc_sev_level1, "sub info");
-  eCAL::protobuf::CPublisher<art_protocol::std_msgs::Heartbeat>
+  eCAL::protobuf::CPublisher<dtproto::std_msgs::Heartbeat>
       publisher("dtProto_HB");
   
   auto cnt = 0;
   auto message(
-      std::make_unique<art_protocol::std_msgs::Heartbeat>());
+      std::make_unique<dtproto::std_msgs::Heartbeat>());
 
   while (eCAL::Ok()) {
     // fill message body

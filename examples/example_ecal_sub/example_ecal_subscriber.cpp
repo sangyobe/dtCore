@@ -13,7 +13,7 @@
 #define PRINT_PUB_SUB_INFO
 
 void OnHeartbeat(const char *topic_name,
-                const art_protocol::std_msgs::Heartbeat &message,
+                const dtproto::std_msgs::Heartbeat &message,
                 const long long time, const long long clock) {
 #ifdef PRINT_PUB_SUB_INFO
   std::cout << "------------------------------------------" << std::endl;
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 {
   eCAL::Initialize(argc, argv, "dtProto HB sub");
   eCAL::Process::SetState(proc_sev_healthy, proc_sev_level1, "sub info");
-  eCAL::protobuf::CSubscriber<art_protocol::std_msgs::Heartbeat>
+  eCAL::protobuf::CSubscriber<dtproto::std_msgs::Heartbeat>
       subscriber("dtProto_HB");
   auto callback_heartbeat = std::bind(OnHeartbeat, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   subscriber.AddReceiveCallback(callback_heartbeat);

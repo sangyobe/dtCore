@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package art_protocol.std_msgs;
+package dtproto.std_msgs;
 
 import "google/protobuf/timestamp.proto";
 import "dtProto/std_msgs/Header.proto";
