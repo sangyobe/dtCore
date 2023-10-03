@@ -14,13 +14,14 @@ set(pb_proto_srcs "")
 set(pb_proto_hdrs "")
 set(pb_grpc_srcs "")
 set(pb_grpc_hdrs "")
+set(pb_gen_dir ${CMAKE_CURRENT_BINARY_DIR})
 
 file(GLOB_RECURSE PB_SRCS "./" "*.proto")
 foreach(pb_src ${PB_SRCS})
     message(STATUS "pb_src: ${pb_src}")
     get_filename_component(pb_proto_path "${pb_src}" PATH)
     get_filename_component(pb_proto_name "${pb_src}" NAME_WE)
-    get_pb_out_path(${pb_src} ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_BINARY_DIR}" pb_bin_path)
+    get_pb_out_path("${pb_src}" "${CMAKE_CURRENT_SOURCE_DIR}" "${pb_gen_dir}" pb_bin_path)
     string(CONCAT pb_proto_src ${pb_bin_path} "/" "${pb_proto_name}" ".pb.cc")
     string(CONCAT pb_proto_hdr ${pb_bin_path} "/" "${pb_proto_name}" ".pb.h")
     string(CONCAT pb_grpc_src ${pb_bin_path} "/" "${pb_proto_name}" ".grpc.pb.cc")
@@ -69,6 +70,7 @@ endforeach()
 
 
 # Include generated *.pb.h files
+set(PROTOBUF_GEN_DIR ${pb_gen_dir} PARENT_SCOPE)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # dtProto

@@ -37,6 +37,8 @@ if(BUILD_dtProto)
   endif()
 
   # Target Art Protocol
+  set(PROTOBUF_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/proto")
   add_subdirectory(proto)
+  set(PROTOBUF_GEN_DIR ${PROTOBUF_GEN_DIR} PARENT_SCOPE)
 endif()
 
