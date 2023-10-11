@@ -88,6 +88,9 @@ install(TARGETS dtproto
 install(DIRECTORY            ${CMAKE_CURRENT_BINARY_DIR}/dtProto
         DESTINATION          ${CMAKE_INSTALL_PREFIX}/include
 )
+install(DIRECTORY            ${CMAKE_CURRENT_SOURCE_DIR}/dtProto
+        DESTINATION          ${CMAKE_INSTALL_PREFIX}/include
+)
 
 
 if(BUILD_dtProto_gRPC)

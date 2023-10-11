@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package dtproto.std_msgs;
+package dtproto.robot_msgs;
 
-message SystemInfo {
+message RobotInfo {
   string name = 1;
   string author = 2;
   string version = 3;

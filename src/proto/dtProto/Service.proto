@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package dtproto.service;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/std_msgs/State.proto";
+import "dtProto/std_msgs/Request.proto";
+import "dtProto/robot_msgs/RobotInfo.proto";
+import "dtProto/robot_msgs/RobotState.proto";
+import "google/protobuf/empty.proto";
+
+service DataService {
+  rpc QueryRobotInfo(google.protobuf.Empty) 
+    returns (robot_msgs.RobotInfo);
+
+  rpc StreamRobotState(std_msgs.Request)
+    returns (stream robot_msgs.RobotStateTimeStamped);
+
+  rpc StreamState(std_msgs.Request) 
+    returns (stream std_msgs.StateTimeStamped);
+}

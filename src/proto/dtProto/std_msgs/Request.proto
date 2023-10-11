@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package dtproto.std_msgs;
+
+message Request {
+  enum ReqType {
+    ON = 0;
+    OFF = 1;
+  }
+  string name = 1;
+  ReqType type = 2;
+}
