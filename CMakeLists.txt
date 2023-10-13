@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(dtCore C CXX)
+project(dtCore 
+  LANGUAGES C CXX
+  HOMEPAGE_URL https://github.hmc.co.kr/art_framework
+  DESCRIPTION "HMC's Art Framework Library"
+  VERSION 1.0.0
+)
 
 cmake_policy(VERSION 3.13)
 cmake_policy(SET CMP0077 NEW)

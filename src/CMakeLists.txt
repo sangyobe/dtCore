@@ -7,7 +7,7 @@ if(BUILD_dtProto)
   set(protobuf_MODULE_COMPATIBLE TRUE)
   find_package(Protobuf CONFIG REQUIRED)
   message(STATUS "Using protobuf ${Protobuf_VERSION}")
-  message(STATUS "    Protobuf_INCLUDE_DIR ${Protobuf_INCLUDE_DIR}")
+  message(STATUS "    Protobuf_INCLUDE_DIRS ${Protobuf_INCLUDE_DIRS}")
   message(STATUS "    Protobuf_LIBRARY ${Protobuf_LIBRARY}")
   message(STATUS "    Protobuf_LIBRARY_DEBUG ${Protobuf_LIBRARY_DEBUG}")
   message(STATUS "    Protobuf_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE}")
@@ -21,14 +21,16 @@ if(BUILD_dtProto)
   endif()
 
   if(BUILD_dtProto_gRPC)
-    set(_REFLECTION gRPC::grpc++_reflection)
-  
     # Find gRPC installation
     # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
     find_package(gRPC CONFIG REQUIRED)
     message(STATUS "Using gRPC ${gRPC_VERSION}")
+    message(STATUS "    gRPC_INCLUDE_DIRS ${gRPC_INCLUDE_DIRS}")
+    message(STATUS "    gRPC_LIBRARY ${gRPC_LIBRARY}")
+    message(STATUS "    gRPC_LIBRARY_DEBUG ${gRPC_LIBRARY_DEBUG}")
 
     set(_GRPC_GRPCPP gRPC::grpc++)
+    set(_GRPC_REFLECTION gRPC::grpc++_reflection)
     if(CMAKE_CROSSCOMPILING)
         find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
     else()

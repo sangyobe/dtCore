@@ -1,0 +1,15 @@
+# this template is filled-in by CMake `configure_file(... @ONLY)`
+# the `@....@` are filled in by CMake configure_file(), 
+# from variables set in your CMakeLists.txt or by CMake itself
+
+prefix="@CMAKE_INSTALL_PREFIX@"
+exec_prefix="${prefix}"
+libdir="${prefix}/lib"
+includedir="${prefix}/include"
+
+Name: @pc_name@
+Description: @pc_desc@
+URL: @pc_url@
+Version: @pc_version@
+Cflags: -I"${includedir}"
+Libs: -L"${libdir}" -l@pc_target@
