@@ -1,7 +1,9 @@
 include(DebugUtil)
 include(GetDirectoryName)
 
-include_directories("${PROTOBUF_GEN_DIR}")
+if(BUILD_dtProto)
+  include_directories("${PROTOBUF_GEN_DIR}")
+endif()
 
 # eCAL example targets
 if(BUILD_dtProto AND BUILD_EXAMPLES_eCAL)
