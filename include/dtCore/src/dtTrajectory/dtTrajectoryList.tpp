@@ -56,7 +56,7 @@ void dtTrajectoryList<TrajType>::GetAt(const typename TrajType::ValType t,
 
   while (itr != m_trajList.end()) 
   {
-    if ((*itr) < index) {
+    if ((*itr) < t) {
       t0 = (*itr).key();
       traj = (*itr).value();
     } else {

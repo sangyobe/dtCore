@@ -44,3 +44,4 @@ if(BUILD_dtProto)
   set(PROTOBUF_GEN_DIR ${PROTOBUF_GEN_DIR} PARENT_SCOPE)
 endif()
 
+add_subdirectory(core)

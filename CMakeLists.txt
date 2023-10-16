@@ -28,6 +28,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
+include_directories(${CMAKE_SOURCE_DIR}/include)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
+
 set(PROTOBUF_GEN_DIR "") # this variable will be set while configuring 'src' directory
 
 # --------------------------------------------------------
@@ -41,6 +44,7 @@ OPTION(BUILD_EXAMPLES_eCAL  "Build eCAL examples"                     OFF)
 OPTION(BUILD_EXAMPLES_gRPC  "Build gRPC examples"                     OFF)
 OPTION(BUILD_dtProto        "Build dtProto headers and library"       OFF)
 OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
+OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      OFF)
 OPTION(dtCore_USE_EIGEN3    "Use Eigen3 as the default math library"  OFF)
 
 
@@ -106,4 +110,5 @@ message(STATUS "BUILD_EXAMPLES_eCAL                            : ${BUILD_EXAMPLE
 message(STATUS "BUILD_EXAMPLES_gRPC                            : ${BUILD_EXAMPLES_gRPC}")
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")
 message(STATUS "BUILD_dtProto_gRPC                             : ${BUILD_dtProto_gRPC}")
+message(STATUS "BUILD_dtCore_gRPC                              : ${BUILD_dtCore_gRPC}")
 message(STATUS "dtCore_USE_EIGEN3                              : ${dtCore_USE_EIGEN3}")

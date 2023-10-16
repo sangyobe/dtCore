@@ -17,7 +17,7 @@ namespace dtCore {
 template<typename T>
 class dtDataSinkPB : public dtDataSink {
 public:
-    virtual void Update(T& msg) {}
+    virtual void Publish(T& msg) {}
 };
 
 }

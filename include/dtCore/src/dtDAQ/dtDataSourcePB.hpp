@@ -24,7 +24,7 @@ protected:
         for (const std::shared_ptr<dtDataSink>& sink : _data_sinks) {
             std::shared_ptr<dtDataSinkPB<T>> s = std::dynamic_pointer_cast<dtDataSinkPB<T>>(sink);
             if (s) {
-                s->Update(_msg);
+                s->Publish(_msg);
             }
         }
     }

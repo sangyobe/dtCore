@@ -14,8 +14,11 @@ service DataService {
     returns (robot_msgs.RobotInfo);
 
   rpc StreamRobotState(std_msgs.Request)
+    returns (stream robot_msgs.RobotState);
+
+  rpc StreamRobotStateTimeStamped(std_msgs.Request)
     returns (stream robot_msgs.RobotStateTimeStamped);
 
   rpc StreamState(std_msgs.Request) 
-    returns (stream std_msgs.StateTimeStamped);
+    returns (stream std_msgs.State);
 }

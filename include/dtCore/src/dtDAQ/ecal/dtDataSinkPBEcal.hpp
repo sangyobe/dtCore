@@ -28,7 +28,7 @@ template<typename T>
 class dtDataSinkPBEcal : public dtDataSinkPB<T> {
 public:
     dtDataSinkPBEcal(const std::string& topic_name) : _pub(topic_name) {}
-    void Update(T& msg) {
+    void Publish(T& msg) {
 #ifdef PRINT_PUB_SUB_INFO
         std::cout << "------------------------------------------" << std::endl;
         std::cout << "Publish topic : " << _pub.GetTopicName() << std::endl;

@@ -17,7 +17,7 @@ class dtDataSink {
 public:
     dtDataSink() {}
     virtual ~dtDataSink() {}
-    virtual void Update() {}
+    virtual void Publish() {}
 };
 
 }
