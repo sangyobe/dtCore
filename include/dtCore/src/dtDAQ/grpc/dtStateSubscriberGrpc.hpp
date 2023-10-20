@@ -79,7 +79,7 @@ dtStateSubscriberGrpc<StateType>::dtStateSubscriberGrpc(const std::string& topic
 template<typename StateType>
 dtStateSubscriberGrpc<StateType>::~dtStateSubscriberGrpc()
 {
-
+    Stop();
 }
 
 template<typename StateType>
@@ -112,11 +112,13 @@ bool dtStateSubscriberGrpc<StateType>::InitRequest() {
         while (_running.load() && _cq.Next(&tag, &ok)) {
             // LOG(INFO) << "Async READ complete event";
             if (ok) {
-                static_cast<dtStateSubscriberGrpc*>(tag)->OnCompletionEvent();
+                if (static_cast<dtStateSubscriberGrpc*>(tag)->OnCompletionEvent())
+                    continue;
             }
             else {
-                static_cast<dtStateSubscriberGrpc*>(tag)->TryCancelCallAndShutdown();
+                //static_cast<dtStateSubscriberGrpc*>(tag)->TryCancelCallAndShutdown();
             }
+            break;
         }
     });
 
@@ -158,7 +160,8 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
         _call_status = RpcCallStatus::FINISHED;
         _running = false;
         // Once we're complete, deallocate the call object.
-        delete this;
+        //delete this;
+        return false;
     }
     else {
         // LOG(INFO) << "AsyncStreamStateRequest::OnCompletionEvent, _call_status = " << static_cast<int>(_call_status);
@@ -170,16 +173,20 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
 
 template<typename StateType>
 bool dtStateSubscriberGrpc<StateType>::TryCancelCallAndShutdown() {
+    _running = false;
     _call_status = RpcCallStatus::WAIT_FINISH;
     _stream_reader->Finish(&_status, (void *)this);
-    _running = false;
     return true;
 }
 
 template<typename StateType>
 void dtStateSubscriberGrpc<StateType>::Stop()
 {
-    TryCancelCallAndShutdown();
+    //TryCancelCallAndShutdown();
+    _running = false;
+    _cq.Shutdown();
+    if (_rpc_recv_thread.joinable())
+        _rpc_recv_thread.join();
 }
 
 } // namespace dtCore

@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package dtproto.geometry_msgs;
 
-import "dtProto/geometry_msgs/Vector.proto";
-import "dtProto/geometry_msgs/Matrix.proto";
+import "dtProto/geometry_msgs/Displacement.proto";
+import "dtProto/geometry_msgs/Orientation.proto";
 
 message HTransform {
-  Matrix3d rotation = 1;
-  Vector3d displacement = 2;
+  Rotation rotation = 1;
+  Displacement displacement = 2;
 }

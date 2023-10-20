@@ -27,11 +27,26 @@ int main(int argc, char** argv)
     };
     sub.RegMessageHandler(handler);
     
-    while (true)
+    std::atomic<bool> bRun;
+    bRun.store(true);
+    std::thread chk_key = std::thread([&bRun] () {
+        while (true) {
+            std::cout << "(type \'q\' to quit) >\n";
+            std::string cmd;
+            std::cin >> cmd;
+            if (cmd == "q" || cmd == "quit") {
+                bRun = false;
+                return;
+            }
+        }
+    });
+    std::string cmd;
+    std::cin >> cmd;
+    while (bRun.load())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    //sub.Stop();
-
+    chk_key.join();
+    
     return 0;
 }

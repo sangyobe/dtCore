@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package dtproto.sensor_msgs;
+
+import "dtProto/geometry_msgs/Vector.proto";
+import "dtProto/geometry_msgs/Orientation.proto";
+
+message Imu {
+  geometry_msgs.Quaternion orientaton = 1;
+  geometry_msgs.Vector3d angular_velocity = 2;      // rad/sec
+  geometry_msgs.Vector3d linear_acceleration = 3;   // m/s^2
+}

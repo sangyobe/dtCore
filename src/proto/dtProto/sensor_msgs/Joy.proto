@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package dtproto.sensor_msgs;
+
+message Joy {
+  repeated float axes = 1;
+  int32 buttons = 2;
+}

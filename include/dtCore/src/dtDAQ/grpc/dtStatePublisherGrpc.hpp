@@ -200,7 +200,6 @@ void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
         _ctx.TryCancel();
     // LOG(INFO) << "Session shutdown.";
     _status = SessionStatus::FINISHED;
-    _server->RemoveSession(_id);
 }
 
 
@@ -222,7 +221,7 @@ dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_n
 template<typename StateType>
 dtStatePublisherGrpc<StateType>::~dtStatePublisherGrpc()
 {
-    Stop();
+    //Stop();
 }
 
 template<typename StateType>
@@ -257,11 +256,11 @@ void dtStatePublisherGrpc<StateType>::Stop() {
     for (auto it : _sessions) {
         it.second->TryCancelCallAndShutdown();
     }
-
+    _sessions.clear();
     _server->Shutdown();
     _cq->Shutdown();
     _running = false;
-    _rpc_thread.join();
+    if (_rpc_thread.joinable()) _rpc_thread.join();
     // LOG(INFO) << "Server shutdown.";
 }
 
@@ -276,15 +275,21 @@ void dtStatePublisherGrpc<StateType>::Run() {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
         bool ok;
-        while (_cq->Next(&tag, &ok)) {
-            // LOG(INFO) << "CQ_CALL";
-            //GPR_ASSERT(ok);
-            if (ok) {
-                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
+        try {
+            while (_cq->Next(&tag, &ok)) {
+                // LOG(INFO) << "CQ_CALL";
+                //GPR_ASSERT(ok);
+                if (ok) {
+                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
+                }
+                else {
+                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+                    RemoveSession(static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->GetId());
+                }
             }
-            else {
-                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
-            }
+        }
+        catch (std::exception& e) {
+            // LOG(ERROR) << e.what();
         }
     });
 }
