@@ -1,6 +1,6 @@
 #include "dtCore/src/dtDAQ/grpc/dtDAQManagerGrpc.h"
 #include "dtCore/src/dtDAQ/grpc/dtStatePublisherGrpc.hpp"
-//#include "dtCore/src/dtLog/dtLog.hpp"
+#include "dtCore/src/dtLog/dtLog.h"
 
 dtCore::dtDAQManagerGrpc DAQ;
 
@@ -10,6 +10,9 @@ int main(int argc, char** argv)
     
     // grpc::EnableDefaultHealthCheckService(true);
     // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+
+    dtCore::dtLog::Initialize("grpc_state_pub", "logs/grpc_state_pub.txt");
+    dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
 
 
     //DAQ.Initialize();
@@ -31,7 +34,7 @@ int main(int argc, char** argv)
         }
         else {
             for (uint32_t seq = 0; seq < 1000; seq++) {
-                std::cout << seq << std::endl;
+                LOG(trace) << seq;
 
                 msg.mutable_header()->set_seq(seq);
                 msg.mutable_state()->mutable_base_pose()->mutable_position()->set_x(data_gen());
@@ -51,6 +54,8 @@ int main(int argc, char** argv)
     }
 
     //DAQ.Terminate();
+
+    dtCore::dtLog::Terminate();
 
     return 0;
 }
