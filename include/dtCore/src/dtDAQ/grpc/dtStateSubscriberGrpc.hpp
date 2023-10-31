@@ -35,52 +35,60 @@ public:
 
     void RegMessageHandler(std::function<void(StateType&)>);
     bool IsRunning();
+    void Reconnect();
 
 private:
-    bool InitRequest();
-    bool OnCompletionEvent();
-    bool TryCancelCallAndShutdown();
-    void Stop();
-
-private:
-    std::unique_ptr<dtproto::service::DataService::Stub> _stub {nullptr};
-    grpc::ClientContext _context;
-    grpc::Status _status;
-    enum class RpcCallStatus {
-        WAIT_START,
-        READY_TO_READ,
-        WAIT_READ_DONE,
-        WAIT_FINISH,
-        FINISHED,
-        PEER_DISCONNECTED
-    };
-    RpcCallStatus _call_status {RpcCallStatus::WAIT_START};
-    grpc::CompletionQueue _cq;
-    std::atomic<bool> _running {true};
-    std::thread _rpc_recv_thread;
-    std::mutex _call_mtx;
-    std::function<void(StateType&)> _msg_handler {nullptr};
-    dtproto::std_msgs::State _msg;
-    std::unique_ptr<grpc::ClientAsyncReader<dtproto::std_msgs::State> > _stream_reader;
     std::string _topic_name{""};
     std::string _server_address{""};
+    std::function<void(StateType&)> _msg_handler {nullptr};
+    std::atomic<bool> _running {true};
+
+    class Session {
+    public:
+        Session(dtStateSubscriberGrpc<StateType>* subscriber);
+        ~Session();
+
+    private:
+        bool InitRequest();
+        bool OnCompletionEvent();
+        bool TryCancelCallAndShutdown();
+        void Stop();
+
+    private:
+        std::unique_ptr<dtproto::service::DataService::Stub> _stub {nullptr};
+        grpc::ClientContext _ctx;
+        grpc::CompletionQueue _cq;
+        grpc::Status _status;
+        std::unique_ptr<grpc::ClientAsyncReader<dtproto::std_msgs::State>> _stream_reader;
+        dtproto::std_msgs::State _msg;
+        enum class RpcCallStatus {
+            WAIT_START,
+            READY_TO_READ,
+            WAIT_READ_DONE,
+            WAIT_FINISH,
+            FINISHED,
+            PEER_DISCONNECTED
+        };
+        RpcCallStatus _call_status {RpcCallStatus::WAIT_START};
+        std::thread _rpc_recv_thread;
+        std::mutex _call_mtx;
+        dtStateSubscriberGrpc<StateType>* _subscriber;
+    };
+
+    std::unique_ptr<Session> _session{nullptr};
 };
 
 template<typename StateType>
 dtStateSubscriberGrpc<StateType>::dtStateSubscriberGrpc(const std::string& topic_name, const std::string& server_address)
 : _topic_name(topic_name), _server_address(server_address)
 {
-    _stub = dtproto::service::DataService::NewStub(
-        grpc::CreateChannel(_server_address, grpc::InsecureChannelCredentials())
-    );
-
-    InitRequest();
+    _session = std::make_unique<Session>(this);
 }
 
 template<typename StateType>
 dtStateSubscriberGrpc<StateType>::~dtStateSubscriberGrpc()
 {
-    Stop();
+    if(_session) _session.reset();
 }
 
 template<typename StateType>
@@ -96,49 +104,73 @@ bool dtStateSubscriberGrpc<StateType>::IsRunning()
 }
 
 template<typename StateType>
-bool dtStateSubscriberGrpc<StateType>::InitRequest() {
-    
-    _context.set_wait_for_ready(true);
+void dtStateSubscriberGrpc<StateType>::Reconnect()
+{
+    if (_session) {
+        _session.reset();
+    }
+    _session = std::make_unique<Session>(this);
+}
+
+template<typename StateType>
+dtStateSubscriberGrpc<StateType>::Session::Session(dtStateSubscriberGrpc<StateType>* subscriber)
+: _subscriber(subscriber)
+{
+    _stub = dtproto::service::DataService::NewStub(
+        grpc::CreateChannel(_subscriber->_server_address, grpc::InsecureChannelCredentials()));
+
+    InitRequest();
+}
+
+template<typename StateType>
+dtStateSubscriberGrpc<StateType>::Session::~Session()
+{
+    Stop();
+}
+
+template<typename StateType>
+bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
+{
+    _ctx.set_wait_for_ready(true);
 
     dtproto::std_msgs::Request req;
-    req.set_name(_topic_name);
+    req.set_name(_subscriber->_topic_name);
     req.set_type(dtproto::std_msgs::Request::ON);
     _stream_reader =
       _stub->PrepareAsyncStreamState(
-        &_context,
+        //&_context,
+        &_ctx,
         req,
         &_cq);
-    _stream_reader->StartCall((void*)this);
+    
     _call_status = RpcCallStatus::WAIT_START;
-
-
-    _running = true;
+    _stream_reader->StartCall((void*)this);
+    this->_subscriber->_running = true;
 
     _rpc_recv_thread = std::thread([this] {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
         bool ok;
-        bool rtn = true;
-        while (_running.load() && _cq.Next(&tag, &ok)) {
+        while (_cq.Next(&tag, &ok)) {
             // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
-            if (ok) {
-                if (!static_cast<dtStateSubscriberGrpc*>(tag)->OnCompletionEvent()) {
-                    _running = false;
-                }
+            if (ok && static_cast<dtStateSubscriberGrpc<StateType>::Session*>(tag)->OnCompletionEvent()) {
+                continue;
             }
             else {
-                static_cast<dtStateSubscriberGrpc*>(tag)->TryCancelCallAndShutdown();
+                static_cast<dtStateSubscriberGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+                break;
             }
         }
         // LOG(INFO) << "RPC handler() exits.";
+        this->_subscriber->_running = false;
     });
 
     return true;
 }
 
 template<typename StateType>
-bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
-
+bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
+{
     std::lock_guard<std::mutex> lock(_call_mtx);
 
     if (_call_status == RpcCallStatus::WAIT_START) {
@@ -161,11 +193,11 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
             return false;
         }
 
-        if (_msg_handler) {
+        if (_subscriber->_msg_handler) {
             // LOG(INFO) << "Got a new message. Type = " << _msg.state().type_url();
             StateType state;
             _msg.state().UnpackTo(&state);
-            _msg_handler(state);
+            _subscriber->_msg_handler(state);
         }
 
         _stream_reader->Read(&_msg, (void*)this);
@@ -175,13 +207,12 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
     else if (_call_status == RpcCallStatus::WAIT_FINISH) {
         // LOG(INFO) << "Finalize StreamState() service call.";
         _call_status = RpcCallStatus::FINISHED;
-        _running = false;
         // Once we're complete, deallocate the call object.
         //delete this;
         return false;
     }
     else {
-        // LOG(INFO) << "AsyncStreamStateRequest::OnCompletionEvent, _call_status = " << static_cast<int>(_call_status);
+        // LOG(INFO) << "Session::OnCompletionEvent, _call_status = " << static_cast<int>(_call_status);
         return false;
     }
 
@@ -189,11 +220,11 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
 }
 
 template<typename StateType>
-bool dtStateSubscriberGrpc<StateType>::TryCancelCallAndShutdown() {
+bool dtStateSubscriberGrpc<StateType>::Session::TryCancelCallAndShutdown()
+{
     std::lock_guard<std::mutex> lock(_call_mtx);
 
-    _context.TryCancel();
-    _running = false;
+    _ctx.TryCancel();
 
     if (_call_status != RpcCallStatus::WAIT_START &&
         _call_status != RpcCallStatus::WAIT_FINISH &&
@@ -208,13 +239,13 @@ bool dtStateSubscriberGrpc<StateType>::TryCancelCallAndShutdown() {
 }
 
 template<typename StateType>
-void dtStateSubscriberGrpc<StateType>::Stop()
+void dtStateSubscriberGrpc<StateType>::Session::Stop()
 {
     TryCancelCallAndShutdown();
-    _running = false;
     _cq.Shutdown();
+    // LOG(INFO) << "CQ shutdown.";
     _rpc_recv_thread.join();
-    //LOG(INFO) << "Clinet shutdown.";
+    // LOG(INFO) << "Session shutdown.";
 }
 
 } // namespace dtCore

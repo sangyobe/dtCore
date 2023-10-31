@@ -52,9 +52,7 @@ int main(int argc, char** argv)
 
         if (!sub->IsRunning()) {
             std::cout << "Reconnect..." << std::endl;
-            sub.reset();
-            sub = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50051");
-            sub->RegMessageHandler(handler);
+            sub->Reconnect();
         }
     }
     chk_key.join();
