@@ -1,13 +1,13 @@
 #include "dtCore/src/dtDAQ/grpc/dtStateSubscriberGrpc.hpp"
+//#include "dtCore/src/dtLog/dtLog.h"
 
 int main(int argc, char** argv) 
 {
     //google::InitGoogleLogging(argv[0]);
-
-    dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped> sub("RobotState", "0.0.0.0:50051");
+    //dtCore::dtLog::Initialize(argv[0]);
 
     std::function<void(dtproto::robot_msgs::RobotStateTimeStamped&)> handler = [](dtproto::robot_msgs::RobotStateTimeStamped& msg) {
-        //LOG(INFO) << "Got a new message. Type = " << msg.state().type_url();
+        // LOG(info) << "Got a new message. Type = " << msg.state().GetTypeName();
 
         // if (msg.state().type_url() != "type.googleapis.com/dtproto.robot_msgs.RobotState") {
         //     return;
@@ -25,8 +25,14 @@ int main(int argc, char** argv)
         }
 
     };
-    sub.RegMessageHandler(handler);
-    
+
+
+
+    std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>> sub
+        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50051");
+    sub->RegMessageHandler(handler);
+
+
     std::atomic<bool> bRun;
     bRun.store(true);
     std::thread chk_key = std::thread([&bRun] () {
@@ -40,13 +46,18 @@ int main(int argc, char** argv)
             }
         }
     });
-    std::string cmd;
-    std::cin >> cmd;
-    while (bRun.load())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    while (bRun.load()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        if (!sub->IsRunning()) {
+            std::cout << "Reconnect..." << std::endl;
+            sub.reset();
+            sub = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50051");
+            sub->RegMessageHandler(handler);
+        }
     }
     chk_key.join();
-    
+
     return 0;
 }

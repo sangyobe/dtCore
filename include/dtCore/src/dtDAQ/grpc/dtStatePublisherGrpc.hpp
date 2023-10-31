@@ -80,6 +80,7 @@ protected:
 
         dtproto::std_msgs::Request _request;
         grpc::ServerAsyncWriter<dtproto::std_msgs::State> _responder;
+        grpc::Status _finish_status = grpc::Status::OK;
         uint32_t _msg_seq{0};
         dtproto::std_msgs::State _msg;
         std::deque<dtproto::std_msgs::State> _msg_queue{};
@@ -132,39 +133,34 @@ dtStatePublisherGrpc<StateType>::Session::~Session()
 template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
 {
-    // LOG(INFO) << "StreamState: " << "OnCompletionEvent";
     if (_status == SessionStatus::WAIT_CONNECT) {
         // LOG(INFO) << "NEW StreamState() service call.";
-
         _server->AddSession();
-
         {
             std::lock_guard<std::mutex> lock(_proc_mtx);
             _status = SessionStatus::READY_TO_WRITE;
         }
-      
     } 
     else if (_status == SessionStatus::WAIT_WRITE_DONE) {
-
-      std::lock_guard<std::mutex> lock(_proc_mtx);
-
-      if (!_msg_queue.empty()) {
-        _status = SessionStatus::WAIT_WRITE_DONE;
-        _responder.Write(_msg_queue.front(), this);
-        _msg_queue.pop_front();
-      }
-      else {
-        _status = SessionStatus::READY_TO_WRITE;
-      }
+        // LOG(INFO) << "Write done.";
+        std::lock_guard<std::mutex> lock(_proc_mtx);
+        if (!_msg_queue.empty()) {
+            _status = SessionStatus::WAIT_WRITE_DONE;
+            _responder.Write(_msg_queue.front(), this);
+            _msg_queue.pop_front();
+        }
+        else {
+            _status = SessionStatus::READY_TO_WRITE;
+        }
     }
     else if (_status == SessionStatus::WAIT_FINISH) {
-      // LOG(INFO) << "Finalize StreamState() service.";
-      //_status = SessionStatus::FINISHED;
-      _server->RemoveSession(_id);
+        // LOG(INFO) << "Finalize StreamState() service.";
+        //_status = SessionStatus::FINISHED;
+        _server->RemoveSession(_id);
     }
     else {
-      GPR_ASSERT(false && "Invalid Session Status.");
-      // LOG(ERROR) << "Invalid session status (" << static_cast<int>(_status) << ")";
+        GPR_ASSERT(false && "Invalid Session Status.");
+        // LOG(ERROR) << "Invalid session status (" << static_cast<int>(_status) << ")";
     }
 }
 
@@ -196,20 +192,29 @@ template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
 {
     //std::lock_guard<std::mutex> lock(_proc_mtx);
-    if (_status != SessionStatus::WAIT_CONNECT)
+    if (_status != SessionStatus::WAIT_CONNECT &&
+        _status != SessionStatus::WAIT_FINISH &&
+        _status != SessionStatus::FINISHED) {
         _ctx.TryCancel();
+
+        // LOG(INFO) << "Finishing<" << _id << ">.";
+        std::lock_guard<std::mutex> lock(_proc_mtx);
+        //_status = SessionStatus::WAIT_FINISH;
+        _status = SessionStatus::FINISHED;
+        //_responder.Finish(_finish_status, this);
+    }
+
     // LOG(INFO) << "Session shutdown.";
-    _status = SessionStatus::FINISHED;
+    // _status = SessionStatus::FINISHED;
+    // _server->RemoveSession(_id);
 }
-
-
 
 template<typename StateType>
 dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address)
 : _topic_name(topic_name), _server_address(server_address)
 {
     grpc::ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&_service);
     _cq = builder.AddCompletionQueue();
     _server = builder.BuildAndStart();
@@ -221,7 +226,7 @@ dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_n
 template<typename StateType>
 dtStatePublisherGrpc<StateType>::~dtStatePublisherGrpc()
 {
-    //Stop();
+    Stop();
 }
 
 template<typename StateType>
@@ -229,7 +234,7 @@ void dtStatePublisherGrpc<StateType>::Publish(StateType& msg)
 {
     std::lock_guard<std::mutex> lock(_session_mtx);
     for (auto it : _sessions) {
-      it.second->Publish(msg);
+        it.second->Publish(msg);
     }
 }
 
@@ -252,15 +257,18 @@ template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Stop() {
     // LOG(INFO) << "Shutting down Server.";
 
-    std::lock_guard<std::mutex> lock(_session_mtx);
-    for (auto it : _sessions) {
-        it.second->TryCancelCallAndShutdown();
+    {
+        std::lock_guard<std::mutex> lock(_session_mtx);
+        for (auto it : _sessions) {
+            it.second->TryCancelCallAndShutdown();
+        }
+        //_sessions.clear();
     }
-    _sessions.clear();
+
+    _running = false;
     _server->Shutdown();
     _cq->Shutdown();
-    _running = false;
-    if (_rpc_thread.joinable()) _rpc_thread.join();
+    _rpc_thread.join();
     // LOG(INFO) << "Server shutdown.";
 }
 
@@ -275,21 +283,15 @@ void dtStatePublisherGrpc<StateType>::Run() {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
         bool ok;
-        try {
-            while (_cq->Next(&tag, &ok)) {
-                // LOG(INFO) << "CQ_CALL";
-                //GPR_ASSERT(ok);
-                if (ok) {
-                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
-                }
-                else {
-                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
-                    RemoveSession(static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->GetId());
-                }
+        while (_cq->Next(&tag, &ok)) {
+            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+            //GPR_ASSERT(ok);
+            if (ok) {
+                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
             }
-        }
-        catch (std::exception& e) {
-            // LOG(ERROR) << e.what();
+            else {
+                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+            }
         }
     });
 }

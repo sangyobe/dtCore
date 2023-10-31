@@ -34,6 +34,7 @@ public:
     ~dtStateSubscriberGrpc();
 
     void RegMessageHandler(std::function<void(StateType&)>);
+    bool IsRunning();
 
 private:
     bool InitRequest();
@@ -70,7 +71,7 @@ dtStateSubscriberGrpc<StateType>::dtStateSubscriberGrpc(const std::string& topic
 : _topic_name(topic_name), _server_address(server_address)
 {
     _stub = dtproto::service::DataService::NewStub(
-        grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials())
+        grpc::CreateChannel(_server_address, grpc::InsecureChannelCredentials())
     );
 
     InitRequest();
@@ -89,7 +90,15 @@ void dtStateSubscriberGrpc<StateType>::RegMessageHandler(std::function<void(Stat
 }
 
 template<typename StateType>
+bool dtStateSubscriberGrpc<StateType>::IsRunning()
+{
+    return _running.load();
+}
+
+template<typename StateType>
 bool dtStateSubscriberGrpc<StateType>::InitRequest() {
+    
+    _context.set_wait_for_ready(true);
 
     dtproto::std_msgs::Request req;
     req.set_name(_topic_name);
@@ -109,17 +118,19 @@ bool dtStateSubscriberGrpc<StateType>::InitRequest() {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
         bool ok;
+        bool rtn = true;
         while (_running.load() && _cq.Next(&tag, &ok)) {
-            // LOG(INFO) << "Async READ complete event";
+            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             if (ok) {
-                if (static_cast<dtStateSubscriberGrpc*>(tag)->OnCompletionEvent())
-                    continue;
+                if (!static_cast<dtStateSubscriberGrpc*>(tag)->OnCompletionEvent()) {
+                    _running = false;
+                }
             }
             else {
-                //static_cast<dtStateSubscriberGrpc*>(tag)->TryCancelCallAndShutdown();
+                static_cast<dtStateSubscriberGrpc*>(tag)->TryCancelCallAndShutdown();
             }
-            break;
         }
+        // LOG(INFO) << "RPC handler() exits.";
     });
 
     return true;
@@ -128,12 +139,16 @@ bool dtStateSubscriberGrpc<StateType>::InitRequest() {
 template<typename StateType>
 bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
 
+    std::lock_guard<std::mutex> lock(_call_mtx);
+
     if (_call_status == RpcCallStatus::WAIT_START) {
 
         if (!_status.ok()) {
-            std::cout << "StreamState rpc call failed." << std::endl;
+            // LOG(INFO) << "StreamState rpc call failed.";
             return false;
         }
+
+        // LOG(INFO) << "StreamState rpc call started.";
 
         _stream_reader->Read(&_msg, (void*)this);
         _call_status = RpcCallStatus::WAIT_READ_DONE;
@@ -147,6 +162,7 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
         }
 
         if (_msg_handler) {
+            // LOG(INFO) << "Got a new message. Type = " << _msg.state().type_url();
             StateType state;
             _msg.state().UnpackTo(&state);
             _msg_handler(state);
@@ -157,6 +173,7 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
 
     }
     else if (_call_status == RpcCallStatus::WAIT_FINISH) {
+        // LOG(INFO) << "Finalize StreamState() service call.";
         _call_status = RpcCallStatus::FINISHED;
         _running = false;
         // Once we're complete, deallocate the call object.
@@ -173,20 +190,31 @@ bool dtStateSubscriberGrpc<StateType>::OnCompletionEvent() {
 
 template<typename StateType>
 bool dtStateSubscriberGrpc<StateType>::TryCancelCallAndShutdown() {
+    std::lock_guard<std::mutex> lock(_call_mtx);
+
+    _context.TryCancel();
     _running = false;
-    _call_status = RpcCallStatus::WAIT_FINISH;
-    _stream_reader->Finish(&_status, (void *)this);
+
+    if (_call_status != RpcCallStatus::WAIT_START &&
+        _call_status != RpcCallStatus::WAIT_FINISH &&
+        _call_status != RpcCallStatus::FINISHED) 
+    {
+        // LOG(INFO) << "Finishing...";
+        _call_status = RpcCallStatus::WAIT_FINISH;
+        _stream_reader->Finish(&_status, (void *)this);
+    }
+
     return true;
 }
 
 template<typename StateType>
 void dtStateSubscriberGrpc<StateType>::Stop()
 {
-    //TryCancelCallAndShutdown();
+    TryCancelCallAndShutdown();
     _running = false;
     _cq.Shutdown();
-    if (_rpc_recv_thread.joinable())
-        _rpc_recv_thread.join();
+    _rpc_recv_thread.join();
+    //LOG(INFO) << "Clinet shutdown.";
 }
 
 } // namespace dtCore
