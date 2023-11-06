@@ -1,0 +1,6 @@
+[submodule "extlib/yaml-cpp"]
+	path = extlib/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "extlib/spdlog"]
+	path = extlib/spdlog
+	url = https://github.com/gabime/spdlog.git
