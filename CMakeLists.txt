@@ -88,6 +88,8 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extlib/yaml-cpp/CMakeLists.txt")
     message(FATAL_ERROR "The yaml-cpp submodules was not downloaded. GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
+add_subdirectory(extlib/spdlog)
+add_subdirectory(extlib/yaml-cpp)
 
 
 # --------------------------------------------------------
