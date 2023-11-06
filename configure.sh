@@ -1,0 +1,1 @@
+cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_EXAMPLES=ON -DBUILD_EXAMPLES_gRPC=ON -DBUILD_dtProto=ON -DBUILD_dtProto_gRPC=ON
