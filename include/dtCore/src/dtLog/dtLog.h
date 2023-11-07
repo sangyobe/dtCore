@@ -67,17 +67,26 @@ public:
         spdlog::set_default_logger(logger);
     }
 
-    static void Create(const std::string log_name, const std::string file_basename)
+    static void Create(const std::string log_name, const std::string file_basename, bool annot_datetime = true, bool truncate = false)
     {
-        spdlog::filename_t filename = annotate_filename_datetime(file_basename);
+        spdlog::filename_t filename = file_basename;
+        if (annot_datetime)
+            filename = annotate_filename_datetime(file_basename);
 
         // Create a logger
 #ifdef DTCORE_DTLOG_MT
-        auto logger = spdlog::basic_logger_mt(log_name, filename);
+        auto logger = spdlog::basic_logger_mt(log_name, filename, truncate);
 #else
-        auto logger = spdlog::basic_logger_st(log_name, filename);
+        auto logger = spdlog::basic_logger_st(log_name, filename, truncate);
 #endif
         logger->set_pattern("%^[%L][%H:%M:%S.%f]%$%v");
+    }
+
+    static void Flush(const std::string log_name)
+    {
+        std::shared_ptr<spdlog::logger> logger = spdlog::get(log_name);
+        if (logger)
+            logger->flush();
     }
 
     static void Terminate() 
