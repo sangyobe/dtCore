@@ -28,7 +28,7 @@ void DoubleDof3WithoutDefaultConstructor()
     {
         double tc = 0.01*i; //!< current time
         traj.Interpolate(tc, p, v); //!< input: tc, output: p, v
-        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2]
+        std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2]
                   << std::endl;
     }
 }
@@ -69,7 +69,7 @@ void DoubleDof3WithDefaultConstructor()
         }
 
         traj.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+        std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                   << std::endl;       
     }
 }
@@ -113,7 +113,7 @@ void DoubleDof3WithDefaultConstructor2()
         }
 
         traj.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-        std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+        std::cout << 0.01*i << "," << p[0] << "," << p[1] << "," << p[2] << "," << v[0] << "," << v[1] << "," << v[2] << "," << a[0] << "," << a[1] << "," << a[2]
                   << std::endl;       
     }
 }

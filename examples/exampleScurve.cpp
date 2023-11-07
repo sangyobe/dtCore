@@ -27,7 +27,7 @@ class Duration //!< Example of creating an S-curve trajectory using trajectory d
         {
             double tc = 0.01*i; //!< current time
             traj5.Interpolate(tc, p, v); //!< input: tc, output: p, v
-            std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2]
+            std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2]
                       << std::endl;       
         }
     }
@@ -57,7 +57,7 @@ class Duration //!< Example of creating an S-curve trajectory using trajectory d
           }
 
           traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-          std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+          std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                     << std::endl;       
         }
     }
@@ -89,7 +89,7 @@ class Duration //!< Example of creating an S-curve trajectory using trajectory d
             }
 
             traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-            std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+            std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                       << std::endl;       
         }
     }
@@ -118,7 +118,7 @@ class Limit //!< Example of creating an S-curve trajectory using velocity limit,
         {
             double tc = 0.01*i; //!< current time
             traj5.Interpolate(tc, p, v, a); //!< input: tc, output: p, v
-            std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+            std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                       << std::endl;       
         }
     }
@@ -148,7 +148,7 @@ class Limit //!< Example of creating an S-curve trajectory using velocity limit,
             }
 
             traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-            std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+            std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                       << std::endl;       
         }
     }
@@ -180,7 +180,7 @@ class Limit //!< Example of creating an S-curve trajectory using velocity limit,
             }
 
             traj7.Interpolate(tc, p, v, a); //!< input: tc, output: p, v, a
-            std::cout << 0.01*i << " " << p[0] << " " << p[1] << " " << p[2] << " " << v[0] << " " << v[1] << " " << v[2] << " " << a[0] << " " << a[1] << " " << a[2]
+            std::cout << 0.01*i << ", " << p[0] << ", " << p[1] << ", " << p[2] << ", " << v[0] << ", " << v[1] << ", " << v[2] << ", " << a[0] << ", " << a[1] << ", " << a[2]
                       << std::endl;       
         }
     }
