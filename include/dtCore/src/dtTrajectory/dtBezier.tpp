@@ -106,7 +106,7 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
     m_p[1] = p0 + m_duration* v0 / (m_num - 1); //!< Set the control point for the init velocity
     m_p[2] = p0 + 2 * m_duration * v0 / (m_num - 1) + m_duration * m_duration* a0 / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the init acceleration
     memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
-    m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) - m_duration * m_duration * af / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the target acceleration
+    m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) + m_duration * m_duration * af / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the target acceleration
     m_p[m_num - 2] = pf - m_duration * vf / (m_num - 1); //!< Set the control point for the target velocity
     m_p[m_num - 1] = pf; //!< Set the control point for the target position
 
