@@ -89,12 +89,12 @@ template <typename TrajType> class dtTrajectoryList {
     typename TrajType::ValType key() const { return m_key; }
     TrajType value() const { return m_value; }
 
-    bool operator<(Cont &rhs) { return (m_key < rhs.key()); }
-    bool operator<=(Cont &rhs) { return (m_key <= rhs.key()); }
-    bool operator==(Cont &rhs) { return (m_key == rhs.key()); }
-    bool operator>(Cont &rhs) { return (m_key > rhs.key()); }
-    bool operator>=(Cont &rhs) { return (m_key >= rhs.key()); }
-    bool operator<(typename TrajType::ValType &key) { return (m_key < key); }
+    bool operator<(const Cont &rhs) const { return (m_key < rhs.key()); }
+    bool operator<=(const Cont &rhs) const { return (m_key <= rhs.key()); }
+    bool operator==(const Cont &rhs) const { return (m_key == rhs.key()); }
+    bool operator>(const Cont &rhs) const { return (m_key > rhs.key()); }
+    bool operator>=(const Cont &rhs) const { return (m_key >= rhs.key()); }
+    bool operator<(const typename TrajType::ValType &key) const { return (m_key < key); }
 
   private:
     typename TrajType::ValType m_key;
@@ -112,11 +112,14 @@ public:
                    typename TrajType::ContRefType v,
                    typename TrajType::ContRefType a) const;
   void Interpolate(const typename TrajType::ValType t,
+                   typename TrajType::ContRefType p,
+                   typename TrajType::ContRefType v) const;
+  void Interpolate(const typename TrajType::ValType t,
                    typename TrajType::ContRefType p) const;
 
 private:
   void GetAt(const typename TrajType::ValType t, typename TrajType::ValType &t0,
-             TrajType &traj);
+             TrajType &traj) const;
 
 private:
   std::list<Cont> m_trajList;

@@ -23,30 +23,50 @@ void dtTrajectoryList<TrajType>::Add(const typename TrajType::ValType t,
 
 template <typename TrajType>
 void dtTrajectoryList<TrajType>::Interpolate(
-    const typename TrajType::ValType t, typename TrajType::ContRefType p,
-    typename TrajType::ContRefType v, typename TrajType::ContRefType a) const {
-    // typename TrajType::ValType t0;
-    // TrajType traj;
-    // GetAt(t, t0, traj);
+    const typename TrajType::ValType t, 
+    typename TrajType::ContRefType p,
+    typename TrajType::ContRefType v, 
+    typename TrajType::ContRefType a) const {
 
-  typename std::list<Cont>::const_iterator itr = m_trajList.begin();
-  if (itr != m_trajList.end()) {
-    typename TrajType::ValType t0 = (*itr).key();
-    TrajType &&traj = (*itr).value();
-    traj.Interpolate(t - t0, p, v, a);
-  }
+  typename TrajType::ValType t0;
+  TrajType traj;
+  GetAt(t, t0, traj);
+  traj.Interpolate(t - t0, p, v, a);
+
+  // typename std::list<Cont>::const_iterator itr = m_trajList.begin();
+  // if (itr != m_trajList.end()) {
+  //   typename TrajType::ValType t0 = (*itr).key();
+  //   TrajType &&traj = (*itr).value();
+  //   traj.Interpolate(t - t0, p, v, a);
+  // }
 }
 
 template <typename TrajType>
 void dtTrajectoryList<TrajType>::Interpolate(
     const typename TrajType::ValType t,
-    typename TrajType::ContRefType p) const {}
+    typename TrajType::ContRefType p, 
+    typename TrajType::ContRefType v) const {
+  typename TrajType::ValType t0;
+  TrajType traj;
+  GetAt(t, t0, traj);
+  traj.Interpolate(t - t0, p, v);
+}
+
+template <typename TrajType>
+void dtTrajectoryList<TrajType>::Interpolate(
+    const typename TrajType::ValType t,
+    typename TrajType::ContRefType p) const {
+  typename TrajType::ValType t0;
+  TrajType traj;
+  GetAt(t, t0, traj);
+  traj.Interpolate(t - t0, p);
+}
 
 template <typename TrajType>
 void dtTrajectoryList<TrajType>::GetAt(const typename TrajType::ValType t,
                                        typename TrajType::ValType &t0,
-                                       TrajType &traj) {
-  typename std::list<Cont>::iterator itr = m_trajList.begin();
+                                       TrajType &traj) const {
+  typename std::list<Cont>::const_iterator itr = m_trajList.begin();
 
   if (itr != m_trajList.end()) 
   {
