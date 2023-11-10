@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTLOG_HPP__
-#define __DTCORE_DTLOG_HPP__
+#ifndef __DTCORE_DTLOG_H__
+#define __DTCORE_DTLOG_H__
 
 /** \defgroup dtLog
  *
@@ -18,6 +18,7 @@
 #include <spdlog/details/os.h>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 
 #define DTCORE_DTLOG_MT
 
@@ -43,9 +44,39 @@ private:
         return filename;
     }
 
-public:
-    static void Initialize(const std::string log_name, const std::string file_basename = "") 
+    static std::tuple<std::string, std::string> split_by_directory(const std::string &fname)
     {
+        auto dir_index = fname.rfind('/');
+
+        // no valid directory found - return empty string as folder and whole path
+        if (dir_index == std::string::npos)
+        {
+            return std::make_tuple(std::string(), fname);
+        }
+        // ends up with '/' - return whole path as directory and empty string as filename
+        else if (dir_index == fname.size() - 1)
+        {
+            return std::make_tuple(fname, std::string());
+        }
+
+        // finally - return a valid directory and file path tuple
+        return std::make_tuple(fname.substr(0, dir_index+1), fname.substr(dir_index+1)); // '/' is included as directory name
+    }
+
+public:
+    enum class LogLevel {
+        trace = spdlog::level::trace,
+        debug = spdlog::level::debug, 
+        info = spdlog::level::info, 
+        warn = spdlog::level::warn, 
+        err = spdlog::level::err, 
+        critical = spdlog::level::critical, 
+        off = spdlog::level::off
+    };
+
+    static void Initialize(const std::string log_name, const std::string file_basename = "", bool annot_datetime = true, bool truncate = false) 
+    {
+        int rtn;
         std::shared_ptr<spdlog::logger> logger{nullptr};
         // Create a logger
         if (file_basename.empty()) {
@@ -56,12 +87,22 @@ public:
 #endif 
         }
         else {
-            spdlog::filename_t filename = annotate_filename_datetime(file_basename);
+            spdlog::filename_t filename = file_basename;
+            if (annot_datetime)
+                filename = annotate_filename_datetime(file_basename);
 #ifdef DTCORE_DTLOG_MT
-            logger = spdlog::basic_logger_mt(log_name, filename);
+            logger = spdlog::basic_logger_mt(log_name, filename, truncate);
 #else
-            logger = spdlog::basic_logger_st(log_name, filename);
-#endif 
+            logger = spdlog::basic_logger_st(log_name, filename, truncate);
+#endif
+            if (annot_datetime) {
+                std::string dname, fname;
+                std::tie(dname, fname) = split_by_directory(filename);
+                rtn = remove(file_basename.c_str());
+                if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+                rtn = symlink(fname.c_str(), file_basename.c_str());
+                if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+            }
         }
         logger->set_pattern("%^[%L][%H:%M:%S.%f]%$%v");
         spdlog::set_default_logger(logger);
@@ -69,6 +110,7 @@ public:
 
     static void Create(const std::string log_name, const std::string file_basename, bool annot_datetime = true, bool truncate = false)
     {
+        int rtn;
         spdlog::filename_t filename = file_basename;
         if (annot_datetime)
             filename = annotate_filename_datetime(file_basename);
@@ -79,6 +121,14 @@ public:
 #else
         auto logger = spdlog::basic_logger_st(log_name, filename, truncate);
 #endif
+        if (annot_datetime) {
+            std::string dname, fname;
+            std::tie(dname, fname) = split_by_directory(filename);
+            rtn = remove(file_basename.c_str());
+            if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+            rtn = symlink(fname.c_str(), file_basename.c_str());
+            if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+        }
         logger->set_pattern("%^[%L][%H:%M:%S.%f]%$%v");
     }
 
@@ -89,22 +139,24 @@ public:
             logger->flush();
     }
 
+    static void FlushOn(const std::string log_name, LogLevel lvl)
+    {
+        std::shared_ptr<spdlog::logger> logger = spdlog::get(log_name);
+        if (logger)
+            logger->flush_on(static_cast<spdlog::level::level_enum>(lvl));
+    }
+
+    static void FlushOn(LogLevel lvl)
+    {
+        spdlog::flush_on(static_cast<spdlog::level::level_enum>(lvl));
+    }
+
     static void Terminate() 
     {
         // flush all peding log message
         spdlog::shutdown();
     }
 
-    enum class LogLevel {
-        trace = spdlog::level::trace,
-        debug = spdlog::level::debug, 
-        info = spdlog::level::info, 
-        warn = spdlog::level::warn, 
-        err = spdlog::level::err, 
-        critical = spdlog::level::critical, 
-        off = spdlog::level::off
-    };
-    
     static void SetLogLevel(const std::string log_name, LogLevel lvl) {
         std::shared_ptr<spdlog::logger> logger = spdlog::get(log_name);
         if (logger) {
@@ -224,4 +276,4 @@ public:
 
 #include "dtLog.tpp"
 
-#endif // __DTCORE_DTLOG_HPP__
+#endif // __DTCORE_DTLOG_H__
