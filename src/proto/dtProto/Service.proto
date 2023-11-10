@@ -7,6 +7,9 @@ import "dtProto/std_msgs/State.proto";
 import "dtProto/std_msgs/Request.proto";
 import "dtProto/robot_msgs/RobotInfo.proto";
 import "dtProto/robot_msgs/RobotState.proto";
+import "dtProto/robot_msgs/ControlCmd.proto";
+import "dtProto/robot_msgs/MoveControl.proto";
+import "dtProto/robot_msgs/JointControl.proto";
 import "google/protobuf/empty.proto";
 
 service DataService {
@@ -21,4 +24,29 @@ service DataService {
 
   rpc StreamState(std_msgs.Request) 
     returns (stream std_msgs.State);
+
+  rpc Move(robot_msgs.MoveControl)
+    returns (std_msgs.Response);
+  
+  rpc MoveJoint(robot_msgs.JointControl)
+    returns (std_msgs.Response);
+
+  rpc Command(robot_msgs.ControlCmd)
+    returns (std_msgs.Response);
+}
+
+service ControlService {
+  rpc Move(robot_msgs.MoveControl)
+    returns (std_msgs.Response);
+  
+  rpc MoveJoint(robot_msgs.JointControl)
+    returns (std_msgs.Response);
+
+  rpc Command(robot_msgs.ControlCmd)
+    returns (std_msgs.Response);
+}
+
+service InfoService {
+  rpc QueryRobotInfo(google.protobuf.Empty) 
+    returns (robot_msgs.RobotInfo);
 }

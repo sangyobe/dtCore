@@ -4,5 +4,5 @@ package dtproto.sensor_msgs;
 
 message Joy {
   repeated float axes = 1;
-  int32 buttons = 2;
+  repeated int32 buttons = 2;
 }

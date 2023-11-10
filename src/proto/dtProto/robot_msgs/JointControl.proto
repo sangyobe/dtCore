@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/sensor_msgs/JointState.proto";
+
+message JointControl {
+  enum Mode {
+    SET_POSITION = 0;
+    SET_VELOCITY = 1;
+    SET_TORQUE = 2;
+  }
+  repeated sensor_msgs.JointState joint_state = 1;
+  float duration = 2;
+}
+
+message JointControlTimeStamped {
+  std_msgs.Header header = 1;
+  JointControl cmd = 2;
+}

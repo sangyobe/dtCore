@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/geometry_msgs/Pose.proto";
+import "dtProto/geometry_msgs/Twist.proto";
+
+message ControlCmd {
+  int32 op_mode = 1;
+  string arg = 2;
+}
+
+message ControlCmdTimeStamped {
+  std_msgs.Header header = 1;
+  ControlCmd cmd = 2;
+}

@@ -10,3 +10,8 @@ message Request {
   string name = 1;
   ReqType type = 2;
 }
+
+message Response {
+  int32 rtn = 1;
+  string msg = 2;
+}
