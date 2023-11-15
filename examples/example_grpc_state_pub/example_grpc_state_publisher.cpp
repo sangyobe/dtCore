@@ -1,5 +1,6 @@
 #include "dtCore/src/dtDAQ/grpc/dtDAQManagerGrpc.h"
 #include "dtCore/src/dtDAQ/grpc/dtStatePublisherGrpc.hpp"
+#include "dtProto/robot_msgs/RobotState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
 
 dtCore::dtDAQManagerGrpc DAQ;
@@ -8,14 +9,13 @@ int main(int argc, char** argv)
 {
     //google::InitGoogleLogging(argv[0]);
     
-    // grpc::EnableDefaultHealthCheckService(true);
-    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-
     dtCore::dtLog::Initialize("grpc_state_pub", "logs/grpc_state_pub.txt");
     dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
 
 
-    //DAQ.Initialize();
+    DAQ.Initialize();
+    // grpc::EnableDefaultHealthCheckService(true);
+    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     //std::shared_ptr<dtCore::dtDataSink> pub = std::make_shared<dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> >("RobotState", "0.0.0.0:50051");
     dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50051");
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     }
     chk_key.join();
 
-    //DAQ.Terminate();
+    DAQ.Terminate();
 
     dtCore::dtLog::Terminate();
 

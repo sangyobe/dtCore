@@ -1,52 +1,20 @@
 syntax = "proto3";
 
-package dtproto.service;
+package dtproto;
 
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/std_msgs/State.proto";
 import "dtProto/std_msgs/Request.proto";
 import "dtProto/robot_msgs/RobotInfo.proto";
-import "dtProto/robot_msgs/RobotState.proto";
 import "dtProto/robot_msgs/ControlCmd.proto";
 import "dtProto/robot_msgs/MoveControl.proto";
 import "dtProto/robot_msgs/JointControl.proto";
 import "google/protobuf/empty.proto";
 
-service DataService {
-  rpc QueryRobotInfo(google.protobuf.Empty) 
-    returns (robot_msgs.RobotInfo);
-
-  rpc StreamRobotState(std_msgs.Request)
-    returns (stream robot_msgs.RobotState);
-
-  rpc StreamRobotStateTimeStamped(std_msgs.Request)
-    returns (stream robot_msgs.RobotStateTimeStamped);
-
-  rpc StreamState(std_msgs.Request) 
-    returns (stream std_msgs.State);
-
-  rpc Move(robot_msgs.MoveControl)
-    returns (std_msgs.Response);
-  
-  rpc MoveJoint(robot_msgs.JointControl)
-    returns (std_msgs.Response);
-
-  rpc Command(robot_msgs.ControlCmd)
-    returns (std_msgs.Response);
-}
-
-service ControlService {
-  rpc Move(robot_msgs.MoveControl)
-    returns (std_msgs.Response);
-  
-  rpc MoveJoint(robot_msgs.JointControl)
-    returns (std_msgs.Response);
-
-  rpc Command(robot_msgs.ControlCmd)
-    returns (std_msgs.Response);
-}
-
-service InfoService {
-  rpc QueryRobotInfo(google.protobuf.Empty) 
-    returns (robot_msgs.RobotInfo);
+service dtService {
+  rpc StreamState(std_msgs.Request) returns (stream std_msgs.State);
+  rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
+  rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
+  rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
+  rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 }

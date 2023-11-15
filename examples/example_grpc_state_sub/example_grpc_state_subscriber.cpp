@@ -1,4 +1,5 @@
 #include "dtCore/src/dtDAQ/grpc/dtStateSubscriberGrpc.hpp"
+#include "dtProto/robot_msgs/RobotState.pb.h"
 //#include "dtCore/src/dtLog/dtLog.h"
 
 int main(int argc, char** argv) 

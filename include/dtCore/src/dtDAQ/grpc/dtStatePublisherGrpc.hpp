@@ -52,7 +52,7 @@ protected:
 
     class Session {
     public:
-        Session(dtStatePublisherGrpc<StateType>* server, dtproto::service::DataService::AsyncService* service, grpc::ServerCompletionQueue* cq);
+        Session(dtStatePublisherGrpc<StateType>* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq);
         Session() = delete;
         virtual ~Session();
         virtual void OnCompletionEvent();
@@ -63,7 +63,7 @@ protected:
     protected:
         uint64_t _id;
         dtStatePublisherGrpc<StateType>* _server;
-        dtproto::service::DataService::AsyncService* _service;
+        dtproto::dtService::AsyncService* _service;
         grpc::ServerCompletionQueue* _cq;
         grpc::ServerContext _ctx;
         std::mutex _proc_mtx;
@@ -97,7 +97,7 @@ protected:
     std::string _topic_name;
     std::unique_ptr<grpc::Server> _server;
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
-    dtproto::service::DataService::AsyncService _service;
+    dtproto::dtService::AsyncService _service;
     std::atomic<bool> _running {false};
     std::thread _rpc_thread;    
     std::mutex _session_mtx;
@@ -112,7 +112,7 @@ uint64_t dtStatePublisherGrpc<StateType>::Session::AllocSessionId()
 }
 
 template<typename StateType>
-dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType>* server, dtproto::service::DataService::AsyncService* service, grpc::ServerCompletionQueue* cq)
+dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType>* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq)
     : _server(server), _service(service), _cq(cq), _status(SessionStatus::WAIT_CONNECT), _responder(&_ctx) 
 {    
     _id = AllocSessionId();

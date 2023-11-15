@@ -55,7 +55,7 @@ private:
         void Stop();
 
     private:
-        std::unique_ptr<dtproto::service::DataService::Stub> _stub {nullptr};
+        std::unique_ptr<dtproto::dtService::Stub> _stub {nullptr};
         grpc::ClientContext _ctx;
         grpc::CompletionQueue _cq;
         grpc::Status _status;
@@ -116,7 +116,7 @@ template<typename StateType>
 dtStateSubscriberGrpc<StateType>::Session::Session(dtStateSubscriberGrpc<StateType>* subscriber)
 : _subscriber(subscriber)
 {
-    _stub = dtproto::service::DataService::NewStub(
+    _stub = dtproto::dtService::NewStub(
         grpc::CreateChannel(_subscriber->_server_address, grpc::InsecureChannelCredentials()));
 
     InitRequest();
