@@ -1,9 +1,12 @@
 #include "dtCore/src/dtDAQ/grpc/dtDAQManagerGrpc.h"
 #include "dtCore/src/dtDAQ/grpc/dtStatePublisherGrpc.hpp"
 #include "dtProto/robot_msgs/RobotState.pb.h"
+#include "dtProto/robot_msgs/AnonState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
 
 dtCore::dtDAQManagerGrpc DAQ;
+
+std::function<double(void)> data_gen = ([]() -> double { return (double)rand() / (double)RAND_MAX; });
 
 int main(int argc, char** argv) 
 {
@@ -16,53 +19,74 @@ int main(int argc, char** argv)
     DAQ.Initialize();
     // grpc::EnableDefaultHealthCheckService(true);
     // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    //std::shared_ptr<dtCore::dtDataSink> pub = std::make_shared<dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> >("RobotState", "0.0.0.0:50051");
-    dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50051");
-
-    dtproto::robot_msgs::RobotStateTimeStamped msg;
-    for (int ji = 0; ji < 3; ji++) {
-        msg.mutable_state()->add_joint_state();
-    }
-    std::function<double(void)> data_gen = ([]() -> double { return (double)rand() / (double)RAND_MAX; });
     
 
     std::atomic<bool> bRun;
     bRun.store(true);
-    std::thread chk_key = std::thread([&bRun] () {
-        while (true) {
-            std::cout << "(type \'q\' to quit) >\n";
-            std::string cmd;
-            std::cin >> cmd;
-            if (cmd == "q" || cmd == "quit") {
-                bRun = false;
-                return;
+
+    std::thread proc_pub_robot_state = std::thread([&bRun] () {
+        //std::shared_ptr<dtCore::dtDataSink> pub = std::make_shared<dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> >("RobotState", "0.0.0.0:50051");
+        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50051");
+        dtproto::robot_msgs::RobotStateTimeStamped msg;
+
+        for (int ji = 0; ji < 3; ji++) {
+            msg.mutable_state()->add_joint_state();
+        }
+
+        uint32_t seq = 0;
+        while (bRun.load())
+        {
+            msg.mutable_header()->set_seq(seq++);
+            msg.mutable_state()->mutable_base_pose()->mutable_position()->set_x(data_gen());
+            msg.mutable_state()->mutable_base_pose()->mutable_orientation()->set_w(data_gen());
+            msg.mutable_state()->mutable_base_velocity()->mutable_linear()->set_x(data_gen());
+            msg.mutable_state()->mutable_base_velocity()->mutable_angular()->set_x(data_gen());
+            for (int ji = 0; ji < 3; ji++) {
+                msg.mutable_state()->mutable_joint_state(ji)->set_position(data_gen());
+                msg.mutable_state()->mutable_joint_state(ji)->set_velocity(data_gen());
+                msg.mutable_state()->mutable_joint_state(ji)->set_acceleration(data_gen());
+                msg.mutable_state()->mutable_joint_state(ji)->set_torque(data_gen());
             }
+            pub.Publish(msg);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     });
 
-    uint32_t seq = 0;
-    while (bRun.load())
-    {
-        msg.mutable_header()->set_seq(seq++);
-        msg.mutable_state()->mutable_base_pose()->mutable_position()->set_x(data_gen());
-        msg.mutable_state()->mutable_base_pose()->mutable_orientation()->set_w(data_gen());
-        msg.mutable_state()->mutable_base_velocity()->mutable_linear()->set_x(data_gen());
-        msg.mutable_state()->mutable_base_velocity()->mutable_angular()->set_x(data_gen());
-        for (int ji = 0; ji < 3; ji++) {
-            msg.mutable_state()->mutable_joint_state(ji)->set_position(data_gen());
-            msg.mutable_state()->mutable_joint_state(ji)->set_velocity(data_gen());
-            msg.mutable_state()->mutable_joint_state(ji)->set_acceleration(data_gen());
-            msg.mutable_state()->mutable_joint_state(ji)->set_torque(data_gen());
+    std::thread proc_pub_anon_state = std::thread([&bRun] () {
+        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::AnonStateTimeStamped> pub("AnonState", "0.0.0.0:50052");
+        dtproto::robot_msgs::AnonStateTimeStamped msg;
+
+        for (int ji = 0; ji < 2; ji++) {
+            msg.mutable_state()->add_data(0.0);
         }
-        pub.Publish(msg);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        uint32_t seq = 0;
+        while (bRun.load())
+        {
+            msg.mutable_header()->set_seq(seq++);
+            for (int ji = 0; ji < 2; ji++) {
+                msg.mutable_state()->set_data(ji, data_gen());
+            }
+            pub.Publish(msg);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+    });
+
+
+    while (bRun.load()) {
+        std::cout << "(type \'q\' to quit) >\n";
+        std::string cmd;
+        std::cin >> cmd;
+        if (cmd == "q" || cmd == "quit") {
+            bRun = false;
+        }
     }
-    chk_key.join();
-
+    
+    proc_pub_robot_state.join();
+    proc_pub_anon_state.join();
     DAQ.Terminate();
-
     dtCore::dtLog::Terminate();
 
     return 0;
