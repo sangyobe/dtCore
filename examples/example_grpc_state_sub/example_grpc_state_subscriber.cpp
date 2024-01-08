@@ -27,7 +27,7 @@ int main(int argc, char** argv)
         }
     };
     std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>> sub_robot_state
-        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50051");
+        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50053");
     sub_robot_state->RegMessageHandler(handler_robot_state);
 
     std::function<void(dtproto::robot_msgs::AnonStateTimeStamped&)> handler_anon_state = [](dtproto::robot_msgs::AnonStateTimeStamped& msg) {

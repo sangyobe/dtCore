@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 
     std::thread proc_pub_robot_state = std::thread([&bRun] () {
         //std::shared_ptr<dtCore::dtDataSink> pub = std::make_shared<dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> >("RobotState", "0.0.0.0:50051");
-        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50051");
+        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50053");
         dtproto::robot_msgs::RobotStateTimeStamped msg;
 
         for (int ji = 0; ji < 3; ji++) {
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
             }
             pub.Publish(msg);
             
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     });
 
