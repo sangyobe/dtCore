@@ -93,8 +93,8 @@ protected:
     friend class Session;
 
 protected:
-    std::string _server_address;
     std::string _topic_name;
+    std::string _server_address;
     std::unique_ptr<grpc::Server> _server;
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
     dtproto::dtService::AsyncService _service;
