@@ -26,10 +26,13 @@
 #include <string>
 #include <thread>
 #include <deque>
+#include <pthread.h>
 
 #include "dtProto/Service.grpc.pb.h"
 
 #include "../dtDataSinkPB.hpp"
+
+#define USE_THREAD_PTHREAD
 
 namespace dtCore {
 
@@ -99,7 +102,11 @@ protected:
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
     dtproto::dtService::AsyncService _service;
     std::atomic<bool> _running {false};
-    std::thread _rpc_thread;    
+#ifdef USE_THREAD_PTHREAD
+    pthread_t _rpc_thread;
+#else
+    std::thread _rpc_thread;
+#endif    
     std::mutex _session_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session> > _sessions;
 };
@@ -117,6 +124,30 @@ dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType
 {    
     _id = AllocSessionId();
     // LOG(INFO) << "Session id: " << _id;
+
+    // initialize mutex attributes
+    int rtn;
+    pthread_mutexattr_t mtx_attr;
+    rtn = pthread_mutexattr_init(&mtx_attr);
+    if (rtn) printf("error: pthread_mutexattr_init (%d)\n\n", rtn);
+    
+    rtn = pthread_mutexattr_setprotocol(&mtx_attr, PTHREAD_PRIO_NONE);
+    if (rtn) printf("error: pthread_mutexattr_setprotocol (%d)\n\n", rtn);
+
+    rtn = pthread_mutexattr_setpshared(&mtx_attr, PTHREAD_PROCESS_SHARED);
+    if (rtn) printf("error: pthread_mutexattr_setpshared (%d)\n\n", rtn);
+
+    rtn = pthread_mutexattr_settype(&mtx_attr, PTHREAD_MUTEX_RECURSIVE);
+    if (rtn) printf("error: pthread_mutexattr_settype (%d)\n\n", rtn);
+    
+    rtn = pthread_mutexattr_setprioceiling(&mtx_attr, 99);
+    if (rtn) printf("error: pthread_mutexattr_setprioceiling (%d)\n\n", rtn);
+    
+    rtn = pthread_mutex_init(_proc_mtx.native_handle(), &mtx_attr);
+    if (rtn) printf("error: pthread_mutex_init (%d)\n\n", rtn);
+
+    
+    
 
     // LOG(INFO) << "NEW StreamStateSession created.";
     _service->RequestStreamState(&_ctx, &_request, &_responder, _cq, _cq, this);
@@ -268,7 +299,12 @@ void dtStatePublisherGrpc<StateType>::Stop() {
     _running = false;
     _server->Shutdown();
     _cq->Shutdown();
+#ifdef USE_THREAD_PTHREAD
+    void* th_join_result;
+    pthread_join(_rpc_thread, &th_join_result);
+#else
     _rpc_thread.join();
+#endif
     // LOG(INFO) << "Server shutdown.";
 }
 
@@ -279,6 +315,27 @@ void dtStatePublisherGrpc<StateType>::Run() {
 
     // rpc event "read done / write done / close(already connected)" call-back by this call completion queue
     // rpc event "new connection / close(waiting for connect)" call-back by this notification completion queue
+#ifdef USE_THREAD_PTHREAD
+    pthread_create(&_rpc_thread, NULL, 
+        [](void* arg) -> void * { 
+            dtStatePublisherGrpc<StateType>* server = (dtStatePublisherGrpc<StateType>*)arg;
+
+            // LOG(INFO) << "RPC new-call handler()";
+            void* tag;
+            bool ok;
+            while (server->_cq->Next(&tag, &ok)) {
+                // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+                //GPR_ASSERT(ok);
+                if (ok) {
+                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
+                }
+                else {
+                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+                }
+            }
+            return 0; 
+        }, (void*)this);
+#else
     _rpc_thread = std::thread([this] {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
@@ -294,6 +351,7 @@ void dtStatePublisherGrpc<StateType>::Run() {
             }
         }
     });
+#endif    
 }
 
 template<typename StateType>

@@ -32,6 +32,8 @@
 
 #include <dtProto/Service.grpc.pb.h>
 
+#define USE_THREAD_PTHREAD
+
 namespace dtCore {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +97,11 @@ protected:
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
     dtproto::dtService::AsyncService _service;
     std::atomic<bool> _running {false};
-    std::thread _rpc_thread;    
+#ifdef USE_THREAD_PTHREAD
+    pthread_t _rpc_thread;
+#else
+    std::thread _rpc_thread;
+#endif   
     std::mutex _session_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session> > _sessions;
 };
@@ -190,7 +196,12 @@ void dtServiceListenerGrpc::Stop() {
     _running = false;
     _server->Shutdown();
     _cq->Shutdown();
+#ifdef USE_THREAD_PTHREAD
+    void* th_join_result;
+    pthread_join(_rpc_thread, &th_join_result);
+#else
     _rpc_thread.join();
+#endif
     // LOG(INFO) << "Server shutdown.";
 }
 
@@ -200,6 +211,27 @@ void dtServiceListenerGrpc::Run() {
 
     // rpc event "read done / write done / close(already connected)" call-back by this call completion queue
     // rpc event "new connection / close(waiting for connect)" call-back by this notification completion queue
+#ifdef USE_THREAD_PTHREAD
+    pthread_create(&_rpc_thread, NULL, 
+        [](void* arg) -> void * { 
+            dtServiceListenerGrpc* client = (dtServiceListenerGrpc*)arg;
+
+            // LOG(INFO) << "RPC new-call handler()";
+            void* tag;
+            bool ok;
+            while (client->_cq->Next(&tag, &ok)) {
+                // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+                //GPR_ASSERT(ok);
+                if (ok) {
+                    static_cast<dtServiceListenerGrpc::Session*>(tag)->OnCompletionEvent();
+                }
+                else {
+                    static_cast<dtServiceListenerGrpc::Session*>(tag)->TryCancelCallAndShutdown();
+                }
+            }
+            return 0; 
+        }, (void*)this);
+#else
     _rpc_thread = std::thread([this] {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
@@ -215,6 +247,7 @@ void dtServiceListenerGrpc::Run() {
             }
         }
     });
+#endif
 }
 
 bool dtServiceListenerGrpc::IsRun() {

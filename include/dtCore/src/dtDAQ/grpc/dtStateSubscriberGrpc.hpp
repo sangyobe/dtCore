@@ -25,6 +25,8 @@
 
 #include "dtProto/Service.grpc.pb.h"
 
+#define USE_THREAD_PTHREAD
+
 namespace dtCore {
 
 template<typename StateType>
@@ -70,7 +72,11 @@ private:
             PEER_DISCONNECTED
         };
         RpcCallStatus _call_status {RpcCallStatus::WAIT_START};
+#ifdef USE_THREAD_PTHREAD
+        pthread_t _rpc_recv_thread;
+#else
         std::thread _rpc_recv_thread;
+#endif
         std::mutex _call_mtx;
         dtStateSubscriberGrpc<StateType>* _subscriber;
     };
@@ -147,6 +153,29 @@ bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
     _stream_reader->StartCall((void*)this);
     this->_subscriber->_running = true;
 
+#ifdef USE_THREAD_PTHREAD
+    pthread_create(&_rpc_recv_thread, NULL, 
+        [](void* arg) -> void * { 
+            dtStateSubscriberGrpc<StateType>::Session* client = (dtStateSubscriberGrpc<StateType>::Session*)arg;
+     
+           // LOG(INFO) << "RPC new-call handler()";
+            void* tag;
+            bool ok;
+            while (client->_cq.Next(&tag, &ok)) {
+                // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+                if (ok && static_cast<dtStateSubscriberGrpc<StateType>::Session*>(tag)->OnCompletionEvent()) {
+                    continue;
+                }
+                else {
+                    static_cast<dtStateSubscriberGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+                    break;
+                }
+            }
+            // LOG(INFO) << "RPC handler() exits.";
+            client->_subscriber->_running = false;
+            return 0;
+        }, (void*)this);
+#else
     _rpc_recv_thread = std::thread([this] {
         // LOG(INFO) << "RPC new-call handler()";
         void* tag;
@@ -164,6 +193,7 @@ bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
         // LOG(INFO) << "RPC handler() exits.";
         this->_subscriber->_running = false;
     });
+#endif
 
     return true;
 }
@@ -244,7 +274,12 @@ void dtStateSubscriberGrpc<StateType>::Session::Stop()
     TryCancelCallAndShutdown();
     _cq.Shutdown();
     // LOG(INFO) << "CQ shutdown.";
+#ifdef USE_THREAD_PTHREAD
+    void* th_join_result;
+    pthread_join(_rpc_recv_thread, &th_join_result);
+#else
     _rpc_recv_thread.join();
+#endif
     // LOG(INFO) << "Session shutdown.";
 }
 
