@@ -1,6 +1,6 @@
 #include "dtCore/src/dtDAQ/grpc/dtStateSubscriberGrpc.hpp"
 #include "dtProto/robot_msgs/RobotState.pb.h"
-#include "dtProto/robot_msgs/AnonState.pb.h"
+#include "dtProto/robot_msgs/ArbitraryState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
 
 int main(int argc, char** argv) 
@@ -30,8 +30,8 @@ int main(int argc, char** argv)
         = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50053");
     sub_robot_state->RegMessageHandler(handler_robot_state);
 
-    std::function<void(dtproto::robot_msgs::AnonStateTimeStamped&)> handler_anon_state = [](dtproto::robot_msgs::AnonStateTimeStamped& msg) {
-        LOG(info) << "handler_anon_state Got a new message. Type = " << msg.state().GetTypeName();
+    std::function<void(dtproto::robot_msgs::ArbitraryStateTimeStamped&)> handler_arbitrary_state = [](dtproto::robot_msgs::ArbitraryStateTimeStamped& msg) {
+        LOG(info) << "handler_arbitrary_state Got a new message. Type = " << msg.state().GetTypeName();
 
         if (msg.state().GetTypeName() != "dtproto.std_msgs.PackedDouble") {
             return;
@@ -41,16 +41,16 @@ int main(int argc, char** argv)
             LOG(trace) << "  data[" << ji << "] = " << msg.state().data(ji);
         }
     };
-    std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::AnonStateTimeStamped>> sub_anon_state
-        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::AnonStateTimeStamped>>("AnonState", "0.0.0.0:50052");
-    sub_anon_state->RegMessageHandler(handler_anon_state);
+    std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>> sub_arbitrary_state
+        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>>("ArbitraryState", "0.0.0.0:50052");
+    sub_arbitrary_state->RegMessageHandler(handler_arbitrary_state);
 
 
 
     std::atomic<bool> bRun;
     bRun.store(true);
 
-    std::thread proc_reconnector = std::thread([&bRun, &sub_robot_state, &sub_anon_state] () {
+    std::thread proc_reconnector = std::thread([&bRun, &sub_robot_state, &sub_arbitrary_state] () {
 
         while (bRun.load()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -60,9 +60,9 @@ int main(int argc, char** argv)
                 sub_robot_state->Reconnect();
             }
 
-            if (!sub_anon_state->IsRunning()) {
-                std::cout << "Reconnect to anonymous state publisher..." << std::endl;
-                sub_anon_state->Reconnect();
+            if (!sub_arbitrary_state->IsRunning()) {
+                std::cout << "Reconnect to arbitrary state publisher..." << std::endl;
+                sub_arbitrary_state->Reconnect();
             }
         }
     });

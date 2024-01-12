@@ -1,7 +1,7 @@
 #include "dtCore/src/dtDAQ/grpc/dtDAQManagerGrpc.h"
 #include "dtCore/src/dtDAQ/grpc/dtStatePublisherGrpc.hpp"
 #include "dtProto/robot_msgs/RobotState.pb.h"
-#include "dtProto/robot_msgs/AnonState.pb.h"
+#include "dtProto/robot_msgs/ArbitraryState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
 
 dtCore::dtDAQManagerGrpc DAQ;
@@ -53,9 +53,9 @@ int main(int argc, char** argv)
         }
     });
 
-    std::thread proc_pub_anon_state = std::thread([&bRun] () {
-        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::AnonStateTimeStamped> pub("AnonState", "0.0.0.0:50052");
-        dtproto::robot_msgs::AnonStateTimeStamped msg;
+    std::thread proc_pub_arbitrary_state = std::thread([&bRun] () {
+        dtCore::dtStatePublisherGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped> pub("ArbitraryState", "0.0.0.0:50052");
+        dtproto::robot_msgs::ArbitraryStateTimeStamped msg;
 
         for (int ji = 0; ji < 2; ji++) {
             msg.mutable_state()->add_data(0.0);
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
     }
     
     proc_pub_robot_state.join();
-    proc_pub_anon_state.join();
+    proc_pub_arbitrary_state.join();
     DAQ.Terminate();
     dtCore::dtLog::Terminate();
 
