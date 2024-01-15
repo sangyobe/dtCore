@@ -4,6 +4,37 @@
 
 using dtCore::dtBezierTrajectory;
 
+void DofWithDefaultConstructor() 
+{
+    double ti = 0.0; //!< init time
+    double td = 0.5; //!< trajectory duration
+    double pi[1]   = { 0.5 }; //!< init position
+    double pf[1]   = { 0.0 }; //!< target position
+    double vi[1]   = { -1.0 }; //!< init velocity
+    double vf[1]   = { -1.0 }; //!< target velocity
+    double pc[6*1] = { 0.4286 , 0.3571, 0.2500, 0.2500, 0.1429, 0.0714 }; //!< input control point
+    uint16_t pcNum = 6;
+    double p[1], v[1]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
+
+    dtBezierTrajectory<double, 1, 10> traj; // double, 3 dof, max 10 input control point num bezier trajectory
+    double controlPeriod = 0.001; //!< real time control period (sec)
+    for (int i = 0; i < 1000; i++) //!< real time thread (0 ~ 2 sec)
+    {
+        double tc = controlPeriod*i; //!< current time
+        if (i == 0)
+        {
+            traj.SetDuration(td);
+            traj.SetInitParam(pi, vi);
+            traj.SetTargetParam(pf, vf);
+            traj.SetControlParam(pc, pcNum);
+            traj.Configure(); //!< without this function, polynomial coefficeints are not configured.
+        }
+
+        traj.Interpolate(tc, p, v); //!< input: tc, output: p, v
+        std::cout << 0.001*i << "," << p[0] << "," << v[0] << std::endl;       
+    }
+}
+
 void DoubleDof3WithoutDefaultConstructor() 
 {
     double ti = 1.0; //!< init time
@@ -122,7 +153,10 @@ int main ()
 {
     //!< Example of three ways to generate polynomial trajectories
 
+    DofWithDefaultConstructor();
     // DoubleDof3WithoutDefaultConstructor();
     // DoubleDof3WithDefaultConstructor();
-    DoubleDof3WithDefaultConstructor2();
+    // DoubleDof3WithDefaultConstructor2();
+
+    return 0;
 }

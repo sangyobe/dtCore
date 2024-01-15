@@ -95,4 +95,6 @@ int main ()
     DoubleDof3Order5WithoutDefaultConstructor();
     // DoubleDof3Order7WithDefaultConstructor();
     // DoubleDof3Order7WithDefaultConstructor2();
+
+    return 0;
 }
