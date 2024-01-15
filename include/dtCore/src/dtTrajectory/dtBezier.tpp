@@ -80,6 +80,34 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
 }
 
 /*! \details Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+    \param[in] pc control point (x)
+    \param[in] pcNum pc size
+    \param[in] duration polynomial trajectory duration (sec)
+*/
+template <typename ValueType, uint16_t m_maxNum>
+void dtBezier<ValueType, m_maxNum>::Configure(const ValueType *pc, const uint16_t pcNum, const ValueType duration)
+{
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(pcNum > 0 && "Bezier input control point num should be greater than zero");
+
+    m_num = pcNum;
+    m_duration = duration;
+    m_durationInv = 1 / m_duration;
+    memcpy(&m_p[0], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
+
+    // Calculate bezier coefficients
+    for (uint16_t i = 0; i < m_num - 2; i++)
+    {
+        m_posCoeff[i] = CalculateBinomialCoeff(m_num - 1, i);
+        m_velCoeff[i] = CalculateBinomialCoeff(m_num - 2, i);
+        m_accCoeff[i] = CalculateBinomialCoeff(m_num - 3, i);
+    }
+    m_posCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 1, m_num - 2);
+    m_velCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 2, m_num - 2);
+    m_posCoeff[m_num - 1] = CalculateBinomialCoeff(m_num - 1, m_num - 1);
+}
+
+/*! \details Configure the control points and coefficients of the bezier trajectory from the parameters entered.
     \param[in] p0 init position (x)
     \param[in] pf target position (x)
     \param[in] v0 init velocity (x/sec)

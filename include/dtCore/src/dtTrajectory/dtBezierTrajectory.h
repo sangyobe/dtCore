@@ -49,6 +49,9 @@ public:
 
 public:
     dtBezierTrajectory(); //!< Initialize without input parameter
+    dtBezierTrajectory(const ValueType duration,
+                       const ContRefType pc, const uint16_t pcNum,
+                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     dtBezierTrajectory(const ValueType duration, 
                        const ContRefType pi, const ContRefType pf, 
                        const ContRefType pc, const uint16_t pcNum,
@@ -88,6 +91,9 @@ public:
 
     virtual void Configure(); //!< Configure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetControlParam, SetTimeOffset).
 
+    void SetParam(const ValueType duration, 
+                  const ContRefType pc, const uint16_t pcNum,
+                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
     void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf, 
                   const ContRefType pc, const uint16_t pcNum,
