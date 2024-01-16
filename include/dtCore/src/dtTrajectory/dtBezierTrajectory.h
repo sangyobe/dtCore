@@ -49,9 +49,6 @@ public:
 
 public:
     dtBezierTrajectory(); //!< Initialize without input parameter
-    dtBezierTrajectory(const ValueType duration,
-                       const ContRefType pc, const uint16_t pcNum,
-                       const ValueType timeOffset = 0); //!< Initialize and configure control points and coefficients of the bezier from the parameters entered.
     dtBezierTrajectory(const ValueType duration, 
                        const ContRefType pi, const ContRefType pf, 
                        const ContRefType pc, const uint16_t pcNum,
@@ -92,9 +89,6 @@ public:
     virtual void Configure(); //!< Configure the coefficients of polynomial through parameters entered from functions below (SetParam, SetDuration, SetInitParam, SetTargetParam, SetControlParam, SetTimeOffset).
 
     void SetParam(const ValueType duration, 
-                  const ContRefType pc, const uint16_t pcNum,
-                  const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
-    void SetParam(const ValueType duration, 
                   const ContRefType pi, const ContRefType pf, 
                   const ContRefType pc, const uint16_t pcNum,
                   const ValueType timeOffset = 0); //!< Enter parameters for the Configure() function.
@@ -133,6 +127,12 @@ public:
     void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure() function.
 
 private:
+    enum {
+        POS = 0,
+        VEL = 1,
+        ACC = 2,
+    };
+
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
     ValueType m_duration; //!< trajectory duration (sec)
@@ -144,6 +144,7 @@ private:
     ValueType m_af[m_dof]; //!< target accleration (x/sec^2)
     ValueType m_pc[m_dof][m_maxNum + 6]; //!< input control point (x)
     uint16_t m_pcNum; //!< number of input control point
+    uint8_t m_inputType = POS;
 
     dtBezier<ValueType, m_maxNum> m_interpolator[m_dof]; //!< dtBezier trajectory
 };

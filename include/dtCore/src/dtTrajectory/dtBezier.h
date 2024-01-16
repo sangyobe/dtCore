@@ -33,7 +33,11 @@ public:
     void Interpolate(const ValueType t, ValueType &p, ValueType &v) const; //!< Calculates the desired position(p) and velocity(v) corresponding to the time(t) entered. 
     void Interpolate(const ValueType t, ValueType &p, ValueType &v, ValueType &a) const; //!< Calculates the desired position(p), velocity(v) and acceleration(a) corresponding to the time(t) entered. 
 
-    void Configure(const ValueType *pc, const uint16_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+    void Configure(const ValueType p0, const ValueType pf,
+                   const ValueType *pc, const uint16_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+    void Configure(const ValueType p0, const ValueType pf,
+                   const ValueType v0, const ValueType vf,
+                   const ValueType *pc, const uint16_t pcNum, const ValueType duration); //!< Configure the control points and coefficients of the bezier trajectory from the parameters entered.
     void Configure(const ValueType p0, const ValueType pf,
                    const ValueType v0, const ValueType vf,
                    const ValueType a0, const ValueType af,

@@ -10,10 +10,10 @@ void DofWithDefaultConstructor()
     double td = 0.5; //!< trajectory duration
     double pi[1]   = { 0.5 }; //!< init position
     double pf[1]   = { 0.0 }; //!< target position
-    double vi[1]   = { -1.0 }; //!< init velocity
-    double vf[1]   = { -1.0 }; //!< target velocity
-    double pc[8*1] = {0.5, 0.4286 , 0.3571, 0.2500, 0.2500, 0.1429, 0.0714, 0.0}; //!< input control point
-    uint16_t pcNum = 8;
+    double vi[1]   = { 0.0 }; //!< init velocity
+    double vf[1]   = { 0.0 }; //!< target velocity
+    double pc[6*1] = {0.4286 , 0.3571, 0.2500, 0.2500, 0.1429, 0.0714}; //!< input control point
+    uint16_t pcNum = 6;
     double p[1], v[1]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
     dtBezierTrajectory<double, 1, 10> traj; // double, 3 dof, max 10 input control point num bezier trajectory
@@ -23,7 +23,8 @@ void DofWithDefaultConstructor()
         double tc = controlPeriod*i; //!< current time
         if (i == 0)
         {
-            traj.SetParam(td, pc, pcNum); //!< without this function, polynomial coefficeints are not configured.
+            traj.SetParam(td, pi, pf, vi, vf, pc, pcNum); //!< without this function, polynomial coefficeints are not configured.
+            traj.Configure(); //!< without this function, polynomial coefficeints are not configured.
         }
 
         traj.Interpolate(tc, p, v); //!< input: tc, output: p, v

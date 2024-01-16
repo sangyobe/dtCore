@@ -80,20 +80,62 @@ void dtBezier<ValueType, m_maxNum>::Interpolate(const ValueType t, ValueType &p,
 }
 
 /*! \details Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+    \param[in] p0 init position (x)
+    \param[in] pf target position (x)
     \param[in] pc control point (x)
     \param[in] pcNum pc size
     \param[in] duration polynomial trajectory duration (sec)
 */
 template <typename ValueType, uint16_t m_maxNum>
-void dtBezier<ValueType, m_maxNum>::Configure(const ValueType *pc, const uint16_t pcNum, const ValueType duration)
+void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueType pf,
+                                              const ValueType *pc, const uint16_t pcNum, const ValueType duration)
 {
     assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
     assert(pcNum > 0 && "Bezier input control point num should be greater than zero");
 
-    m_num = pcNum;
+    m_num = pcNum + 2;
     m_duration = duration;
     m_durationInv = 1 / m_duration;
-    memcpy(&m_p[0], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
+    m_p[0] = p0; //!< Set the control point for the init position
+    memcpy(&m_p[1], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
+    m_p[m_num - 1] = pf; //!< Set the control point for the target position
+
+    // Calculate bezier coefficients
+    for (uint16_t i = 0; i < m_num - 2; i++)
+    {
+        m_posCoeff[i] = CalculateBinomialCoeff(m_num - 1, i);
+        m_velCoeff[i] = CalculateBinomialCoeff(m_num - 2, i);
+        m_accCoeff[i] = CalculateBinomialCoeff(m_num - 3, i);
+    }
+    m_posCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 1, m_num - 2);
+    m_velCoeff[m_num - 2] = CalculateBinomialCoeff(m_num - 2, m_num - 2);
+    m_posCoeff[m_num - 1] = CalculateBinomialCoeff(m_num - 1, m_num - 1);
+}
+/*! \details Configure the control points and coefficients of the bezier trajectory from the parameters entered.
+    \param[in] p0 init position (x)
+    \param[in] pf target position (x)
+    \param[in] v0 init velocity (x/sec)
+    \param[in] vf target velocity (x/sec)
+    \param[in] pc control point (x)
+    \param[in] pcNum pc size
+    \param[in] duration polynomial trajectory duration (sec)
+*/
+template <typename ValueType, uint16_t m_maxNum>
+void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueType pf,
+                                              const ValueType v0, const ValueType vf,
+                                              const ValueType *pc, const uint16_t pcNum, const ValueType duration)
+{
+    assert(duration > m_tolerance && "Trajectory duration should be greater than zero");
+    assert(pcNum > 0 && "Bezier input control point num should be greater than zero");
+
+    m_num = pcNum + 4;
+    m_duration = duration;
+    m_durationInv = 1 / m_duration;
+    m_p[0] = p0; //!< Set the control point for the init position
+    m_p[1] = p0 + m_duration * v0 / (m_num - 1); //!< Set the control point for the init velocity
+    memcpy(&m_p[2], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
+    m_p[m_num - 2] = pf - m_duration * vf / (m_num - 1); //!< Set the control point for the target velocity
+    m_p[m_num - 1] = pf; //!< Set the control point for the target position
 
     // Calculate bezier coefficients
     for (uint16_t i = 0; i < m_num - 2; i++)
@@ -131,7 +173,7 @@ void dtBezier<ValueType, m_maxNum>::Configure(const ValueType p0, const ValueTyp
     m_duration = duration;
     m_durationInv = 1 / m_duration;
     m_p[0] = p0; //!< Set the control point for the init position
-    m_p[1] = p0 + m_duration* v0 / (m_num - 1); //!< Set the control point for the init velocity
+    m_p[1] = p0 + m_duration * v0 / (m_num - 1); //!< Set the control point for the init velocity
     m_p[2] = p0 + 2 * m_duration * v0 / (m_num - 1) + m_duration * m_duration* a0 / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the init acceleration
     memcpy(&m_p[3], pc, sizeof(ValueType) * pcNum); //!< Set the input control point
     m_p[m_num - 3] = pf - 2 * m_duration * vf / (m_num - 1) + m_duration * m_duration * af / ((m_num - 1) * (m_num - 2)); //!< Set the control point for the target acceleration
