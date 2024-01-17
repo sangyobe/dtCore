@@ -10,9 +10,9 @@ void DofWithDefaultConstructor()
     double td = 0.5; //!< trajectory duration
     double pi[1]   = { 0.5 }; //!< init position
     double pf[1]   = { 0.0 }; //!< target position
-    double vi[1]   = { -1.0 }; //!< init velocity
-    double vf[1]   = { -1.0 }; //!< target velocity
-    double pc[6*1] = { 0.4286 , 0.3571, 0.2500, 0.2500, 0.1429, 0.0714 }; //!< input control point
+    double vi[1]   = { 0.0 }; //!< init velocity
+    double vf[1]   = { 0.0 }; //!< target velocity
+    double pc[6*1] = {0.4286 , 0.3571, 0.2500, 0.2500, 0.1429, 0.0714}; //!< input control point
     uint16_t pcNum = 6;
     double p[1], v[1]; //!< trajectory output (p: desired position, v: desired velocity, a: desired acceleration)
 
@@ -23,10 +23,7 @@ void DofWithDefaultConstructor()
         double tc = controlPeriod*i; //!< current time
         if (i == 0)
         {
-            traj.SetDuration(td);
-            traj.SetInitParam(pi, vi);
-            traj.SetTargetParam(pf, vf);
-            traj.SetControlParam(pc, pcNum);
+            traj.SetParam(td, pi, pf, vi, vf, pc, pcNum); //!< without this function, polynomial coefficeints are not configured.
             traj.Configure(); //!< without this function, polynomial coefficeints are not configured.
         }
 

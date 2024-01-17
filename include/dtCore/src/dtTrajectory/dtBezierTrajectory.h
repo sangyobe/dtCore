@@ -127,6 +127,12 @@ public:
     void SetTimeOffset(const ValueType timeOffset); //!< Enter trajectory delay for the Configure() function.
 
 private:
+    enum {
+        POS = 0,
+        VEL = 1,
+        ACC = 2,
+    };
+
     ValueType m_tolerance = std::numeric_limits<ValueType>::epsilon(); //!< Threshold to prevent being divided by zero
     ValueType m_ti; //!< trajectory time offset(delay) (sec)
     ValueType m_duration; //!< trajectory duration (sec)
@@ -138,6 +144,7 @@ private:
     ValueType m_af[m_dof]; //!< target accleration (x/sec^2)
     ValueType m_pc[m_dof][m_maxNum + 6]; //!< input control point (x)
     uint16_t m_pcNum; //!< number of input control point
+    uint8_t m_inputType = POS;
 
     dtBezier<ValueType, m_maxNum> m_interpolator[m_dof]; //!< dtBezier trajectory
 };

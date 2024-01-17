@@ -55,6 +55,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = POS;
     Configure();
 }
 
@@ -96,6 +97,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = VEL;
     Configure();
 }
 
@@ -139,6 +141,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = ACC;
     Configure();    
 }
 
@@ -177,6 +180,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = POS;
     Configure();
 }
 
@@ -218,6 +222,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = VEL;
     Configure();
 }
 
@@ -261,6 +266,7 @@ dtBezierTrajectory<ValueType, m_dof, m_maxNum>::dtBezierTrajectory(const ValueTy
         }
     }
 
+    m_inputType = ACC;
     Configure();
 }
 
@@ -363,9 +369,32 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Interpolate(const ValueType
 template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::Configure() 
 {
-    for (uint16_t i = 0; i < m_dof; i++) 
+    switch (m_inputType)
     {
-        m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_vi[i], this->m_vf[i], this->m_ai[i], this->m_af[i], this->m_pc[i], m_pcNum, this->m_duration);
+        case POS:
+        {
+            for (uint16_t i = 0; i < m_dof; i++) 
+            {
+                m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_pc[i], m_pcNum, this->m_duration);
+            }
+            break;
+        }
+        case VEL:
+        {
+            for (uint16_t i = 0; i < m_dof; i++) 
+            {
+                m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_vi[i], this->m_vf[i], this->m_pc[i], m_pcNum, this->m_duration);
+            }
+            break;
+        }
+        case ACC:
+        {
+            for (uint16_t i = 0; i < m_dof; i++) 
+            {
+                m_interpolator[i].Configure(this->m_pi[i], this->m_pf[i], this->m_vi[i], this->m_vf[i], this->m_ai[i], this->m_af[i], this->m_pc[i], m_pcNum, this->m_duration);
+            }
+            break;
+        }
     }
 }
 
@@ -404,6 +433,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
         }
     }
     m_pcNum = pcNum;
+    m_inputType = POS;
 }
 
 /*! \details Enter parameters for the Configure() function.
@@ -443,7 +473,8 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
             m_pc[i][j] = pc[m_dof*j + i]; 
         }
     }
-    m_pcNum = pcNum;  
+    m_pcNum = pcNum;
+    m_inputType = VEL;
 }
 
 /*! \details Enter parameters for the Configure() function.
@@ -486,6 +517,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
         }
     }
     m_pcNum = pcNum;
+    m_inputType = ACC;
 }
 
 /*! \details Enter parameters for the Configure() function.
@@ -523,6 +555,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
         }
     }
     m_pcNum = pcNum;
+    m_inputType = POS;
 }
 
 /*! \details Enter parameters for the Configure() function.
@@ -563,6 +596,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
         }
     }
     m_pcNum = pcNum;  
+    m_inputType = VEL;
 }
 
 /*! \details Enter parameters for the Configure() function.
@@ -605,6 +639,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetParam(const ValueType du
         }
     }
     m_pcNum = pcNum;
+    m_inputType = ACC;
 }
 
 /*! \details  Enter trajectory duration for the Configure() function.
@@ -626,9 +661,11 @@ template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetInitParam(const ContRefType pi, const ContRefType vi, const ContRefType ai)
 {
     memcpy(m_pi, pi, sizeof(ValueType) * m_dof);
+    m_inputType = POS;
     if (vi)
     {
         memcpy(m_vi, vi, sizeof(ValueType) * m_dof);
+        m_inputType = VEL;
     }
     else
     {
@@ -637,6 +674,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetInitParam(const ContRefT
     if (ai)
     {
         memcpy(m_ai, ai, sizeof(ValueType) * m_dof);
+        m_inputType = ACC;
     }
     else
     {
@@ -653,9 +691,11 @@ template <typename ValueType, uint16_t m_dof, uint16_t m_maxNum>
 void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTargetParam(const ContRefType pf, const ContRefType vf, const ContRefType af)
 {
     memcpy(m_pf, pf, sizeof(ValueType) * m_dof);
+    m_inputType = POS;
     if (vf)
     {
         memcpy(m_vf, vf, sizeof(ValueType) * m_dof);
+        m_inputType = VEL;
     }
     else
     {
@@ -664,6 +704,7 @@ void dtBezierTrajectory<ValueType, m_dof, m_maxNum>::SetTargetParam(const ContRe
     if (af)
     {
         memcpy(m_af, af, sizeof(ValueType) * m_dof);
+        m_inputType = ACC;
     }
     else
     {
