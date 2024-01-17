@@ -40,7 +40,7 @@ template<typename StateType>
 class dtStatePublisherGrpc : public dtDataSinkPB<StateType>
 { 
 public:
-    dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address);
+    dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address, int queue_size = -1);
     ~dtStatePublisherGrpc();
 
     void Publish(StateType& msg);
@@ -109,8 +109,13 @@ protected:
 #endif    
     std::mutex _session_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session> > _sessions;
+    int _msg_queue_size;
 };
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation of dtStatePublisherGrpc::Session
+//
 template<typename StateType>
 uint64_t dtStatePublisherGrpc<StateType>::Session::AllocSessionId()
 {
@@ -202,6 +207,12 @@ void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
     
     if (_status == SessionStatus::WAIT_WRITE_DONE) {
         // LOG(INFO) << "StreamStateSession<" << _id << ">::Queue(" << _msg_seq << ")";
+        if (_server->_msg_queue_size == 0) {
+            return; // delete this message !
+        }
+        else if (_server->_msg_queue_size > 0 && _msg_queue.size() >= _server->_msg_queue_size) {
+            _msg_queue.pop_front(); // delete the oldest message.
+        }
         _msg.mutable_state()->PackFrom(msg);
         _msg_queue.push_back(_msg);
     }
@@ -240,9 +251,13 @@ void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
     // _server->RemoveSession(_id);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation of dtStatePublisherGrpc
+//
 template<typename StateType>
-dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address)
-: _topic_name(topic_name), _server_address(server_address)
+dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address, int queue_size)
+: _topic_name(topic_name), _server_address(server_address), _msg_queue_size(queue_size)
 {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
