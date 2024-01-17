@@ -137,7 +137,7 @@ dtStateSubscriberGrpc<StateType>::Session::~Session()
 template<typename StateType>
 bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
 {
-    _ctx.set_wait_for_ready(true);
+    _ctx.set_wait_for_ready(false);
 
     dtproto::std_msgs::Request req;
     req.set_name(_subscriber->_topic_name);
