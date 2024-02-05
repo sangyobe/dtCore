@@ -7,13 +7,13 @@ import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Twist.proto";
 
 message MoveControl {
-  enum CmdMode {
+  enum ControlMode {
     POSE_ABSOLUTE = 0;
     POSE_RELATIVE = 1;
     VEL_ABSOLUBE = 2;
     VEL_RELATIVE = 3;
   }
-  CmdMode mode = 1;
+  ControlMode mode = 1;
   geometry_msgs.Pose3d cmd_pose = 2;
   geometry_msgs.Twist cmd_vel = 3;
   float duration = 4;

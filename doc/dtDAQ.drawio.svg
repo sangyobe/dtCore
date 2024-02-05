@@ -1,365 +1,225 @@
-<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1131px" height="678px" viewBox="-0.5 -0.5 1131 678" content="&lt;mxfile&gt;&lt;diagram id=&quot;BF9TuoTAg_J7JJHr0W7K&quot; name=&quot;DataSink &amp;amp; Source&quot;&gt;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&lt;/diagram&gt;&lt;diagram id=&quot;HGnBpSPyw6Q68GAMrUL7&quot; name=&quot;gRPC DataSink&quot;&gt;7Vptb6M4EP41SOmHrHgLJB/z0u6dTqvrXnu6u/2ycsABq4CpMU1zv34HMAHsVKHdzct2I1WtPbYHzzOPhxkXzZrHzx8ZSsNP1MeRZur+s2YtNNM0LMOGP4VkU0nG+rgSBIz4YlIjuCP/YyHUhTQnPs46EzmlESdpV+jRJMEe78gQY3TdnbaiUfepKQqwIrjzUKRK/yE+D4XUcCbNwG+YBKF49Nh0q4EY1ZOFJVmIfLpuiaxrzZozSnnVip/nOCrAq3Gp1t28MLrdGMMJ77Pg0WNf/ri3R3+u+cxfWmP9Op8NhZYnFOXC4Nt8KfbLNzUIsPW0aOZxdMNQDM3ZOiQc36XIK+Rr8D3IQh5H0DOgqW6ufhJmHD+3RGKzHzGNMWcbmCJGbV0At6kZIfrrxg/bOWHLBVaNOBK+D7a6G3igIRB6BVqmgtYCcXRHcwYwmA6KCxQi2MbsftsN+BaOFqI/Fipj1IVqZE4UqAxjB1SjQyFl7UaKJA+nxMk2zg0nW8Vp+vkTSiCqsCOTxnLU83VcMEYKGAFLPc2aws8dZk8Hh0Tmx+khcfZAQorAc1BMnPG5YeIqmPx1C5r0OSrX/p5kHCUeJA3HBeb0wWSsAKNAgBN/WmRF0KMpTgAJkNyQqMYFeiIHM8yeb/Ssev3tPdYcsQDz/VzHficjU/Fv41uTkeEIcfLUTdp2ASzU3VICZmx9abpdXzqG5KPKSLGqnWRJihwpqNqupKhCQVFU+ntr49spMDkkBcDzbPMvdPQPhmPVgv9KwWTi1oJFgYW+7W3avVvMCNgIkbwSvp1VVk9WGadj1ciSQudk9EZWTfYoOjCr6tNwbpHF6ckB93QcsN1R9y1hTd7GAVmRLVc5h+aAWiqeBQfsnhwwT8cB197jur4ckBUpZDo0B9QC+Cw4YPbkgHXCDMP4QRyQFR2dA2ppDzV8WcyHgIpT1vFBlZHXNf+gqt6u6onw4GZuLUxrwd+pjzgewGxdu15oE/iBxkybOtrYLhrjm6LR6EobVRIZIZXnXZJlnNEHPKcRLVKQhCbFZdYK6CmJshR5JAlAMGp69zQFwdDUX7gAo2DkKiq5HxLfL9nPaJ742N+X77yibpevxTS56jAnO6oO42C3YoZ6idFmRMsfzmNe3HbOVjThw6yMAlOYYFjpc0UEMS5TY8l2qnl5wU6C+eRJFoFfk52ql8h7CErXDb2KGMVGSUI4QVGpQJeNMIUR1cBaQF8MJZTFYpW84dt8GZEsHDT3YNVvWBVnQXkE3LZV1YYVY3eYdo7W7t1IeaiGWXWqCmUpwy9p0iAN7qLQBmdF2VeMvLA4GQjsgKNs6l5EynM3bRNLAfOCcU+Mj/ioNQNNg/JIdMPCxXs/gfcyzMsMKssjOaxf/Pcz+I8ECYpaAfRdu9BdvNKWXyDptKULUsNwlbTTOHLaqf676JJ29uQ4S72vIUr8CLPBGSWZRwyO+3cjP7MqS+c0TiPMCU0+5xh4BzHxcf82dobJg+N5wpcTaIoKcAac5fh8GPZrvK694x2Kxw9FdTXQutVrleldXZ2Bx88wrXuHjHtBTFZFCBB5f5HALMrn69eM0eY28D3mkO/Dy6djzpJh9NAavnDku0BuSpr3COSlYOvxdZKrfp20/eqlU7DJX6z0KNig23zHXP2jqfka3Lr+Bg==&lt;/diagram&gt;&lt;diagram id=&quot;YojYIqFwH08CFYIoD1We&quot; name=&quot;gRPC DAQ Server&quot;&gt;7Vhdb9owFP01kboHpnyQlD6S0LJJVGtLpWpPyI1N4tWJI8c00F+/68QhBEJhG+wJKQL7+NqO7zn3+iqGEyTLsUBZfM8xYYZt4qXhjAzbthyrD38KWVXIwBxUQCQo1kYNMKUfRIOmRhcUk7xlKDlnkmZtMORpSkLZwpAQvGibzTlr75qhiOwA0xCxXfSFYhlr1PJumoFvhEax3npgX1cDCaqN9UnyGGFebEDOreEEgnNZtZJlQJhyXu2Xat7dntH1iwmSymMm3Ezz6DG9W9k0++W/FM9j9h70LKda5h2xhT6xYXsMFvRj2MGLVCt6egjAZjR8hN8pEe9E1EawXWNXg1kN9HobdlljVrpDrmofS7IsN5QJA8CCZi4FfyMBZ1wAkvIULP05ZWwLyjMU0jQCwG16zzwDoAfucPwippJMAVdbFSBRwDi8/5yVVMQUY5ICJvgixUR5yly/4aZrtbdhJrzsBqRdPSY8IVKswGTZ1u+q3S0aDdk3Gos35GPVakFat9F65YZaaGh2u5l+fA5/hD9jeTexF/H98AM9xH7P2iG6ZnKLjbygCUOVx3kqp3pE0YIYjcBboxD8AjMdX/mDQrAM9YBUrvfDmDI8QSu+UKfKJQrf6p4fc0E/YFnUUI2E1HFvey2LqZqpKREkB5uHmhJrC7pHy5bhBOVSAyFnDGU5fV0fI0EioqnPpeTJCRnvtyl3zF3OXfO/cm53BDcc1ZzlJM8pT2G/YUk+Vg1nuEi5wEQQPEtQVoeutp2pnYYLmkrHnknDVhlBDwE+1a0DIX5sXNdCY2Qu98pMh/uktBn1G+RJ+7a/N9glkqjSgyI/43Cq0veuDw+wEZhfXcMdqVO6vtX04VHmQgbgPCkQLdVCQGwFyWWnjj4NxsPi0mKCyDhKS7XdyaXUdU9sccxolZNLjuvL0vorghOgim0keJ3SrR3WnV3WnQ6GGXol7IHnVJZyHYnKdov5Q+S21UvTmAh6TtJd+zjSB2fivL8nfYyJ/A4eQmlIrr5UKWRdFaAkqyoBw3asKrOqKUOMdYq4kquM6FmqeUkVJ1aNd+S1453r1nE7Kg19O1xKjZOUGtfe4VLD8royxbmuB+9ApVFVDwA0BcQl7D8Le/doTeyvEDolcLYK4fpSIfxrhfDHpHdUCN1xfybOB3vCHlaPOb5c9WeO+Y6r/lQxD93m01Q5tvGBz7n9DQ==&lt;/diagram&gt;&lt;diagram id=&quot;GdyGgqRgVyQJDD1CJEq4&quot; name=&quot;gRPC State Pub/Sub&quot;&gt;7Vpbb+I6EP41SN2VqHIBCo8B2t1z6bYqXfWxcmKTWJvEWcfhcn79GcdOQhIobRdoe84KVOLJeDz2fP5mnLRjT6LVF46S4JphEnYsA6869rRjWaZt9uBHStZKMjSGSuBzirVSJZjRf4gWGlqaUUzSmqJgLBQ0qQs9FsfEEzUZ4pwt62pzFtZHTZBPWoKZh8K29IFiEWipORhVN74S6gd66KF1oW5EqFDWM0kDhNlyQ2RfduwJZ0yoq2g1IaFcvGJdVL+rHXdLxziJxXM60Jtxur425zeTabKi0/mf82/rrrayQGGmJ9yxBiHYGyfSZbHW6zD4mUk/xxHiPo07tmMkq7LZFSwBUS8XCbISXRRSX2p54BvhIK0swJWvf/Nx3EIwI2lKWVzIYSJuUxdkSVMWcOlogZtiFHP3gC+ZWEjmopzZNpPwNR7lCjtwkdFYDHqP4il3Dz96lPqPPzMi4yedwAQaoIIiiMk4HxOLhDPB5H3bSQWWXVLVmgkkyD2NCFxECcFlxw+w7reZG9I0OFNzWCfVrNXfT2pBFoziE0WkC6Zu4gmLkpAIwPLlAvB/ttcPq+aBtSBcUGAgR22iab67xnpLTZULYwZa8zDnkzmFfW6P5ywWmj9NS7evUERDybxfSbgg0qqMnIhCqVSOLQckq520YpZkBSxPWEQEX4OK7mAXTL0uiFu3lxVd9gpZsMGU5lALkaZov7RdsRhcaCJ7AalZ74jUJDY1UKFPbVu2cdvcdB+FAFNF3ammwZhxTDgBnkFJfcoVQ0JkjXIBPj+fdo7hPF/IcDp5DZJ4mhhz6efTu0K9gshrrF3dsZ0pEmi2KXDSdewVkpN6DOv1KAJOkE6BkF2US1r4rnFb35xnCgiPCGMOeG7MJxWcxv6nHRNS4I3dNPmV7OTyFo+0JAfOVg7Guu4q0pQL1fUJ0+UdiSCVFT4U/PA2qfsui/cn6yNgcVes/0NVQq9eJNjDdpFg21uKBMs+VpFgv7MiYZa5qcepm1cJH6gAUCbTBMVbrbrI++FzlsW467GQ6TxLYyooCp/MhSJzX5wIZ9BpM2crt162z46ZKjnxFq/Nl8c5OQYoxmFR/pTezLPYE+ow/ovnyCLZfaBzZWM7HrguuCP+NZiRj43U0p/tWXWZis4Ot/Tvoer4A7b/nXxOkYo3Kjt2ntJP7Mc9X09Q7JFwgsLQifEsyARmy7eqxmaQz36XQMcpgQbm/hqoNzpWDXT75eFbnC4D9y9n9eB8x/5o+PcTT38Ds1h1/+62PKtXxxpZpRgNppFa24qYytYGdJTge4LBLCAOjF1OOyP4wsW44ww6w568GF7Ji+eAQVZf9ZgBNbMfZKKqjmnMYiKDDRhoiKBI8IDDQdCvWvcSS9Mu+GWPlwGFhAByOdSSo6QOq4BiTABx47zMIXLBjcNApvVorQWY/rYna6Nj4aX9YM04zz+wt8GTvtmKComxI9/CbKy2QFw0ZKB1le/NfOFyjY023NXbdVgPcHP/u0wIFslCBQFCsdYKkUvCcVmGNoIvVW+RgFpdWpArbJhV9AhuvR1qxA5myzLukf2PI2FWPhH7TiRtLGxE2xzoyHISIkEXdd+2hVubu2VwsK5wVaKmoCKrgRg1J91r851Sw9BgsMeQmnTLUI6+co6vB+TWQ9xG7VRvAXFJ39lcRg1qMPAqbRWmtdZuNLMk3/LvDM1vgNodDPYbtbtR22uhNi3eff6PAWc+E3Cno0m7b5+PLi6s8tOvwcYavBJ/Pds8vzB6/eLTMGscCo3QrP69QKlX/6RhX/4L&lt;/diagram&gt;&lt;/mxfile&gt;">
-    <defs>
-        <clipPath id="mx-clip-554-619-152-26-0">
-            <rect x="554" y="619" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-554-653-152-26-0">
-            <rect x="554" y="653" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-249-152-26-0">
-            <rect x="919" y="249" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-283-152-26-0">
-            <rect x="919" y="283" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-34-31-322-26-0">
-            <rect x="34" y="31" width="322" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-34-65-322-70-0">
-            <rect x="34" y="65" width="322" height="70"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-31-152-26-0">
-            <rect x="919" y="31" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-65-152-70-0">
-            <rect x="919" y="65" width="152" height="70"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-31-332-26-0">
-            <rect x="464" y="31" width="332" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-65-332-70-0">
-            <rect x="464" y="65" width="332" height="70"/>
-        </clipPath>
-        <clipPath id="mx-clip-34-249-322-26-0">
-            <rect x="34" y="249" width="322" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-34-283-322-26-0">
-            <rect x="34" y="283" width="322" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-249-332-26-0">
-            <rect x="464" y="249" width="332" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-283-332-26-0">
-            <rect x="464" y="283" width="332" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-419-332-26-0">
-            <rect x="464" y="419" width="332" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-464-453-332-26-0">
-            <rect x="464" y="453" width="332" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-419-152-26-0">
-            <rect x="919" y="419" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-919-453-152-26-0">
-            <rect x="919" y="453" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-364-619-152-26-0">
-            <rect x="364" y="619" width="152" height="26"/>
-        </clipPath>
-        <clipPath id="mx-clip-364-653-152-26-0">
-            <rect x="364" y="653" width="152" height="26"/>
-        </clipPath>
-    </defs>
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1091px" height="611px" viewBox="-0.5 -0.5 1091 611" content="&lt;mxfile&gt;&lt;diagram id=&quot;BF9TuoTAg_J7JJHr0W7K&quot; name=&quot;DataSink &amp;amp; Source&quot;&gt;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&lt;/diagram&gt;&lt;diagram id=&quot;HGnBpSPyw6Q68GAMrUL7&quot; name=&quot;gRPC DataSink&quot;&gt;7Vptb6M4EP41SOmHrHgLJB/z0u6dTqvrXnu6u/2ycsABq4CpMU1zv34HMAHsVKHdzct2I1WtPbYHzzOPhxkXzZrHzx8ZSsNP1MeRZur+s2YtNNM0LMOGP4VkU0mcsVUJAkZ8MakR3JH/sRDqQpoTH2ediZzSiJO0K/RokmCPd2SIMbruTlvRqPvUFAVYEdx5KFKl/xCfh0JqOJNm4DdMglA8emy61UCM6snCkixEPl23RNa1Zs0Zpbxqxc9zHBXg1bhU625eGN1ujOGE91nw6LEvf9zboz/XfOYvrbF+nc+GQssTinJh8G2+FPvlmxoE2HpaNPM4umEohuZsHRKO71LkFfI1+B5kIY8j6BnQVDdXPwkzjp9bIrHZj5jGmLMNTBGjti6A29SMEP1144ftnLDlAqtGHAnfB1vdDTzQEAi9Ai1TQWuBOLqjOQMYTAfFBQoRbGN2v+0GfAtHC9EfC5Ux6kI1MicKVIaxA6rRoZCydiNFkodT4mQb54aTreI0/fwJJRBV2JFJYznq+TouGCMFjIClnmZN4ecOs6eDQyLz4/SQOHsgIUXgOSgmzvjcMHEVTP66BU36HJVrf08yjhIPkobjAnP6YDJWgFEgwIk/LbIi6NEUJ4AESG5IVOMCPZGDGWbPN3pWvf72HmuOWID5fq5jv5ORqfi38a3JyHCEOHnqJm27ABbqbikBM7a+NN2uLx1D8lFlpFjVTrIkRY4UVG1XUlShoCgq/b218e0UmBySAuB5tvkXOvoHw7FqwX+lYDJxa8GiwELf9jbt3i1mBGyESF4J384qqyerjNOxamRJoXMyeiOrJnsUHZhV9Wk4t8ji9OSAezoO2O6o+5awJm/jgKzIlqucQ3NALRXPggN2Tw6Yp+OAa+9xXV8OyIoUMh2aA2oBfBYcMHtywDphhmH8IA7Iio7OAbW0hxq+LOZDQMUp6/igysjrmn9QVW9X9UR4cDO3Fqa14O/URxwPYLauXS+0CfxAY6ZNHW1sF43xTdFodKWNKomMkMrzLskyzugDntOIFilIQpPiMmsF9JREWYo8kgQgGDW9e5qCYGjqL1yAUTByFZXcD4nvl+xnNE987O/Ld15Rt8vXYppcdZiTHVWHcbBbMUO9xGgzouUP5zEvbjtnK5rwYVZGgSlMMKz0uSKCGJepsWQ71by8YCfBfPIki8CvyU7VS+Q9BKXrhl5FjGKjJCGcoKhUoMtGmMKIamAtoC+GEspisUre8G2+jEgWDpp7sOo3rIqzoDwCbtuqasOKsTtMO0dr926kPFTDrDpVhbKU4Zc0aZAGd1Fog7Oi7CtGXlicDAR2wFE2dS8i5bmbtomlgHnBuCfGR3zUmoGmQXkkumHh4r2fwHsZ5mUGleWRHNYv/vsZ/EeCBEWtAPquXeguXmnLL5B02tIFqWG4StppHDntVP9ddEk7e3Kcpd7XECV+hNngjJLMIwbH/buRn1mVpXMapxHmhCafcwy8g5j4uH8bO8PkwfE84csJNEUFOAPOcnw+DPs1Xtfe8Q7F44eiuhpo3eq1yvSurs7A42eY1r1Dxr0gJqsiBIi8v0hgFuXz9WvGaHMb+B5zyPfh5dMxZ8kwemgNXzjyXSA3Jc17BPJSsPX4OslVv07afvXSKdjkL1Z6FGzQbb5jrv7R1HwNbl1/Aw==&lt;/diagram&gt;&lt;diagram id=&quot;YojYIqFwH08CFYIoD1We&quot; name=&quot;gRPC DAQ Server&quot;&gt;7VjRbtowFP2aSN0DE0lI2j6S0LJJVKNNpWpPyI1N4tWJI8c00K/fdeIQAqGwDfaEhMA+Po7je861rzBsP1mOBcriB44JM6w+Xhr2yLAs0zYH8KOQVYW4N3YFRIJiTWqAgH4QDfY1uqCY5C2i5JxJmrXBkKcpCWULQ0Lwok2bc9ZeNUMR2QGCELFd9IViGWvUdG+bgW+ERrFe+sa6rgYSVJP1TvIYYV5sQPadYfuCc1m1kqVPmApeHZdq3v2e0fWLCZLKYybcBnn0mN6vLJr98l6K5zF793umVuMdsYXesWG5DB7oxbCCG6lW9DT1gTMaPsJ3QMQ7ETUJlmt4NZjVQK+3wcsaWhkOuapjLMmyXFAmDAATmrkU/I34nHEBSMpTYHpzytgWlGcopGkEgNP0nnkGQA/CYXtFTCUJAFdLFWBRwDi8/5yVUsQUY5ICJvgixURFqr9+w83Q6mjDTHjZDUiHekx4QqRYAWXZ9u+q3S0aD1m3Gos37GPWbkHat9H6yY200NDqdiv9+Bz+CH/G8n5iLeKH4Qeaxl7P3BG6VnJLjbygCUNVxHkqAz2iZEGMRhCtUQhxgZm2p+JBIVmGekCq0HthTBmeoBVfqF3lEoVvdc+LuaAf8FjUSI2E1HlvuS1GoGZqSQTJgTOtJTG3oAe0bBEnKJcaCDljKMvp63obCRIRTT0uJU9OqPigLbnd39Xc6f9Xza2O5Iat9mc5yXPKU1hvWIqPVcMeLlIuMBEEzxKU1amruTO10nBBU2lbM2lY6kTQQ4AHunUgxY/N69pojMzlXpvpdJ+UnNGgQZ50bAd7k10iiSo/KPEzDrsqY+948AE1/P5Xx3BGapeOZzZ9+Ci6kD4ETwpES7cQMFtBctnpo0+T8bC5tJkgM47yUs07uZW67oktjRmtzuRS4/qyNP9K4ASkYhsHvD7SzR3V7V3V7Q6FGXolbMpzKku7jkTF3VL+kLht99I0JoKeU3THOk70mzNpPthzfIyJ/A4RQmlIrr5UR8i6KkBJVlUChmWb1cmqpgwx1kfElVxlRM9SzctRcWLXuEdeO+65bh2no9LQt8Ol1DhJqXHtHi41TLfrpDjX9eAeqDSq6gGApoC4pP1nae8c7Yn9FUKnBc5WIVxfKoR/rRD+WPSOCqE778+k+c2etIenxxxfrvoz53zHVX+qnIdu89dUObbxB5999xs=&lt;/diagram&gt;&lt;diagram id=&quot;GdyGgqRgVyQJDD1CJEq4&quot; name=&quot;gRPC State Pub/Sub&quot;&gt;7Vpbb+I6EP41SN2VqEgCFB4DtN1z6bYqXfWxcmKTWJvEWcfhcn79GcfOHUov0Ms5K1CxJ854PPP5m3HSjjUN15ccxf4VwyTomD287lizjmkaltGHHynZKMlwZCmBxynWg0rBnP5DtLCnpSnFJKkNFIwFgsZ1ocuiiLiiJkOcs1V92IIF9Vlj5JGWYO6ioC29p1j4WmoMx+WFb4R6vp56ZJ6pCyHKB+uVJD7CbFURWecda8oZE6oVrqckkM7L/aLuu9hxtTCMk0g85QZ6PUk2V8biejqL13S2+HPxfdPVWpYoSPWCO+YwAH2TWJosNtoPw1+ptHMSIu7RqGPZvXhddLuCxSDqZyJB1qKLAurJUS7YRjhISw3Q8vRvNo+TC+YkSSiLcjksxGmOBVnclPlcGprjJp/F2D3hcxYWkIUoVrZNJXx7D9LDNjRSGolh/0E8Zu7hZw8T7+FXSmT8pBGYQAeGoBBiMsnmxCLmTDB53bITgeUtierNBRLkjoYEGmFMcHHjJ/D7TeoENPFP1Bo2cblq9feLcsiSUfxGEemCqutoysI4IAKwfL4E/J/stcOsWWAuCRcUGMhWm2iW7a6J3lIzZcKEwahFkPHJgsI+tyYLFgnNn4ap+xcopIFk3m8kWBKpVUZOhIEcVMxd5ZCcEMAGsq6INKdcEhYSwTcwRF+1cqbe5MSt+6uSLvu5zK8wpTHSQqQp2it0lywGDU1kzyA18wORmsSmBircU9uWbdw2N91nIcBEUXeiaTBiHBNOgGdQXF9yyZAQ2V7hgK9Pp51jGM+XMpx2VoPEribGTPr17U2hbk7kNdYur1j2DAk0rwrsZBO5ueRNLQZ/PQifE6RTIGQXZZIWfmjc1jfniQLCA8KYA54b60kEp5H3ZceCFHgjJ4lfk50c3uKRluTA2crGWNddeZpyoLp+w3R5S0JIZbkNOT+8T+q+TaP9yfoIWNwV6/9QldCvFwnWqF0kWNaWIsG0jlUkWB+sSJinTuJy6mRVwicqAJTKJEbRVq0Ocn96nKUR7rosYDrP0ogKioJHc6FInWcnwjncVM3Zyqzn7bNjpkpO3OVL8+VxTo4+inCQlz+FNYs0coU6jL/yHJknu090rmxsxwPXBbfEuwI18rGRcv3JHq/LVHRyONd/hKrjD9j+t/I5RSLeqezYeUp/Yzvu+GaKIpcEUxQEdoTnfiowW71XNTaHfPa7BDpOCTQ09tdA/fGxaqCby/vvUbLynb/s9b39A3vj0d+PPP31jdzr3u1NcVYvjzWySuk1mEaO2lbElLoq0FGCHzEGtYA4UHY+64zhC41Jxx52Rn3ZGF3IxlPAIKuvesyAmtlPMlVVxyxiEZHBBgw0RFAkuMDhIBiUvTuJpVkX7LImK59CQgC5nGrFUVyHlU8xJoC4SVbmEOnw3mEg03q01gLMYNuTtfGx8NJ+sNY7zT6wt8GSgdGKComwLd/CVLwtEBcNGYy6yPZm5rhsRKUPV/V2HdUD3Nz/DhOChbJQQYBQrEcFyCHBpChDG8GXQ2+QgFpdapAe7hmPRi9hKXfJ/qePsAiPiP0HEIJrL6DaWKhE2xjqyHISIEGX9XdU28Kt1d0wOFiXuCpQk1OR2UCMWqS+q/pOqaFoONyjSHmhpShDX7HGlwNy6yGuUjvVe0Bc0na2kGGEGgysSlqFaa23G80szrb8B0Pz8VFr/Ebtq1Hbb6E2yd99/n8AZzwRcO9Ik9bAOh2fnZnFZ1CDjTl8If76lnF61usP8k9Dbe9QaIRu+e8Fanj5TxrW+b8=&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs/>
     <g>
-        <path d="M 550 614 L 550 588 L 710 588 L 710 614" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
-        <path d="M 550 614 L 550 674 L 710 674 L 710 614" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 550 614 L 710 614" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="629.5" y="605.5">
-                RobotStateDataSource
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-554-619-152-26-0)" font-size="12px">
-            <text x="555.5" y="631.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 550 644 L 710 644" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-554-653-152-26-0)" font-size="12px">
-            <text x="555.5" y="665.5">
-                + method(type): type
-            </text>
-        </g>
-        <path d="M 915 244 L 915 218 L 1075 218 L 1075 244" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 244 L 915 304 L 1075 304 L 1075 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 244 L 1075 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="994.5" y="235.5">
-                DataSinkPB&lt;T&gt;
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-249-152-26-0)" font-size="12px">
-            <text x="920.5" y="261.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 915 274 L 1075 274" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-283-152-26-0)" font-size="12px">
-            <text x="920.5" y="295.5">
-                + Update(T&amp;): void
-            </text>
-        </g>
-        <path d="M 915 65 L 825.99 65" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 800.99 65 L 813.49 57.65 L 825.99 65 L 813.49 72.35 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 630 388 L 630 322.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 630 305.12 L 638.5 322.12 L 621.5 322.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <rect x="300" y="100" width="400" height="180" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 346px; margin-left: 630px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                Extends
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 402px; height: 180px; padding-top: 100px; margin-left: 300px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left; width: 400px; height: 180px; overflow: hidden;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; width: 100%; height: 100%; white-space: nowrap;">
+                                <p style="margin:0px;margin-top:4px;text-align:center;">
+                                    <b>
+                                        Session
+                                    </b>
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _id: uint64_t
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _msg_queue: deque&lt;dtproto::std_msgs::StateTimeStamped&gt;
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + Publish(StateType&amp;): void
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - OnCompletionEvent(): void
+                                </p>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="630" y="349" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
-                    Extends
+                <text x="300" y="112" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
+                    Session...
                 </text>
             </switch>
         </g>
-        <path d="M 630 588 L 630 492.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 630 475.12 L 638.5 492.12 L 621.5 492.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <rect x="30" y="380" width="330" height="230" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 531px; margin-left: 630px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                Extends
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 332px; height: 230px; padding-top: 380px; margin-left: 30px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left; width: 330px; height: 230px; overflow: hidden;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; width: 100%; height: 100%; white-space: nowrap;">
+                                <p style="margin:0px;margin-top:4px;text-align:center;">
+                                    <b>
+                                        StatePublisher&lt;StateType&gt;
+                                    </b>
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _sessions: unordered_map&lt;uint64_t, StateType*&gt;
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _server: grpc::Server*
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _service: dtproto::service::DataService::AsyncService
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _rpc_thread: std::thread
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + StatePublisher(server_address: std::string)
+                                </p>
+                                + Publish(StateType&amp;): void
+                                <br/>
+                                <br/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - AddSession(): bool
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - RemoveSession(uint64_t): void
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - Run(): void
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    <br/>
+                                </p>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="630" y="534" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
-                    Extends
+                <text x="30" y="392" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
+                    StatePublisher&lt;StateType&gt;...
                 </text>
             </switch>
         </g>
-        <path d="M 30 26 L 30 0 L 360 0 L 360 26" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 30 26 L 30 130 L 360 130 L 360 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 30 26 L 360 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="194.5" y="17.5">
-                DAQManager
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-34-31-322-26-0)" font-size="12px">
-            <text x="35.5" y="43.5">
-                + _data_srcs: std::list&lt;std::shared_ptr&lt;DataSource&gt;&gt;
-            </text>
-        </g>
-        <path d="M 30 56 L 360 56" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-34-65-322-70-0)" font-size="12px">
-            <text x="35.5" y="77.5">
-                + Init(): void
-            </text>
-            <text x="35.5" y="91.5">
-                + Update(): void
-            </text>
-            <text x="35.5" y="105.5">
-                + AppendDataSource(std::shared_ptr&lt;DataSource&gt;): void
-            </text>
-        </g>
-        <path d="M 460 65 L 385.99 65" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 360.99 65 L 373.49 57.65 L 385.99 65 L 373.49 72.35 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 26 L 915 0 L 1075 0 L 1075 26" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 26 L 915 130 L 1075 130 L 1075 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 26 L 1075 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="994.5" y="17.5">
-                DataSink
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-31-152-26-0)" font-size="12px">
-            <text x="920.5" y="43.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 915 56 L 1075 56" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-65-152-70-0)" font-size="12px">
-            <text x="920.5" y="77.5">
-                + Update(): void
-            </text>
-        </g>
-        <path d="M 460 26 L 460 0 L 800 0 L 800 26" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 26 L 460 130 L 800 130 L 800 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 26 L 800 26" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="629.5" y="17.5">
-                DataSource
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-31-332-26-0)" font-size="12px">
-            <text x="465.5" y="43.5">
-                + _data_sinks: std::list&lt;std::unique_ptr&lt;DataSink&gt;&gt;
-            </text>
-        </g>
-        <path d="M 460 56 L 800 56" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-65-332-70-0)" font-size="12px">
-            <text x="465.5" y="77.5">
-                + Update(nsec: uint64_t): void
-            </text>
-            <text x="465.5" y="91.5">
-                + AppendDataSink(std::unique_ptr&lt;DataSink&gt;): void
-            </text>
-        </g>
-        <path d="M 30 244 L 30 218 L 360 218 L 360 244" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 30 244 L 30 304 L 360 304 L 360 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 30 244 L 360 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="194.5" y="235.5">
-                DAQManagerEcal
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-34-249-322-26-0)" font-size="12px">
-            <text x="35.5" y="261.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 30 274 L 360 274" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-34-283-322-26-0)" font-size="12px">
-            <text x="35.5" y="295.5">
-                + Init(): void
-            </text>
-        </g>
-        <path d="M 195 218 L 195 148.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 195 131.12 L 203.5 148.12 L 186.5 148.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <rect x="600" y="380" width="490" height="230" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 174px; margin-left: 195px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                Extends
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 492px; height: 230px; padding-top: 380px; margin-left: 600px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left; width: 490px; height: 230px; overflow: hidden;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; width: 100%; height: 100%; white-space: nowrap;">
+                                <p style="margin:0px;margin-top:4px;text-align:center;">
+                                    <b>
+                                        StateSubscriber
+                                    </b>
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    <span style="background-color: initial;">
+                                        + _stub: dtproto::service::DataService::Stub*
+                                    </span>
+                                    <br/>
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _rpc_recv_thread: std::thread
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + _msg_handler: std::function&lt;dtproto::std_msgs::StateTimeStamped&amp;)&gt;
+                                </p>
+                                <hr size="1"/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    + StateSubscriber(server_address: std::string)
+                                </p>
+                                + RegMessageHandler(std::function&lt;void(dtproto::std_msgs::StateTimeStamped&amp;)&gt;: void
+                                <br/>
+                                <br/>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - InitRequest(): bool
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - OnCompletionEvent(): bool
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - TryCancelCallAndShutdown(): bool
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    - Stop(): void
+                                </p>
+                                <p style="margin:0px;margin-left:4px;">
+                                    <br/>
+                                </p>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="195" y="177" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
-                    Extends
+                <text x="600" y="392" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
+                    StateSubscriber...
                 </text>
             </switch>
         </g>
-        <path d="M 460 244 L 460 218 L 800 218 L 800 244" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 244 L 460 304 L 800 304 L 800 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 244 L 800 244" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="629.5" y="235.5">
-                DataSourcePB&lt;T&gt;
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-249-332-26-0)" font-size="12px">
-            <text x="465.5" y="261.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 460 274 L 800 274" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-283-332-26-0)" font-size="12px">
-            <text x="465.5" y="295.5">
-                + Update(nsec: uint64_t): void
-            </text>
-        </g>
-        <path d="M 460 414 L 460 388 L 800 388 L 800 414" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 414 L 460 474 L 800 474 L 800 414" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 460 414 L 800 414" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="629.5" y="405.5">
-                DataSourcePBTimestamped&lt;T&gt;
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-419-332-26-0)" font-size="12px">
-            <text x="465.5" y="431.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 460 444 L 800 444" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-464-453-332-26-0)" font-size="12px">
-            <text x="465.5" y="465.5">
-                + method(type): type
-            </text>
-        </g>
-        <path d="M 915 414 L 915 388 L 1075 388 L 1075 414" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 414 L 915 474 L 1075 474 L 1075 414" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 915 414 L 1075 414" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="994.5" y="405.5">
-                DataSinkPBEcal&lt;T&gt;
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-419-152-26-0)" font-size="12px">
-            <text x="920.5" y="431.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 915 444 L 1075 444" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-919-453-152-26-0)" font-size="12px">
-            <text x="920.5" y="465.5">
-                + Update(T&amp;): void
-            </text>
-        </g>
-        <path d="M 995 218 L 995 144.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
-        <path d="M 995 131.12 L 1001.5 144.12 L 988.5 144.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 630 218 L 630 144.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
-        <path d="M 630 131.12 L 636.5 144.12 L 623.5 144.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 995 388 L 995 322.12" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 995 305.12 L 1003.5 322.12 L 986.5 322.12 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <rect x="0" y="10" width="500" height="90" fill="none" stroke="none" pointer-events="all"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 346px; margin-left: 995px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                Extends
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 492px; height: 1px; padding-top: 0px; margin-left: 5px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left; max-height: 100px; overflow: hidden;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">
+                                <h1>
+                                    gRPC State Publisher &amp; Subscriber
+                                </h1>
+                                <p>
+                                    Update() 흐름도
+                                </p>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="995" y="349" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
-                    Extends
+                <text x="5" y="12" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
+                    gRPC State Publisher &amp; Subscriber...
                 </text>
             </switch>
         </g>
-        <path d="M 360 614 L 360 588 L 520 588 L 520 614" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 360 614 L 360 674 L 520 674 L 520 614" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 360 614 L 520 614" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="439.5" y="605.5">
-                ControlStateDataSource
-            </text>
-        </g>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-364-619-152-26-0)" font-size="12px">
-            <text x="365.5" y="631.5">
-                + field: type
-            </text>
-        </g>
-        <path d="M 360 644 L 520 644" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g fill="rgb(0, 0, 0)" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-364-653-152-26-0)" font-size="12px">
-            <text x="365.5" y="665.5">
-                + method(type): type
-            </text>
-        </g>
-        <path d="M 480.85 588 L 576.67 487.14" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 588.38 474.81 L 582.83 492.99 L 570.51 481.28 Z" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 360 495 L 600 495" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="10 10" pointer-events="stroke"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 531px; margin-left: 535px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                Extends
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-end; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 492px; margin-left: 480px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;">
+                                0.0.0.0:50051
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="535" y="534" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
-                    Extends
+                <text x="480" y="492" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
+                    0.0.0.0:50051
                 </text>
             </switch>
         </g>
-        <path d="M 0 512 L 1130 512" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 310 380 L 408.42 281.58" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 406.03 290.34 L 409.21 280.79 L 399.66 283.97" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-end; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 327px; margin-left: 360px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;">
+                                &lt;&lt;list of sessoins&gt;&gt;
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="360" y="327" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
+                    &lt;&lt;list of sessoins&gt;&gt;
+                </text>
+            </switch>
+        </g>
+        <path d="M 601.8 280 L 713.24 378.52" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 704.36 376.67 L 714.08 379.26 L 710.32 369.93" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-end; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 327px; margin-left: 658px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;">
+                                session
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="658" y="327" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">
+                    session
+                </text>
+            </switch>
+        </g>
     </g>
     <switch>
         <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>

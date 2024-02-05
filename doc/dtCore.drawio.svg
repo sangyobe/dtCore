@@ -1,0 +1,235 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1041px" height="669px" viewBox="-0.5 -0.5 1041 669" content="&lt;mxfile&gt;&lt;diagram id=&quot;FjESbqU0UxesRwD_RB7Z&quot; name=&quot;Page-1&quot;&gt;xZvbbts4EIafxpcFRFLHyzbJ7l5sgQJp0cuCERlbhSQqFN3EffrSFeVYHKZoWnMEBIE1OvnjjIYzP+UNu+qe/tV82L1XQrYbmoinDbveUFrR3P4/Gg6TgaRlOVm2uhHO9my4bb5LZ0ycdd8IOS4ONEq1phmWxlr1vazNwsa1Vo/Lw+5Vu7zrwLcSGG5r3kLr50aYnbOSvHre8Z9stjt365IW046Ozwc7knHHhXo8M7GbDbvSSpnpU/d0Jdvj4M3jMp33zwt7T19My978zglsOuEbb/eOrbXeGvqt+3rmMDPb8+zw2o137hSpjXx68bbkBGOjQKpOGn2wh7gTUppNp7gIeMMInQyPZ+OZuEHanQ1l5mzcuXB7uvYzpf3gQMPQKYAW5v3RM1GZs9JjThkiM8shnbBB7TZ71R8xd6azF7gmJ+LjMb/mtZdUe127oxyi4Xor3VF5eFS0bLlpvi2v/ldeTV9JKPi4k+LSuAwJNwNB3O2/qlpFfnDZmkGcA+Zte/8Y+bH1iW02xyMuALG9gezjIhd5skQmFSJyCZDV+DDEJc793MwoZm4uUXJzBZNVgZSsKuDToYnt0zLxohjVp3OpeoY8DqJVkQuryn900xQTmgDoA+/aN/UQ2ddF5mPPzxQKNoXhrZVRd/v7uNi08tNWgehtilNSEgbzFsFKXPMEvAYjVuFMcaafICNFYmTJaoxoHQEj6zGi+ZGuF6sZFiNbjzFFYsyy9WIVi5FAcW2rhxqCX7IkIMWaDTqB0hq/G2XTxoWmoH3DlBMJlGK+t81dZOTUlyXSAhEZKjFcCC3H8cuotGli68fEL3wJZuFLoCpT268+xmVO/Xa2RGxx2GvF1T/M1yXM13g1ItKcFGLEqhEJVNeE+XBsViOnK+pFb4baqUIx5r4zcYmr0n9eMSfiFKeGPK2+ntdXSXhcLt+3QrXpYd+0kWuNqvClpgQzkilg1jLQE11WXFsC099+dOkFgGERvR8i11a+mMhm9QDFw7CEHsfIMU387HySr1FyFY42wwLrHwQrV803X8y7n4xtjNhb+yfM/9FXBvyoRp2B51WIyD5OA/MReWFcLv8CApyPlj6+Un3kBQGwDoLrZBwhOQ28dYGmW63wkkmIF0uLTKG2Icz1oeddU0fud5kv6qDGcvbaSekSjs7XC+wUKjrCfNT8q6yNcpeKJ234cg5u2qpw0laxonehYiXMrWqt1+J6Nk9WfYiRXnoMVR0l1oyEs0IdYkyxZqEMp7AIMmKtwmc4WSjIiPU2RY7T6QUZsbqAHGcVPsQ4NZkYsQo7nVaqhz0XtdGRtQrwBnJeImoVOU4fOytni5IfK4Lnm0PvxvUs81WoosL0LI5ingXeSMDzbODnPpNnv4xNF9e7GaZ37ebzb6h+7jv7JRq7+QE=&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs/>
+    <g>
+        <ellipse cx="435" cy="503" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="434.5" y="507.5">
+                lodepng
+            </text>
+        </g>
+        <ellipse cx="595" cy="383" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="594.5" y="387.5">
+                dtMath
+            </text>
+        </g>
+        <path d="M 460.81 406.72 L 525.66 503.98" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 528.57 508.35 L 521.77 504.47 L 525.66 503.98 L 527.6 500.59 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 443.16 407.98 L 437.63 471.68" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 437.18 476.91 L 434.3 469.63 L 437.63 471.68 L 441.27 470.24 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="445" cy="383" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="444.5" y="387.5">
+                mujoco
+            </text>
+        </g>
+        <ellipse cx="545" cy="533" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="544.5" y="537.5">
+                glfw
+            </text>
+        </g>
+        <ellipse cx="770" cy="623" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="769.5" y="627.5">
+                eigen
+            </text>
+        </g>
+        <ellipse cx="695" cy="493" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="694.5" y="497.5">
+                osqp
+            </text>
+        </g>
+        <path d="M 802.47 517.71 L 779.48 592.21" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 777.93 597.22 L 776.65 589.5 L 779.48 592.21 L 783.34 591.57 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="810" cy="493" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="809.5" y="497.5">
+                piqp
+            </text>
+        </g>
+        <ellipse cx="970" cy="373" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="969.5" y="377.5">
+                spdlog
+            </text>
+        </g>
+        <ellipse cx="760" cy="377" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="759.5" y="381.5">
+                yaml-cpp
+            </text>
+        </g>
+        <ellipse cx="305" cy="443" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="304.5" y="447.5">
+                protobuf
+            </text>
+        </g>
+        <path d="M 142.99 396.55 L 97.94 411.36" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 92.95 413 L 98.51 407.49 L 97.94 411.36 L 100.69 414.14 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 186.91 407.98 L 202.59 611.67" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 202.99 616.9 L 198.97 610.19 L 202.59 611.67 L 205.95 609.66 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 220.36 400.68 L 263.95 422.47" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 268.64 424.82 L 260.82 424.82 L 263.95 422.47 L 263.95 418.56 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 158.88 404.32 L 91.06 459.66" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 86.99 462.98 L 90.2 455.84 L 91.06 459.66 L 94.63 461.26 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 170.25 406.89 L 103.73 513.85" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 100.96 518.31 L 101.68 510.52 L 103.73 513.85 L 107.63 514.21 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 194.21 407.57 L 243.45 537.48" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 245.31 542.39 L 239.56 537.08 L 243.45 537.48 L 246.1 534.6 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 205.85 405.72 L 269.86 475.58" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 273.41 479.45 L 266.1 476.65 L 269.86 475.58 L 271.26 471.92 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 178.95 407.82 L 137.68 574.01" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 136.42 579.1 L 134.71 571.47 L 137.68 574.01 L 141.5 573.15 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="185" cy="383" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="184.5" y="387.5">
+                grpc
+            </text>
+        </g>
+        <ellipse cx="295" cy="503" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="294.5" y="507.5">
+                abseil
+            </text>
+        </g>
+        <ellipse cx="255" cy="568" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="254.5" y="572.5">
+                zlib
+            </text>
+        </g>
+        <ellipse cx="205" cy="643" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="204.5" y="647.5">
+                address_sorting
+            </text>
+        </g>
+        <ellipse cx="50" cy="427" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="49.5" y="431.5">
+                cares
+            </text>
+        </g>
+        <path d="M 239.13 267.58 L 293.55 412.47" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 295.39 417.38 L 289.65 412.06 L 293.55 412.47 L 296.21 409.6 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 222.06 267.68 L 194.88 352.25" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 193.28 357.25 L 192.09 349.52 L 194.88 352.25 L 198.75 351.66 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="230" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="229.5" y="247.5">
+                dtProto
+            </text>
+        </g>
+        <ellipse cx="990" cy="483" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="989.5" y="487.5">
+                fmt
+            </text>
+        </g>
+        <path d="M 983.33 437.94 L 985.46 451.77" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 986.27 456.96 L 981.74 450.58 L 985.46 451.77 L 988.66 449.51 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="980" cy="413" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="979.5" y="417.5">
+                quill
+            </text>
+        </g>
+        <ellipse cx="85" cy="544" rx="50" ry="26" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="84.5" y="548.5">
+                re2
+            </text>
+        </g>
+        <ellipse cx="60" cy="485" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="59.5" y="489.5">
+                upb
+            </text>
+        </g>
+        <ellipse cx="130" cy="605" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="129.5" y="609.5">
+                ssl
+            </text>
+        </g>
+        <path d="M 961.9 267.98 L 967.59 341.67" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 967.99 346.9 L 963.96 340.19 L 967.59 341.67 L 970.94 339.66 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="960" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="959.5" y="247.5">
+                dtUtil::dtLog
+            </text>
+        </g>
+        <path d="M 760 268 L 760 345.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 760 350.88 L 756.5 343.88 L 760 345.63 L 763.5 343.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="760" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="759.5" y="247.5">
+                dtUtil::dtConf
+            </text>
+        </g>
+        <path d="M 424.06 263.34 L 560.72 359" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 565.02 362.02 L 557.28 360.87 L 560.72 359 L 561.29 355.13 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 403.77 267.61 L 434.07 352.39" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 435.83 357.34 L 430.18 351.92 L 434.07 352.39 L 436.77 349.57 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="395" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="394.5" y="247.5">
+                dtDynamics
+            </text>
+        </g>
+        <path d="M 520.19 266.82 L 576.25 353.85" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 579.09 358.26 L 572.36 354.27 L 576.25 353.85 L 578.25 350.48 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="505" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="504.5" y="247.5">
+                dtTrajectory
+            </text>
+        </g>
+        <path d="M 611.53 267.94 L 599.47 351.76" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 598.72 356.96 L 596.25 349.53 L 599.47 351.76 L 603.18 350.53 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="615" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="614.5" y="247.5">
+                dtSolver
+            </text>
+        </g>
+        <path d="M 409.74 152.73 L 270.96 222.42" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 266.27 224.78 L 270.96 218.51 L 270.96 222.42 L 274.1 224.77 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 433.84 159.37 L 408.96 212.87" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 406.75 217.63 L 406.53 209.81 L 408.96 212.87 L 412.87 212.76 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 458.35 159.09 L 488.52 213.35" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 491.07 217.93 L 484.61 213.52 L 488.52 213.35 L 490.73 210.12 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 475.99 154.62 L 578.7 219.94" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 583.13 222.75 L 575.35 221.95 L 578.7 219.94 L 579.1 216.05 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 486.32 149.08 L 712.74 226.79" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 717.71 228.5 L 709.95 229.54 L 712.74 226.79 L 712.22 222.92 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 491.12 144.66 L 907.66 232.02" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 912.8 233.1 L 905.23 235.09 L 907.66 232.02 L 906.66 228.24 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="445" cy="135" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="444.5" y="139.5">
+                leoquadctrl
+            </text>
+        </g>
+        <path d="M 353.17 47.15 L 417.24 108.44" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 421.03 112.07 L 413.55 109.76 L 417.24 108.44 L 418.39 104.7 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="330" cy="25" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="329.5" y="29.5">
+                leoquad
+            </text>
+        </g>
+        <path d="M 512.09 48.34 L 466.92 106.65" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 463.7 110.8 L 465.22 103.12 L 466.92 106.65 L 470.76 107.41 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <ellipse cx="530" cy="25" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="529.5" y="29.5">
+                leoquad_sim
+            </text>
+        </g>
+    </g>
+</svg>

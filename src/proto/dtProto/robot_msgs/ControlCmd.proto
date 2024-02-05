@@ -7,7 +7,7 @@ import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Twist.proto";
 
 message ControlCmd {
-  int32 op_mode = 1;
+  int32 cmd_mode = 1;
   string arg = 2;
 }
 
