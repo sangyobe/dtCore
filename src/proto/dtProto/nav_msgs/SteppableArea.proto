@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package dtproto.nav_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/geometry_msgs/Polygon.proto";
+
+message SteppableArea {
+  repeated geometry_msgs.Polygon3d steppables = 1;
+  uint32 steppables_count = 2;
+  repeated geometry_msgs.Polygon3d unsteppables = 3;
+  uint32 unsteppables_count = 4;
+}
+
+message SteppableAreaTimeStamped {
+  std_msgs.Header header = 1;
+  SteppableArea area = 2;
+}
