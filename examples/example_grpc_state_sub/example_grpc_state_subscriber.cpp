@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     std::thread proc_reconnector = std::thread([&bRun, &sub_robot_state, &sub_arbitrary_state] () {
 
         while (bRun.load()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
             if (!sub_robot_state->IsRunning()) {
                 std::cout << "Reconnect to robot state publisher..." << std::endl;
