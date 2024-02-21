@@ -43,7 +43,7 @@ namespace dtCore {
 class dtServiceListenerGrpc : public dtDataSink
 { 
 public:
-    dtServiceListenerGrpc(const std::string& server_address);
+    dtServiceListenerGrpc(std::unique_ptr<grpc::Service> service, const std::string& server_address);
     ~dtServiceListenerGrpc();
     // virtual void Publish() {}
 
@@ -54,13 +54,13 @@ public:
     bool IsRun();
 
 public:
-    template<typename SesstionType> bool AddSession();
+    template<typename SessionType> bool AddSession(void* udata = nullptr);
     void RemoveSession(uint64_t session_id);
 
 public:
     class Session {
     public:
-        Session(dtServiceListenerGrpc* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq);
+        Session(dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* /*placeholder for user data*/);
         Session() = delete;
         virtual ~Session() = default;
         virtual void OnCompletionEvent() = 0;
@@ -70,7 +70,7 @@ public:
     protected:
         uint64_t _id;
         dtServiceListenerGrpc* _server;
-        dtproto::dtService::AsyncService* _service;
+        grpc::Service* _service;
         grpc::ServerCompletionQueue* _cq;
         grpc::ServerContext _ctx;
         std::mutex _proc_mtx;
@@ -95,7 +95,7 @@ protected:
     std::string _server_address;
     std::unique_ptr<grpc::Server> _server;
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
-    dtproto::dtService::AsyncService _service;
+    std::unique_ptr<grpc::Service> _service;
     std::atomic<bool> _running {false};
 #ifdef USE_THREAD_PTHREAD
     pthread_t _rpc_thread;
@@ -103,7 +103,7 @@ protected:
     std::thread _rpc_thread;
 #endif   
     std::mutex _session_mtx;
-    std::unordered_map<uint64_t, std::shared_ptr<Session> > _sessions;
+    std::unordered_map<uint64_t, std::shared_ptr<Session>> _sessions;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +116,7 @@ uint64_t dtServiceListenerGrpc::Session::AllocSessionId()
     return (++_session_id_allocator);
 }
 
-dtServiceListenerGrpc::Session::Session(dtServiceListenerGrpc* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq)
+dtServiceListenerGrpc::Session::Session(dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void*)
     : _server(server), _service(service), _cq(cq), _status(SessionStatus::WAIT_CONNECT)
 {    
     _id = AllocSessionId();
@@ -151,15 +151,14 @@ void dtServiceListenerGrpc::Session::TryCancelCallAndShutdown()
 //
 // dtServiceListenerGrpc Implementation
 //
-dtServiceListenerGrpc::dtServiceListenerGrpc(const std::string& server_address)
-: _server_address(server_address)
+dtServiceListenerGrpc::dtServiceListenerGrpc(std::unique_ptr<grpc::Service> service, const std::string& server_address)
+: _service(std::move(service)), _server_address(server_address)
 {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&_service);
+    builder.RegisterService(_service.get());
     _cq = builder.AddCompletionQueue();
     _server = builder.BuildAndStart();
-    // AddSession<OnControlCmd>();
     Run();
 }
 
@@ -169,8 +168,8 @@ dtServiceListenerGrpc::~dtServiceListenerGrpc()
 }
 
 template<typename SessionType>
-bool dtServiceListenerGrpc::AddSession() {
-    std::shared_ptr<SessionType> session =  std::make_shared<SessionType>(this, &_service, _cq.get());
+bool dtServiceListenerGrpc::AddSession(void* udata) {
+    std::shared_ptr<SessionType> session =  std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
     std::lock_guard<std::mutex> lock(_session_mtx);
     _sessions[session->GetId()] = session;
     return true;
@@ -184,7 +183,6 @@ void dtServiceListenerGrpc::RemoveSession(uint64_t session_id) {
 // Stop all pending rpc calls and close sessions
 void dtServiceListenerGrpc::Stop() {
     // LOG(INFO) << "Shutting down Server.";
-
     {
         std::lock_guard<std::mutex> lock(_session_mtx);
         for (auto it : _sessions) {
@@ -255,57 +253,6 @@ bool dtServiceListenerGrpc::IsRun() {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// OnControlCmd
-//
-class OnControlCmd : public dtServiceListenerGrpc::Session {
-public:
-    OnControlCmd(dtServiceListenerGrpc* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq)
-    : Session(server, service, cq), _responder(&_ctx) {
-        //LOG(INFO) << "NEW OnControlCmd session created.";
-        _status = SessionStatus::WAIT_CONNECT;
-        _service->RequestCommand(&_ctx, &_request, &_responder, _cq, _cq, this);
-        //LOG(INFO) << "Wait for new ControlService::Command() service call...";
-    }
-    ~OnControlCmd() {
-        //LOG(INFO) << "OnControlCmd session deleted.";
-    }
-    void OnCompletionEvent() {
-        //LOG(INFO) << "OnControlCmd: " << "OnCompletionEvent";
-        if (_status == SessionStatus::WAIT_CONNECT) {
-            //LOG(INFO) << "NEW ControlService::Command() service call.";
-
-            _server->AddSession<OnControlCmd>();
-
-            {
-                std::lock_guard<std::mutex> lock(_proc_mtx);
-
-                _response.set_rtn(0);
-                _response.set_msg("success");
-
-                _status = SessionStatus::WAIT_FINISH;
-                _responder.Finish(_response, grpc::Status::OK, this);
-            }
-        } 
-        else if (_status == SessionStatus::WAIT_FINISH) {
-            //LOG(INFO) << "Finalize ControlService::Command() service.";
-            //_status = SessionStatus::FINISHED;
-            _server->RemoveSession(_id);
-        }
-        else {
-            GPR_ASSERT(false && "Invalid Session Status.");
-            //LOG(ERROR) << "Invalid session status (" << static_cast<int>(_status) << ")";
-        }
-    }
-
-private:
-    ::dtproto::robot_msgs::ControlCmd _request;
-    ::dtproto::std_msgs::Response _response;
-    grpc::ServerAsyncResponseWriter<::dtproto::std_msgs::Response> _responder;
-};
-
-
-}
+} // namespace dtCore
 
 #endif // __DTCORE_DTSERVICELISTENERGRPC_H__
