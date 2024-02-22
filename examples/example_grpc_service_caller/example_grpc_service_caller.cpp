@@ -1,94 +1,93 @@
-#include <grpc/grpc.h>
-#include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
-#include <dtProto/Service.grpc.pb.h>
+#include "dtCore/src/dtDAQ/grpc/dtServiceCallerGrpc.hpp"
+#include "dtCore/src/dtLog/dtLog.h"
 
-#include <memory>
-#include <string>
+using ServiceType = dtproto::dtService;
 
 /////////////////////////////////////////////////////////////////////////
-// RpcClient (Rpc service caller)
+// OnQueryRobotInfo (Rpc service call handler)
 //
-class RpcClient {
-public:
-    RpcClient(const std::string& server_address);
+//     rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
+//
+class OnQueryRobotInfo : public dtCore::dtServiceCallerGrpc<ServiceType>::Call {
+  using CallState =
+      typename dtCore::dtServiceCallerGrpc<ServiceType>::Call::CallState;
 
-    bool QueryRobotInfo();
-    bool ControlCmd(int cmd_mode, const char* fmt, ...);
+public:
+  OnQueryRobotInfo(ServiceType::Stub *stub, grpc::CompletionQueue *cq,
+                   void *udata = nullptr)
+      : dtCore::dtServiceCallerGrpc<ServiceType>::Call(stub, cq, udata) {
+    LOG(info) << "NEW OnQueryRobotInfo session created.";
+    _responder =
+        stub->PrepareAsyncQueryRobotInfo(&(this->_ctx), _request, this->_cq);
+    _responder->StartCall();
+    _responder->Finish(&_response, &(this->_status), (void *)this);
+    this->_call_state = CallState::WAIT_FINISH;
+    LOG(info) << "Wait for response for QueryRobotInfo() service call...";
+  }
+
+  ~OnQueryRobotInfo() {
+    // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log
+    // here. It might be after LOG system has been destroyed.
+  }
+  bool OnCompletionEvent() {
+    LOG(info) << "OnQueryRobotInfo: OnCompletionEvent";
+    if (this->_call_state == CallState::WAIT_FINISH) {
+      LOG(info) << "Get response for QueryRobotInfo() service call.";
+      {
+        std::lock_guard<std::mutex> lock(this->_proc_mtx);
+
+        std::cout << "name : " << _response.name() << std::endl;
+        std::cout << "version : " << _response.version() << std::endl;
+        std::cout << "author : " << _response.author() << std::endl;
+        std::cout << "description : " << _response.description() << std::endl;
+        std::cout << "serial(id) : " << _response.serial() << "("
+                  << _response.id() << ")" << std::endl;
+        std::cout << "type : " << _response.type() << std::endl;
+        std::cout << "dof : " << _response.dof() << std::endl;
+
+        _call_state = CallState::FINISHED;
+      }
+      return false; // remove this call
+    } else {
+      GPR_ASSERT(false && "Invalid Call State.");
+      LOG(err) << "Invalid call state (" << static_cast<int>(_call_state)
+               << ")";
+      return false;
+    }
+  }
 
 private:
-    std::shared_ptr<grpc::Channel> channel_;
-    std::unique_ptr<dtproto::dtService::Stub> stub_;
+  ::google::protobuf::Empty _request;
+  ::dtproto::robot_msgs::RobotInfo _response;
+  std::unique_ptr<::grpc::ClientAsyncResponseReader<::dtproto::robot_msgs::RobotInfo>> _responder;
 };
 
-RpcClient::RpcClient(const std::string& server_address)
-    : channel_(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()))
-    , stub_(dtproto::dtService::NewStub(channel_)) 
-{
-}
-
-bool RpcClient::QueryRobotInfo()
-{
-    grpc::ClientContext context;
-    ::google::protobuf::Empty req;
-    dtproto::robot_msgs::RobotInfo res;
-
-    grpc::Status status = stub_->QueryRobotInfo(&context, req, &res);
-    if (!status.ok()) {
-        std::cout << "QueryRobotInfo rpc failed." << std::endl;
-        return false;
-    } else {
-        std::cout << "name : " << res.name() << std::endl;
-        std::cout << "version : " << res.version() << std::endl;
-        std::cout << "author : " << res.author() << std::endl;
-        std::cout << "description : " << res.description() << std::endl;
-        std::cout << "serial(id) : " << res.serial() << "(" << res.id() << ")" << std::endl;
-        std::cout << "type : " << res.type() << std::endl;
-        std::cout << "dof : " << res.dof() << std::endl;
-        return true;
-    }
-}
-
-bool RpcClient::ControlCmd(int cmd_mode, const char* fmt, ...) 
-{
-    grpc::ClientContext context;
-    dtproto::robot_msgs::ControlCmd req;
-    dtproto::std_msgs::Response res;
-    
-    req.set_cmd_mode(cmd_mode);
-    // req.set_arg(arg);
-
-    grpc::Status status = stub_->Command(&context, req, &res);
-    if (!status.ok()) {
-        std::cout << "Command rpc failed." << std::endl;
-        return false;
-    } else {
-        std::cout << "rtn : " << res.rtn() << std::endl;
-        std::cout << "msg : " << res.msg() << std::endl;
-        return true;
-    }
-}
-
+class RpcClient : public dtCore::dtServiceCallerGrpc<ServiceType> {
+public:
+  RpcClient(const std::string &server_address)
+      : dtCore::dtServiceCallerGrpc<ServiceType>(server_address) {}
+};
 
 /////////////////////////////////////////////////////////////////////////
 // main
 //
-int main(int argc, char** argv) 
-{
-    // initialize RPC client
-    std::unique_ptr<RpcClient> rpcClient = std::make_unique<RpcClient>("localhost:50052");
-    std::cout << "> ControlCmd() call through the 1st channel...\n";
-    rpcClient->ControlCmd(1, "");
-    std::cout << "> QueryRobotInfo() call through the 1st channel...\n";
-    rpcClient->QueryRobotInfo();
-    
-    // open another channel
-    std::cout << "> Open another channel to RPC server...\n";
-    std::unique_ptr<RpcClient> rpcClient_2 = std::make_unique<RpcClient>("localhost:50052");
-    std::cout << "> QueryRobotInfo() call through the 2nd channel...\n";
-    rpcClient_2->QueryRobotInfo();
+int main(int argc, char **argv) {
+  // initialize RPC client
+  std::unique_ptr<RpcClient> rpcClient =
+      std::make_unique<RpcClient>("localhost:50052");
 
-    return 0;
+  std::cout << "> ControlCmd() call ...\n";
+  rpcClient->template StartCall<OnQueryRobotInfo>(nullptr);
+
+  std::atomic<bool> bRun{true};
+  while (bRun.load()) {
+    std::cout << "(type \'q\' to quit) >\n";
+    std::string cmd;
+    std::cin >> cmd;
+    if (cmd == "q" || cmd == "quit") {
+      bRun = false;
+    }
+  }
+
+  return 0;
 }
