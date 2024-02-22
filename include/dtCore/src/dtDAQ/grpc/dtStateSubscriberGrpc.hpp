@@ -63,7 +63,7 @@ private:
         grpc::Status _status;
         std::unique_ptr<grpc::ClientAsyncReader<dtproto::std_msgs::State>> _stream_reader;
         dtproto::std_msgs::State _msg;
-        enum class RpcCallStatus {
+        enum class RpcCallState {
             WAIT_START,
             READY_TO_READ,
             WAIT_READ_DONE,
@@ -71,7 +71,7 @@ private:
             FINISHED,
             PEER_DISCONNECTED
         };
-        RpcCallStatus _call_status {RpcCallStatus::WAIT_START};
+        RpcCallState _call_state {RpcCallState::WAIT_START};
 #ifdef USE_THREAD_PTHREAD
         pthread_t _rpc_recv_thread;
 #else
@@ -149,7 +149,7 @@ bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
         req,
         &_cq);
     
-    _call_status = RpcCallStatus::WAIT_START;
+    _call_state = RpcCallState::WAIT_START;
     _stream_reader->StartCall((void*)this);
     this->_subscriber->_running = true;
 
@@ -203,7 +203,7 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
 {
     std::lock_guard<std::mutex> lock(_call_mtx);
 
-    if (_call_status == RpcCallStatus::WAIT_START) {
+    if (_call_state == RpcCallState::WAIT_START) {
 
         if (!_status.ok()) {
             // LOG(INFO) << "StreamState rpc call failed.";
@@ -213,10 +213,10 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
         // LOG(INFO) << "StreamState rpc call started.";
 
         _stream_reader->Read(&_msg, (void*)this);
-        _call_status = RpcCallStatus::WAIT_READ_DONE;
+        _call_state = RpcCallState::WAIT_READ_DONE;
 
     }
-    else if (_call_status == RpcCallStatus::WAIT_READ_DONE) {
+    else if (_call_state == RpcCallState::WAIT_READ_DONE) {
 
         if (!_status.ok()) {
             std::cout << "StreamState rpc stream broken." << std::endl;
@@ -231,18 +231,18 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
         }
 
         _stream_reader->Read(&_msg, (void*)this);
-        _call_status = RpcCallStatus::WAIT_READ_DONE;
+        _call_state = RpcCallState::WAIT_READ_DONE;
 
     }
-    else if (_call_status == RpcCallStatus::WAIT_FINISH) {
+    else if (_call_state == RpcCallState::WAIT_FINISH) {
         // LOG(INFO) << "Finalize StreamState() service call.";
-        _call_status = RpcCallStatus::FINISHED;
+        _call_state = RpcCallState::FINISHED;
         // Once we're complete, deallocate the call object.
         //delete this;
         return false;
     }
     else {
-        // LOG(INFO) << "Session::OnCompletionEvent, _call_status = " << static_cast<int>(_call_status);
+        // LOG(INFO) << "Session::OnCompletionEvent, _call_state = " << static_cast<int>(_call_state);
         return false;
     }
 
@@ -256,12 +256,12 @@ bool dtStateSubscriberGrpc<StateType>::Session::TryCancelCallAndShutdown()
 
     _ctx.TryCancel();
 
-    if (_call_status != RpcCallStatus::WAIT_START &&
-        _call_status != RpcCallStatus::WAIT_FINISH &&
-        _call_status != RpcCallStatus::FINISHED) 
+    if (_call_state != RpcCallState::WAIT_START &&
+        _call_state != RpcCallState::WAIT_FINISH &&
+        _call_state != RpcCallState::FINISHED) 
     {
         // LOG(INFO) << "Finishing...";
-        _call_status = RpcCallStatus::WAIT_FINISH;
+        _call_state = RpcCallState::WAIT_FINISH;
         _stream_reader->Finish(&_status, (void *)this);
     }
 

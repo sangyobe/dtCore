@@ -151,9 +151,9 @@ public:
               grpc::ServerCompletionQueue *cq,
               void * /*placeholder for user data*/)
           : _server(server), _service(service), _cq(cq),
-            _status(SessionStatus::WAIT_CONNECT) {
+            _call_state(CallState::WAIT_CONNECT) {
         _id = AllocSessionId();
-        _status = SessionStatus::WAIT_CONNECT;
+        _call_state = CallState::WAIT_CONNECT;
       }
 
       Session() = delete;
@@ -164,19 +164,19 @@ public:
 
       void TryCancelCallAndShutdown() {
         // std::lock_guard<std::mutex> lock(_proc_mtx);
-        if (_status != SessionStatus::WAIT_CONNECT &&
-            _status != SessionStatus::WAIT_FINISH &&
-            _status != SessionStatus::FINISHED) {
+        if (_call_state != CallState::WAIT_CONNECT &&
+            _call_state != CallState::WAIT_FINISH &&
+            _call_state != CallState::FINISHED) {
           _ctx.TryCancel();
 
           // LOG(INFO) << "Finishing<" << _id << ">.";
           std::lock_guard<std::mutex> lock(_proc_mtx);
-          //_status = SessionStatus::WAIT_FINISH;
-          _status = SessionStatus::FINISHED;
+          //_call_state = CallState::WAIT_FINISH;
+          _call_state = CallState::FINISHED;
         }
 
         // LOG(INFO) << "Session shutdown.";
-        // _status = SessionStatus::FINISHED;
+        // _call_state = CallState::FINISHED;
         // _server->RemoveSession(_id);
       }
 
@@ -188,7 +188,7 @@ public:
       grpc::ServerContext _ctx;
       std::mutex _proc_mtx;
 
-      enum class SessionStatus {
+      enum class CallState {
         WAIT_CONNECT,
         READY_TO_READ,
         WAIT_READ_DONE,
@@ -198,7 +198,7 @@ public:
         FINISHED,
         PEER_DISCONNECTED
       };
-      SessionStatus _status;
+      CallState _call_state;
 
     public:
       static uint64_t AllocSessionId() {

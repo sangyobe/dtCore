@@ -71,7 +71,7 @@ protected:
         grpc::ServerContext _ctx;
         std::mutex _proc_mtx;
 
-        enum class SessionStatus {
+        enum class CallState {
             WAIT_CONNECT,
             READY_TO_WRITE,
             WAIT_WRITE_DONE,
@@ -79,7 +79,7 @@ protected:
             FINISHED,
             PEER_DISCONNECTED
         };
-        SessionStatus _status;
+        CallState _call_state;
 
         dtproto::std_msgs::Request _request;
         grpc::ServerAsyncWriter<dtproto::std_msgs::State> _responder;
@@ -125,7 +125,7 @@ uint64_t dtStatePublisherGrpc<StateType>::Session::AllocSessionId()
 
 template<typename StateType>
 dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType>* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq)
-    : _server(server), _service(service), _cq(cq), _status(SessionStatus::WAIT_CONNECT), _responder(&_ctx) 
+    : _server(server), _service(service), _cq(cq), _call_state(CallState::WAIT_CONNECT), _responder(&_ctx) 
 {    
     _id = AllocSessionId();
     // LOG(INFO) << "Session id: " << _id;
@@ -156,7 +156,7 @@ dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType
 
     // LOG(INFO) << "NEW StreamStateSession created.";
     _service->RequestStreamState(&_ctx, &_request, &_responder, _cq, _cq, this);
-    _status = SessionStatus::WAIT_CONNECT;
+    _call_state = CallState::WAIT_CONNECT;
     // LOG(INFO) << "Wait for new StreamState() service call...";
 }
 
@@ -169,34 +169,34 @@ dtStatePublisherGrpc<StateType>::Session::~Session()
 template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
 {
-    if (_status == SessionStatus::WAIT_CONNECT) {
+    if (_call_state == CallState::WAIT_CONNECT) {
         // LOG(INFO) << "NEW StreamState() service call.";
         _server->AddSession();
         {
             std::lock_guard<std::mutex> lock(_proc_mtx);
-            _status = SessionStatus::READY_TO_WRITE;
+            _call_state = CallState::READY_TO_WRITE;
         }
     } 
-    else if (_status == SessionStatus::WAIT_WRITE_DONE) {
+    else if (_call_state == CallState::WAIT_WRITE_DONE) {
         // LOG(INFO) << "Write done.";
         std::lock_guard<std::mutex> lock(_proc_mtx);
         if (!_msg_queue.empty()) {
-            _status = SessionStatus::WAIT_WRITE_DONE;
+            _call_state = CallState::WAIT_WRITE_DONE;
             _responder.Write(_msg_queue.front(), this);
             _msg_queue.pop_front();
         }
         else {
-            _status = SessionStatus::READY_TO_WRITE;
+            _call_state = CallState::READY_TO_WRITE;
         }
     }
-    else if (_status == SessionStatus::WAIT_FINISH) {
+    else if (_call_state == CallState::WAIT_FINISH) {
         // LOG(INFO) << "Finalize StreamState() service.";
-        //_status = SessionStatus::FINISHED;
+        //_call_state = CallState::FINISHED;
         _server->RemoveSession(_id);
     }
     else {
         GPR_ASSERT(false && "Invalid Session Status.");
-        // LOG(ERROR) << "Invalid session status (" << static_cast<int>(_status) << ")";
+        // LOG(ERROR) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
     }
 }
 
@@ -205,7 +205,7 @@ void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
 {
     std::lock_guard<std::mutex> lock(_proc_mtx);
     
-    if (_status == SessionStatus::WAIT_WRITE_DONE) {
+    if (_call_state == CallState::WAIT_WRITE_DONE) {
         // LOG(INFO) << "StreamStateSession<" << _id << ">::Queue(" << _msg_seq << ")";
         if (_server->_msg_queue_size == 0) {
             return; // delete this message !
@@ -216,10 +216,10 @@ void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
         _msg.mutable_state()->PackFrom(msg);
         _msg_queue.push_back(_msg);
     }
-    else if (_status == SessionStatus::READY_TO_WRITE) {
+    else if (_call_state == CallState::READY_TO_WRITE) {
         // LOG(INFO) << "StreamStateSession<" << _id << ">::Write(" << _msg_seq << ")";
         _msg.mutable_state()->PackFrom(msg);
-        _status = SessionStatus::WAIT_WRITE_DONE;
+        _call_state = CallState::WAIT_WRITE_DONE;
         _responder.Write(_msg, this);
     }
 }
@@ -234,20 +234,20 @@ template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
 {
     //std::lock_guard<std::mutex> lock(_proc_mtx);
-    if (_status != SessionStatus::WAIT_CONNECT &&
-        _status != SessionStatus::WAIT_FINISH &&
-        _status != SessionStatus::FINISHED) {
+    if (_call_state != CallState::WAIT_CONNECT &&
+        _call_state != CallState::WAIT_FINISH &&
+        _call_state != CallState::FINISHED) {
         _ctx.TryCancel();
 
         // LOG(INFO) << "Finishing<" << _id << ">.";
         std::lock_guard<std::mutex> lock(_proc_mtx);
-        //_status = SessionStatus::WAIT_FINISH;
-        _status = SessionStatus::FINISHED;
+        //_call_state = CallState::WAIT_FINISH;
+        _call_state = CallState::FINISHED;
         //_responder.Finish(_finish_status, this);
     }
 
     // LOG(INFO) << "Session shutdown.";
-    // _status = SessionStatus::FINISHED;
+    // _call_state = CallState::FINISHED;
     // _server->RemoveSession(_id);
 }
 

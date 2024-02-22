@@ -8,13 +8,13 @@
 //
 class OnControlCmd : public dtCore::dtServiceListenerGrpc::Session 
 {
-    using SessionStatus = typename dtCore::dtServiceListenerGrpc::Session::SessionStatus;
+    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
     OnControlCmd(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
     : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
         LOG(info) << "NEW OnControlCmd session created.";
-        _status = SessionStatus::WAIT_CONNECT;
+        _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestCommand(&(_ctx), &_request, &_responder, _cq, _cq, this);
         LOG(info) << "Wait for new dtService::Command() service call...";
     }
@@ -23,7 +23,7 @@ public:
     }
     void OnCompletionEvent() {
         LOG(info) << "OnControlCmd: " << "OnCompletionEvent";
-        if (_status == SessionStatus::WAIT_CONNECT) {
+        if (_call_state == CallState::WAIT_CONNECT) {
             LOG(info) << "NEW dtService::Command() service call.";
 
             _server->template AddSession<OnControlCmd >();
@@ -35,18 +35,18 @@ public:
                 _response.set_rtn(0);
                 _response.set_msg("success");
 
-                _status = SessionStatus::WAIT_FINISH;
+                _call_state = CallState::WAIT_FINISH;
                 _responder.Finish(_response, grpc::Status::OK, this);
             }
         } 
-        else if (_status == SessionStatus::WAIT_FINISH) {
+        else if (_call_state == CallState::WAIT_FINISH) {
             LOG(info) << "Finalize dtService::Command() service.";
-            //_status = SessionStatus::FINISHED;
+            //_call_state = CallState::FINISHED;
             _server->RemoveSession(_id);
         }
         else {
             GPR_ASSERT(false && "Invalid Session Status.");
-            LOG(err) << "Invalid session status (" << static_cast<int>(_status) << ")";
+            LOG(err) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
         }
     }
 
@@ -63,13 +63,13 @@ private:
 //
 class OnQueryRobotInfo : public dtCore::dtServiceListenerGrpc::Session 
 {
-    using SessionStatus = typename dtCore::dtServiceListenerGrpc::Session::SessionStatus;
+    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
     OnQueryRobotInfo(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
     : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
         LOG(info) << "NEW OnQueryRobotInfo session created.";
-        _status = SessionStatus::WAIT_CONNECT;
+        _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestQueryRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
         LOG(info) << "Wait for new dtService::QueryRobotInfo() service call...";
     }
@@ -78,7 +78,7 @@ public:
     }
     void OnCompletionEvent() {
         LOG(info) << "OnQueryRobotInfo: " << "OnCompletionEvent";
-        if (_status == SessionStatus::WAIT_CONNECT) {
+        if (_call_state == CallState::WAIT_CONNECT) {
             LOG(info) << "NEW dtService::QueryRobotInfo() service call.";
 
             _server->template AddSession<OnQueryRobotInfo >();
@@ -94,18 +94,18 @@ public:
                 _response.set_id(1);
                 _response.set_dof(12);
 
-                _status = SessionStatus::WAIT_FINISH;
+                _call_state = CallState::WAIT_FINISH;
                 _responder.Finish(_response, grpc::Status::OK, this);
             }
         } 
-        else if (_status == SessionStatus::WAIT_FINISH) {
+        else if (_call_state == CallState::WAIT_FINISH) {
             LOG(info) << "Finalize dtService::QueryRobotInfo() service.";
-            //_status = dtCore::dtServiceListenerGrpc::SessionStatus::FINISHED;
+            //_call_state = dtCore::dtServiceListenerGrpc::CallState::FINISHED;
             _server->RemoveSession(_id);
         }
         else {
             GPR_ASSERT(false && "Invalid Session Status.");
-            LOG(err) << "Invalid session status (" << static_cast<int>(_status) << ")";
+            LOG(err) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
         }
     }
 
