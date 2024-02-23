@@ -78,12 +78,11 @@ public:
               while (client->_cq->Next(&tag, &ok)) {
                 // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
                 // GPR_ASSERT(ok);
-                if (ok) {
-                  static_cast<dtServiceListenerGrpc::Session *>(tag)
-                      ->OnCompletionEvent();
-                } else {
-                  static_cast<dtServiceListenerGrpc::Session *>(tag)
-                      ->TryCancelCallAndShutdown();
+                if (tag) {
+                  if (!static_cast<dtServiceListenerGrpc::Session*>(tag)->OnCompletionEvent(ok)) {
+                    static_cast<dtServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
+                    client->RemoveSession(static_cast<dtServiceListenerGrpc::Session *>(tag)->GetId());
+                  }
                 }
               }
               return 0;
@@ -96,12 +95,11 @@ public:
           while (_cq->Next(&tag, &ok)) {
             // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             // GPR_ASSERT(ok);
-            if (ok) {
-              static_cast<dtServiceListenerGrpc::Session *>(tag)
-                  ->OnCompletionEvent();
-            } else {
-              static_cast<dtServiceListenerGrpc::Session *>(tag)
-                  ->TryCancelCallAndShutdown();
+            if (tag) {
+              if (!static_cast<dtServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok)) {
+                static_cast<dtServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
+                RemoveSession(static_cast<dtServiceListenerGrpc::Session *>(tag)->GetId());
+              }
             }
           }
         });
@@ -110,23 +108,30 @@ public:
 
     // Stop all pending rpc calls and close sessions
     void Stop() {
-      {
-        std::lock_guard<std::mutex> lock(_session_mtx);
-        for (auto it : _sessions) {
-          it.second->TryCancelCallAndShutdown();
-        }
-        //_sessions.clear();
-      }
+      // {
+      //   std::lock_guard<std::mutex> lock(_session_list_mtx);
+      //   for (auto it : _sessions) {
+      //     it.second->TryCancelCallAndShutdown();
+      //   }
+      //   //_sessions.clear();
+      // }
 
-      _running = false;
       _server->Shutdown();
-      _cq->Shutdown();
+      _cq->Shutdown();  // drain/signal all completion queue.
+
 #ifdef USE_THREAD_PTHREAD
       void *th_join_result;
       pthread_join(_rpc_thread, &th_join_result);
 #else
       _rpc_thread.join();
 #endif
+
+      // drain the queue
+      void *ignoredTag = nullptr;
+      bool ok = false;
+      while (_cq->Next(&ignoredTag, &ok)) {}
+
+      _running = false;
     }
     bool IsRun() { return _running.load(); }
 
@@ -134,13 +139,13 @@ public:
     template <typename SessionType> bool AddSession(void *udata = nullptr) {
       std::shared_ptr<SessionType> session =
           std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
-      std::lock_guard<std::mutex> lock(_session_mtx);
+      std::lock_guard<std::mutex> lock(_session_list_mtx);
       _sessions[session->GetId()] = session;
       return true;
     }
 
     void RemoveSession(uint64_t session_id) {
-      std::lock_guard<std::mutex> lock(_session_mtx);
+      std::lock_guard<std::mutex> lock(_session_list_mtx);
       _sessions.erase(session_id);
     }
 
@@ -158,7 +163,7 @@ public:
 
       Session() = delete;
       virtual ~Session() = default;
-      virtual void OnCompletionEvent() = 0;
+      virtual bool OnCompletionEvent(bool ok) = 0;
 
       uint64_t GetId() { return _id; }
 
@@ -169,13 +174,13 @@ public:
             _call_state != CallState::FINISHED) {
           _ctx.TryCancel();
 
-          // LOG(INFO) << "Finishing<" << _id << ">.";
+          LOG(info) << "Finishing<" << _id << ">.";
           std::lock_guard<std::mutex> lock(_proc_mtx);
           //_call_state = CallState::WAIT_FINISH;
           _call_state = CallState::FINISHED;
         }
 
-        // LOG(INFO) << "Session shutdown.";
+        LOG(info) << "Session shutdown.";
         // _call_state = CallState::FINISHED;
         // _server->RemoveSession(_id);
       }
@@ -220,7 +225,7 @@ public:
 #else
     std::thread _rpc_thread;
 #endif
-    std::mutex _session_mtx;
+    std::mutex _session_list_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session>> _sessions;
 };
 

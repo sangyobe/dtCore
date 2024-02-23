@@ -58,17 +58,11 @@ public:
           while (client->_cq.Next(&tag, &ok)) {
             // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             // GPR_ASSERT(ok);
-            if (ok) {
-              if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)
-                       ->OnCompletionEvent())
-                client->RemoveCall(
-                    static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)
-                        ->GetId());
-
-            } else {
-              // static_cast<dtServiceCallerGrpc<ServiceType>::Call
-              // *>(tag)->TryCancelCallAndShutdown();
-              client->RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
+            if (tag) {
+              if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok)) {
+                // static_cast<dtServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
+                client->RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
+              }
             }
           }
           return 0;
@@ -81,17 +75,10 @@ public:
       while (_cq.Next(&tag, &ok)) {
         // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
         // GPR_ASSERT(ok);
-        if (ok) {
-          if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)
-                   ->OnCompletionEvent())
-            RemoveCall(
-                static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)
-                    ->GetId());
-        } else {
-          // static_cast<dtServiceCallerGrpc<ServiceType>::Call
-          // *>(tag)->TryCancelCallAndShutdown();
-          RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)
-                         ->GetId());
+        if (tag) {
+          if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok)) {
+            // static_cast<dtServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
+            RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
         }
       }
     });
@@ -100,15 +87,14 @@ public:
 
   // Stop all pending rpc calls and close calls
   void Stop() {
-    {
-      std::lock_guard<std::mutex> lock(_call_list_mtx);
-      for (auto it : _calls) {
-        it.second->TryCancelCallAndShutdown();
-      }
-      //_calls.clear();
-    }
+    // {
+    //   std::lock_guard<std::mutex> lock(_call_list_mtx);
+    //   for (auto it : _calls) {
+    //     it.second->TryCancelCallAndShutdown();
+    //   }
+    //   //_calls.clear();
+    // }
 
-    _running = false;
     _cq.Shutdown();
 
 #ifdef USE_THREAD_PTHREAD
@@ -121,8 +107,9 @@ public:
     // drain the queue
     void *ignoredTag = nullptr;
     bool ok = false;
-    while (_cq.Next(&ignoredTag, &ok))
-      ;
+    while (_cq.Next(&ignoredTag, &ok)) {}
+
+    _running = false;
   }
 
   bool IsRun() { return _running.load(); }
@@ -153,7 +140,7 @@ public:
 
     Call() = delete;
     virtual ~Call() = default;
-    virtual bool OnCompletionEvent() = 0;
+    virtual bool OnCompletionEvent(bool ok) = 0;
 
     uint64_t GetId() { return _id; }
 
@@ -173,6 +160,7 @@ public:
 
     enum class CallState {
       WAIT_CONNECT,
+      WAIT_RESPONSE,
       READY_TO_READ,
       WAIT_READ_DONE,
       READY_TO_WRITE,

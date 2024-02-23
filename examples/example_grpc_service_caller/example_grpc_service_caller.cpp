@@ -1,5 +1,5 @@
-#include "dtCore/src/dtDAQ/grpc/dtServiceCallerGrpc.hpp"
-#include "dtCore/src/dtLog/dtLog.h"
+#include <dtCore/src/dtDAQ/grpc/dtServiceCallerGrpc.hpp>
+#include <dtCore/src/dtLog/dtLog.h>
 
 using ServiceType = dtproto::dtService;
 
@@ -16,50 +16,52 @@ public:
   OnQueryRobotInfo(ServiceType::Stub *stub, grpc::CompletionQueue *cq,
                    void *udata = nullptr)
       : dtCore::dtServiceCallerGrpc<ServiceType>::Call(stub, cq, udata) {
-    LOG(info) << "NEW OnQueryRobotInfo session created.";
+    LOG(info) << "QueryRobotInfo[" << this->_id << "] NEW call.";
+    _call_id = *(int*)(udata);
     _responder =
         stub->PrepareAsyncQueryRobotInfo(&(this->_ctx), _request, this->_cq);
     _responder->StartCall();
     _responder->Finish(&_response, &(this->_status), (void *)this);
     this->_call_state = CallState::WAIT_FINISH;
-    LOG(info) << "Wait for response for QueryRobotInfo() service call...";
+    LOG(info) << "QueryRobotInfo[" << this->_id << "] Wait for response...";
   }
 
   ~OnQueryRobotInfo() {
     // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log
     // here. It might be after LOG system has been destroyed.
   }
-  bool OnCompletionEvent() {
-    LOG(info) << "OnQueryRobotInfo: OnCompletionEvent";
-    if (this->_call_state == CallState::WAIT_FINISH) {
-      LOG(info) << "Get response for QueryRobotInfo() service call.";
-      {
-        std::lock_guard<std::mutex> lock(this->_proc_mtx);
+  bool OnCompletionEvent(bool ok) override {
+    if (ok) {
+      if (this->_call_state == CallState::WAIT_FINISH) {
+        LOG(info) << "QueryRobotInfo[" << this->_id << "] Get response.";
+        {
+          std::lock_guard<std::mutex> lock(this->_proc_mtx);
 
-        std::cout << "name : " << _response.name() << std::endl;
-        std::cout << "version : " << _response.version() << std::endl;
-        std::cout << "author : " << _response.author() << std::endl;
-        std::cout << "description : " << _response.description() << std::endl;
-        std::cout << "serial(id) : " << _response.serial() << "("
-                  << _response.id() << ")" << std::endl;
-        std::cout << "type : " << _response.type() << std::endl;
-        std::cout << "dof : " << _response.dof() << std::endl;
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tname : " << _response.name();
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tversion : " << _response.version();
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tauthor : " << _response.author();
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tdescription : " << _response.description();
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tserial(id) : " << _response.serial() << "(" << _response.id() << ")";
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\ttype : " << _response.type();
+          LOG(trace) << "QueryRobotInfo[" << this->_id << "]\tdof : " << _response.dof();
 
-        _call_state = CallState::FINISHED;
+          _call_state = CallState::FINISHED;
+        }
+        return false; // remove this call
+      } else {
+        GPR_ASSERT(false && "Invalid Call State.");
+        LOG(err) << "QueryRobotInfo[" << this->_id << "] Invalid call state (" << static_cast<int>(_call_state) << ")";
+        return false;
       }
-      return false; // remove this call
-    } else {
-      GPR_ASSERT(false && "Invalid Call State.");
-      LOG(err) << "Invalid call state (" << static_cast<int>(_call_state)
-               << ")";
-      return false;
     }
+    return false; // remove this call
   }
 
 private:
   ::google::protobuf::Empty _request;
   ::dtproto::robot_msgs::RobotInfo _response;
   std::unique_ptr<::grpc::ClientAsyncResponseReader<::dtproto::robot_msgs::RobotInfo>> _responder;
+  int _call_id{-1};
 };
 
 class RpcClient : public dtCore::dtServiceCallerGrpc<ServiceType> {
@@ -72,12 +74,16 @@ public:
 // main
 //
 int main(int argc, char **argv) {
+  dtCore::dtLog::Initialize("grpc_service_caller"); //, "logs/grpc_service_caller.txt");
+  dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+
   // initialize RPC client
   std::unique_ptr<RpcClient> rpcClient =
       std::make_unique<RpcClient>("localhost:50052");
 
-  std::cout << "> ControlCmd() call ...\n";
-  rpcClient->template StartCall<OnQueryRobotInfo>(nullptr);
+  for (int cid = 0; cid < 5; cid++) {
+    rpcClient->template StartCall<OnQueryRobotInfo>(&cid);
+  }
 
   std::atomic<bool> bRun{true};
   while (bRun.load()) {
@@ -88,6 +94,8 @@ int main(int argc, char **argv) {
       bRun = false;
     }
   }
+  rpcClient->Stop();
 
+  dtCore::dtLog::Terminate(); // flush all log messages
   return 0;
 }

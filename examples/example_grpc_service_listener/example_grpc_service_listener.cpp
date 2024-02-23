@@ -1,5 +1,5 @@
-#include "dtCore/src/dtDAQ/grpc/dtServiceListenerGrpc.hpp"
-#include "dtCore/src/dtLog/dtLog.h"
+#include <dtCore/src/dtDAQ/grpc/dtServiceListenerGrpc.hpp>
+#include <dtCore/src/dtLog/dtLog.h>
 
 /////////////////////////////////////////////////////////////////////////
 // OnControlCmd (Rpc service call handler)
@@ -13,41 +13,58 @@ class OnControlCmd : public dtCore::dtServiceListenerGrpc::Session
 public:
     OnControlCmd(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
     : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
-        LOG(info) << "NEW OnControlCmd session created.";
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestCommand(&(_ctx), &_request, &_responder, _cq, _cq, this);
-        LOG(info) << "Wait for new dtService::Command() service call...";
+        LOG(info) << "Command[" << _id << "] Wait for new service call...";
     }
     ~OnControlCmd() {
         // LOG(info) << "OnControlCmd session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
     }
-    void OnCompletionEvent() {
-        LOG(info) << "OnControlCmd: " << "OnCompletionEvent";
-        if (_call_state == CallState::WAIT_CONNECT) {
-            LOG(info) << "NEW dtService::Command() service call.";
+    bool OnCompletionEvent(bool ok) override {
+        if (_call_state == CallState::FINISHED) {
+            return false;
+        }
+        else if (ok) {
+            if (_call_state == CallState::WAIT_CONNECT) {
+                LOG(info) << "Command[" << _id << "] NEW service call.";
 
-            _server->template AddSession<OnControlCmd >();
-            {
-                std::lock_guard<std::mutex> lock(_proc_mtx);
+                _server->template AddSession<OnControlCmd >();
+                {
+                    std::lock_guard<std::mutex> lock(_proc_mtx);
 
-                std::cout << "Recv! cmd_mode=" << _request.cmd_mode() << " , arg=" << _request.arg() << std::endl;
+                    LOG(trace) << "Command[" << _id << "]\tcmd_mode=" << _request.cmd_mode() << " , arg=" << _request.arg();
 
-                _response.set_rtn(0);
-                _response.set_msg("success");
+                    _response.set_rtn(0);
+                    _response.set_msg("success");
 
-                _call_state = CallState::WAIT_FINISH;
-                _responder.Finish(_response, grpc::Status::OK, this);
+                    _call_state = CallState::WAIT_FINISH;
+                    _responder.Finish(_response, grpc::Status::OK, this);
+                }
+            } 
+            else if (_call_state == CallState::WAIT_FINISH) {
+                LOG(info) << "Command[" << _id << "] Finalize service.";
+                // _call_state = CallState::FINISHED;
+                // _server->RemoveSession(_id);
+                return false;
             }
-        } 
-        else if (_call_state == CallState::WAIT_FINISH) {
-            LOG(info) << "Finalize dtService::Command() service.";
-            //_call_state = CallState::FINISHED;
-            _server->RemoveSession(_id);
+            else {
+                GPR_ASSERT(false && "Invalid Session Status.");
+                LOG(err) << "Command[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                return false;
+            }
         }
         else {
-            GPR_ASSERT(false && "Invalid Session Status.");
-            LOG(err) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
+            if (_call_state == CallState::WAIT_CONNECT) {
+                LOG(err) << "Command[" << _id << "] Session has been shut down before receiving a matching request.";
+                return false;
+            }
+            else {
+                std::lock_guard<std::mutex> lock(_proc_mtx);
+                _responder.Finish(_response, grpc::Status::CANCELLED, this);
+                _call_state == CallState::WAIT_FINISH;
+            }
         }
+        return true;
     }
 
 private:
@@ -68,45 +85,62 @@ class OnQueryRobotInfo : public dtCore::dtServiceListenerGrpc::Session
 public:
     OnQueryRobotInfo(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
     : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
-        LOG(info) << "NEW OnQueryRobotInfo session created.";
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestQueryRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
-        LOG(info) << "Wait for new dtService::QueryRobotInfo() service call...";
+        LOG(info) << "QueryRobotInfo[" << _id << "] Waiting for new service call...";
     }
     ~OnQueryRobotInfo() {
         // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
     }
-    void OnCompletionEvent() {
-        LOG(info) << "OnQueryRobotInfo: " << "OnCompletionEvent";
-        if (_call_state == CallState::WAIT_CONNECT) {
-            LOG(info) << "NEW dtService::QueryRobotInfo() service call.";
+    bool OnCompletionEvent(bool ok) override {
+        if (_call_state == CallState::FINISHED) {
+            return false;
+        }
+        else if (ok) {
+            if (_call_state == CallState::WAIT_CONNECT) {
+                LOG(info) << "QueryRobotInfo[" << _id << "] NEW service call.";
 
-            _server->template AddSession<OnQueryRobotInfo >();
-            {
-                std::lock_guard<std::mutex> lock(_proc_mtx);
+                _server->template AddSession<OnQueryRobotInfo >();
+                {
+                    std::lock_guard<std::mutex> lock(_proc_mtx);
 
-                _response.set_name("QuadIP");
-                _response.set_version("v0.1");
-                _response.set_author("HMC");
-                _response.set_description("");
-                _response.set_serial("HMC-8-001");
-                _response.set_type(8);
-                _response.set_id(1);
-                _response.set_dof(12);
+                    _response.set_name("QuadIP");
+                    _response.set_version("v0.1");
+                    _response.set_author("HMC");
+                    _response.set_description("");
+                    _response.set_serial("HMC-8-001");
+                    _response.set_type(8);
+                    _response.set_id(1);
+                    _response.set_dof(12);
 
-                _call_state = CallState::WAIT_FINISH;
-                _responder.Finish(_response, grpc::Status::OK, this);
+                    _call_state = CallState::WAIT_FINISH;
+                    _responder.Finish(_response, grpc::Status::OK, this);
+                }
+            } 
+            else if (_call_state == CallState::WAIT_FINISH) {
+                LOG(info) << "QueryRobotInfo[" << _id << "] Finalize service.";
+                // _call_state = CallState::FINISHED;
+                // _server->RemoveSession(_id);
+                return false;
             }
-        } 
-        else if (_call_state == CallState::WAIT_FINISH) {
-            LOG(info) << "Finalize dtService::QueryRobotInfo() service.";
-            //_call_state = dtCore::dtServiceListenerGrpc::CallState::FINISHED;
-            _server->RemoveSession(_id);
+            else {
+                GPR_ASSERT(false && "Invalid Session Status.");
+                LOG(err) << "QueryRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                return false;
+            }
         }
         else {
-            GPR_ASSERT(false && "Invalid Session Status.");
-            LOG(err) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
+            if (_call_state == CallState::WAIT_CONNECT) {
+                LOG(err) << "QueryRobotInfo[" << _id << "] Session has been shut down before receiving a matching request.";
+                return false;
+            }
+            else {
+                std::lock_guard<std::mutex> lock(_proc_mtx);
+                _responder.Finish(_response, grpc::Status::CANCELLED, this);
+                _call_state == CallState::WAIT_FINISH;
+            }
         }
+        return true;
     }
 
 private:
