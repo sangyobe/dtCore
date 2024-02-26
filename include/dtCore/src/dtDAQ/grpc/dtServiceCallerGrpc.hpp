@@ -24,10 +24,12 @@
 
 namespace dtCore {
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// dtServiceCallerGrpc Declaration
-//
+/*!
+* @brief dtServiceCallerGrpc class.
+* @details Is serves as the main interface for RPC service calls.
+* It owns and runs RPC event message dispatcher thread.
+* To initiate a new RPC call, call StartCall() method with proper subclass of dtServiceCallerGrpc::Call template parameter.
+*/
 template <typename ServiceType> class dtServiceCallerGrpc {
 public:
   dtServiceCallerGrpc(const std::string &server_address)
@@ -39,7 +41,12 @@ public:
   ~dtServiceCallerGrpc() { Stop(); }
 
 public:
-  // Run grpc message-dispatcher
+  /*!
+  * Run grpc message-dispatcher.
+  * It launches a thread to check grpc I/O completion.
+  * User does not need to call Run() explicitly. dtServiceCallGrpc() constructor will do.
+  */
+  //! 
   void Run() {
     _running = true;
 
@@ -85,7 +92,10 @@ public:
 #endif
   }
 
-  // Stop all pending rpc calls and close calls
+  /*! 
+  * Stop all pending rpc calls and close calls.
+  * Finally, the message dispatcher therad will stop running.
+  */
   void Stop() {
     // {
     //   std::lock_guard<std::mutex> lock(_call_list_mtx);
@@ -112,9 +122,19 @@ public:
     _running = false;
   }
 
+  /*!
+  * Check if message dispatcher is running.
+  * @return bool Whether message dispatcher thread is running.
+  */
   bool IsRun() { return _running.load(); }
 
 public:
+  /*!
+  * Initiate a new RPC call.
+  * The template parameter 'CallType' should be one of subclasses of dtCore::dtServiceCallerGrpc::Call.
+  * User should subclass dtCore::dtServiceCallerGrpc::Call and implement their own completion event message handler.
+  * @param[in] udata udata is passed as the sole argument of CallType constructor.
+  */
   template <typename CallType> bool StartCall(void *udata = nullptr) {
     std::shared_ptr<CallType> call =
         std::make_shared<CallType>(_stub.get(), &_cq, udata);
@@ -123,12 +143,22 @@ public:
     return true;
   }
 
+  /*!
+  * Remove call by id.
+  * It might be not called by user-code.
+  * @param[in] call_id Id of Call instance to remove.
+  * @return void
+  */
   void RemoveCall(uint64_t call_id) {
     std::lock_guard<std::mutex> lock(_call_list_mtx);
     _calls.erase(call_id);
   }
 
 public:
+  /*!
+  * Call super class of all user-defined Call calsses.
+  * This might be the parent class of all user defined Call implementations.
+  */
   class Call {
   public:
     Call(typename ServiceType::Stub *stub, grpc::CompletionQueue *cq,
@@ -140,8 +170,17 @@ public:
 
     Call() = delete;
     virtual ~Call() = default;
+    /*!
+    * Completion event handler.
+    * All subclasses should implement their own completion event handler properly.
+    * This is called whenever async call requests completed such as Prepare(), Read(), Write(), Finalize(), etc.
+    */
     virtual bool OnCompletionEvent(bool ok) = 0;
 
+    /*!
+    * Returns id for this Call instance.
+    * @return call id.
+    */
     uint64_t GetId() { return _id; }
 
     bool TryCancelCallAndShutdown() {
@@ -191,6 +230,12 @@ protected:
   std::mutex _call_list_mtx;
   std::unordered_map<uint64_t, std::shared_ptr<Call>> _calls;
 };
+/*! 
+* @example example_grpc_service_caller.cpp
+* This examples shows how to use dtServiceCallerGrpc and dtServiceCallerGrpc::Call 
+* for calling RPC at client side.
+* @see example_grpc_service_listener.cpp
+*/
 
 } // namespace dtCore
 

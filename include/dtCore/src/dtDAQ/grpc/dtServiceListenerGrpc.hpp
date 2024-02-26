@@ -36,10 +36,12 @@
 
 namespace dtCore {
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// dtServiceListenerGrpc Declaration
-//
+/*!
+* @brief dtServiceListenerGrpc class.
+* @details Is serves as the main interface for RPC server.
+* It owns and runs RPC event message dispatcher thread.
+* To initiate a new RPC server, use AddSession() method with proper subclass of dtServiceListenerGrpc::Session template parameter.
+*/
 class dtServiceListenerGrpc : public dtDataSink
 { 
 public:
@@ -58,9 +60,9 @@ public:
     ~dtServiceListenerGrpc() { Stop(); }
     // virtual void Publish() {}
 
-  protected:
-  public:
-    // Run grpc message-dispatcher
+protected:
+public:
+  //! Run grpc message-dispatcher
   void Run() {
     _running = true;
 
@@ -76,7 +78,7 @@ public:
               void *tag;
               bool ok;
               while (client->_cq->Next(&tag, &ok)) {
-                // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+                // LOG(info) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
                 // GPR_ASSERT(ok);
                 if (tag) {
                   if (!static_cast<dtServiceListenerGrpc::Session*>(tag)->OnCompletionEvent(ok)) {
@@ -93,7 +95,7 @@ public:
           void *tag;
           bool ok;
           while (_cq->Next(&tag, &ok)) {
-            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+            // LOG(info) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             // GPR_ASSERT(ok);
             if (tag) {
               if (!static_cast<dtServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok)) {
@@ -106,128 +108,134 @@ public:
 #endif
   }
 
-    // Stop all pending rpc calls and close sessions
-    void Stop() {
-      // {
-      //   std::lock_guard<std::mutex> lock(_session_list_mtx);
-      //   for (auto it : _sessions) {
-      //     it.second->TryCancelCallAndShutdown();
-      //   }
-      //   //_sessions.clear();
-      // }
+  //! Stop all pending rpc calls and close sessions
+  void Stop() {
+    // {
+    //   std::lock_guard<std::mutex> lock(_session_list_mtx);
+    //   for (auto it : _sessions) {
+    //     it.second->TryCancelCallAndShutdown();
+    //   }
+    //   //_sessions.clear();
+    // }
 
-      _server->Shutdown();
-      _cq->Shutdown();  // drain/signal all completion queue.
+    _server->Shutdown();
+    _cq->Shutdown();  // drain/signal all completion queue.
 
 #ifdef USE_THREAD_PTHREAD
-      void *th_join_result;
-      pthread_join(_rpc_thread, &th_join_result);
+    void *th_join_result;
+    pthread_join(_rpc_thread, &th_join_result);
 #else
-      _rpc_thread.join();
+    _rpc_thread.join();
 #endif
 
-      // drain the queue
-      void *ignoredTag = nullptr;
-      bool ok = false;
-      while (_cq->Next(&ignoredTag, &ok)) {}
+    // drain the queue
+    void *ignoredTag = nullptr;
+    bool ok = false;
+    while (_cq->Next(&ignoredTag, &ok)) {}
 
-      _running = false;
-    }
-    bool IsRun() { return _running.load(); }
+    _running = false;
+  }
+  bool IsRun() { return _running.load(); }
 
+public:
+  template <typename SessionType> bool AddSession(void *udata = nullptr) {
+    std::shared_ptr<SessionType> session =
+        std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
+    std::lock_guard<std::mutex> lock(_session_list_mtx);
+    _sessions[session->GetId()] = session;
+    return true;
+  }
+
+  void RemoveSession(uint64_t session_id) {
+    std::lock_guard<std::mutex> lock(_session_list_mtx);
+    _sessions.erase(session_id);
+  }
+
+public:
+  class Session {
   public:
-    template <typename SessionType> bool AddSession(void *udata = nullptr) {
-      std::shared_ptr<SessionType> session =
-          std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
-      std::lock_guard<std::mutex> lock(_session_list_mtx);
-      _sessions[session->GetId()] = session;
-      return true;
+    Session(dtServiceListenerGrpc *server, grpc::Service *service,
+            grpc::ServerCompletionQueue *cq,
+            void * /*placeholder for user data*/)
+        : _server(server), _service(service), _cq(cq),
+          _call_state(CallState::WAIT_CONNECT) {
+      _id = AllocSessionId();
+      _call_state = CallState::WAIT_CONNECT;
     }
 
-    void RemoveSession(uint64_t session_id) {
-      std::lock_guard<std::mutex> lock(_session_list_mtx);
-      _sessions.erase(session_id);
+    Session() = delete;
+    virtual ~Session() = default;
+    virtual bool OnCompletionEvent(bool ok) = 0;
+
+    uint64_t GetId() { return _id; }
+
+    void TryCancelCallAndShutdown() {
+      // std::lock_guard<std::mutex> lock(_proc_mtx);
+      if (_call_state != CallState::WAIT_CONNECT &&
+          _call_state != CallState::WAIT_FINISH &&
+          _call_state != CallState::FINISHED) {
+        _ctx.TryCancel();
+
+        // LOG(info) << "Finishing<" << _id << ">.";
+        std::lock_guard<std::mutex> lock(_proc_mtx);
+        //_call_state = CallState::WAIT_FINISH;
+        _call_state = CallState::FINISHED;
+      }
+
+      // LOG(info) << "Session shutdown.";
+      // _call_state = CallState::FINISHED;
+      // _server->RemoveSession(_id);
     }
-
-  public:
-    class Session {
-    public:
-      Session(dtServiceListenerGrpc *server, grpc::Service *service,
-              grpc::ServerCompletionQueue *cq,
-              void * /*placeholder for user data*/)
-          : _server(server), _service(service), _cq(cq),
-            _call_state(CallState::WAIT_CONNECT) {
-        _id = AllocSessionId();
-        _call_state = CallState::WAIT_CONNECT;
-      }
-
-      Session() = delete;
-      virtual ~Session() = default;
-      virtual bool OnCompletionEvent(bool ok) = 0;
-
-      uint64_t GetId() { return _id; }
-
-      void TryCancelCallAndShutdown() {
-        // std::lock_guard<std::mutex> lock(_proc_mtx);
-        if (_call_state != CallState::WAIT_CONNECT &&
-            _call_state != CallState::WAIT_FINISH &&
-            _call_state != CallState::FINISHED) {
-          _ctx.TryCancel();
-
-          LOG(info) << "Finishing<" << _id << ">.";
-          std::lock_guard<std::mutex> lock(_proc_mtx);
-          //_call_state = CallState::WAIT_FINISH;
-          _call_state = CallState::FINISHED;
-        }
-
-        LOG(info) << "Session shutdown.";
-        // _call_state = CallState::FINISHED;
-        // _server->RemoveSession(_id);
-      }
-
-    protected:
-      uint64_t _id;
-      dtServiceListenerGrpc *_server;
-      grpc::Service *_service;
-      grpc::ServerCompletionQueue *_cq;
-      grpc::ServerContext _ctx;
-      std::mutex _proc_mtx;
-
-      enum class CallState {
-        WAIT_CONNECT,
-        READY_TO_READ,
-        WAIT_READ_DONE,
-        READY_TO_WRITE,
-        WAIT_WRITE_DONE,
-        WAIT_FINISH,
-        FINISHED,
-        PEER_DISCONNECTED
-      };
-      CallState _call_state;
-
-    public:
-      static uint64_t AllocSessionId() {
-        static std::atomic<uint64_t> _session_id_allocator{0};
-        return (++_session_id_allocator);
-      }
-    };
-
-    friend class Session;
 
   protected:
-    std::string _server_address;
-    std::unique_ptr<grpc::Server> _server;
-    std::unique_ptr<grpc::ServerCompletionQueue> _cq;
-    std::unique_ptr<grpc::Service> _service;
-    std::atomic<bool> _running{false};
+    uint64_t _id;
+    dtServiceListenerGrpc *_server;
+    grpc::Service *_service;
+    grpc::ServerCompletionQueue *_cq;
+    grpc::ServerContext _ctx;
+    std::mutex _proc_mtx;
+
+    enum class CallState {
+      WAIT_CONNECT,
+      READY_TO_READ,
+      WAIT_READ_DONE,
+      READY_TO_WRITE,
+      WAIT_WRITE_DONE,
+      WAIT_FINISH,
+      FINISHED,
+      PEER_DISCONNECTED
+    };
+    CallState _call_state;
+
+  public:
+    static uint64_t AllocSessionId() {
+    static std::atomic<uint64_t> _session_id_allocator{0};
+      return (++_session_id_allocator);
+    }
+  };
+
+  friend class Session;
+
+protected:
+  std::string _server_address;
+  std::unique_ptr<grpc::Server> _server;
+  std::unique_ptr<grpc::ServerCompletionQueue> _cq;
+  std::unique_ptr<grpc::Service> _service;
+  std::atomic<bool> _running{false};
 #ifdef USE_THREAD_PTHREAD
-    pthread_t _rpc_thread;
+  pthread_t _rpc_thread;
 #else
-    std::thread _rpc_thread;
+  std::thread _rpc_thread;
 #endif
-    std::mutex _session_list_mtx;
-    std::unordered_map<uint64_t, std::shared_ptr<Session>> _sessions;
+  std::mutex _session_list_mtx;
+  std::unordered_map<uint64_t, std::shared_ptr<Session>> _sessions;
 };
+/*! 
+* @example example_grpc_service_listener.cpp
+* This examples shows how to use dtServiceListenerGrpc and dtServiceListenerGrpc::Session 
+* for handling remove RPC call at server side.
+* @see example_grpc_service_caller.cpp
+*/
 
 } // namespace dtCore
 
