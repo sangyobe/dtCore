@@ -27,9 +27,6 @@
 #include <thread>
 #include <deque>
 
-#include <dtCore/src/dtDAQ/dtDataSink.h>
-#include <dtCore/dtLog>
-
 #include <dtProto/Service.grpc.pb.h>
 
 #define USE_THREAD_PTHREAD
@@ -42,7 +39,7 @@ namespace dtCore {
 * It owns and runs RPC event message dispatcher thread.
 * To initiate a new RPC server, use AddSession() method with proper subclass of dtServiceListenerGrpc::Session template parameter.
 */
-class dtServiceListenerGrpc : public dtDataSink
+class dtServiceListenerGrpc
 { 
 public:
   dtServiceListenerGrpc(std::unique_ptr<grpc::Service> service,
@@ -58,7 +55,6 @@ public:
   }
 
     ~dtServiceListenerGrpc() { Stop(); }
-    // virtual void Publish() {}
 
 protected:
 public:
@@ -78,7 +74,6 @@ public:
               void *tag;
               bool ok;
               while (client->_cq->Next(&tag, &ok)) {
-                // LOG(info) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
                 // GPR_ASSERT(ok);
                 if (tag) {
                   if (!static_cast<dtServiceListenerGrpc::Session*>(tag)->OnCompletionEvent(ok)) {
@@ -95,7 +90,6 @@ public:
           void *tag;
           bool ok;
           while (_cq->Next(&tag, &ok)) {
-            // LOG(info) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             // GPR_ASSERT(ok);
             if (tag) {
               if (!static_cast<dtServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok)) {
@@ -176,13 +170,11 @@ public:
           _call_state != CallState::FINISHED) {
         _ctx.TryCancel();
 
-        // LOG(info) << "Finishing<" << _id << ">.";
         std::lock_guard<std::mutex> lock(_proc_mtx);
         //_call_state = CallState::WAIT_FINISH;
         _call_state = CallState::FINISHED;
       }
 
-      // LOG(info) << "Session shutdown.";
       // _call_state = CallState::FINISHED;
       // _server->RemoveSession(_id);
     }

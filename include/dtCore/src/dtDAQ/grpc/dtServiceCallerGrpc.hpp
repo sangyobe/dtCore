@@ -63,7 +63,6 @@ public:
           void *tag;
           bool ok;
           while (client->_cq.Next(&tag, &ok)) {
-            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             // GPR_ASSERT(ok);
             if (tag) {
               if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok)) {
@@ -80,7 +79,6 @@ public:
       void *tag;
       bool ok;
       while (_cq.Next(&tag, &ok)) {
-        // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
         // GPR_ASSERT(ok);
         if (tag) {
           if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok)) {
