@@ -10,8 +10,10 @@ import "dtProto/robot_msgs/ControlCmd.proto";
 import "dtProto/robot_msgs/MoveControl.proto";
 import "dtProto/robot_msgs/JointControl.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
 
 service dtService {
+  rpc Version(google.protobuf.Empty) returns (google.protobuf.StringValue);
   rpc StreamState(std_msgs.Request) returns (stream std_msgs.State);
   rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
   rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);

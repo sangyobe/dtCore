@@ -48,8 +48,8 @@ public:
                 return false;
             }
             else {
-                GPR_ASSERT(false && "Invalid Session Status.");
                 LOG(err) << "Command[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                GPR_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }
@@ -61,7 +61,7 @@ public:
             else {
                 std::lock_guard<std::mutex> lock(_proc_mtx);
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
-                _call_state == CallState::WAIT_FINISH;
+                _call_state = CallState::WAIT_FINISH;
             }
         }
         return true;
@@ -124,8 +124,8 @@ public:
                 return false;
             }
             else {
-                GPR_ASSERT(false && "Invalid Session Status.");
                 LOG(err) << "QueryRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                GPR_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }

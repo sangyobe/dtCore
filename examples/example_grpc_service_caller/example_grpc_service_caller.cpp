@@ -49,8 +49,8 @@ public:
         }
         return false; // remove this call
       } else {
-        GPR_ASSERT(false && "Invalid Call State.");
         LOG(err) << "QueryRobotInfo[" << this->_id << "] Invalid call state (" << static_cast<int>(_call_state) << ")";
+        GPR_ASSERT(false && "Invalid Call State.");
         return false;
       }
     }

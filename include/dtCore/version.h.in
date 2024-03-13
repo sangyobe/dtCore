@@ -1,0 +1,14 @@
+// This file is part of dtCore, a C++ library for robotics software
+// development.
+//
+// This library is commercial and cannot be redistributed, and/or modified
+// WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
+
+#ifndef __DTCORE_VERSION_H__
+#define __DTCORE_VERSION_H__
+
+#define DTCORE_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define DTCORE_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define DTCORE_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+#endif //__DTCORE_VERSION_H__

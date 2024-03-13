@@ -209,10 +209,10 @@ public:
   friend class Session;
 
 protected:
-  std::string _server_address;
   std::unique_ptr<grpc::Server> _server;
   std::unique_ptr<grpc::ServerCompletionQueue> _cq;
   std::unique_ptr<grpc::Service> _service;
+  std::string _server_address;
   std::atomic<bool> _running{false};
 #ifdef USE_THREAD_PTHREAD
   pthread_t _rpc_thread;

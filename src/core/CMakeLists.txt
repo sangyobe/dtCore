@@ -1,10 +1,3 @@
-project(dtCore
-  LANGUAGES C CXX
-  HOMEPAGE_URL https://github.hmc.co.kr/art_framework/dtCore
-  DESCRIPTION "HMC's Art Framework Core Library"
-  VERSION 1.0.0
-)
-
 set(CORE_SRCS "")
 set(CORE_HDRS "")
 

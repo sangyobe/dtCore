@@ -195,8 +195,8 @@ void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
         _server->RemoveSession(_id);
     }
     else {
-        GPR_ASSERT(false && "Invalid Session Status.");
         // LOG(ERROR) << "Invalid session status (" << static_cast<int>(_call_state) << ")";
+        // GPR_ASSERT(false && "Invalid Session Status.");
     }
 }
 
@@ -210,7 +210,7 @@ void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
         if (_server->_msg_queue_size == 0) {
             return; // delete this message !
         }
-        else if (_server->_msg_queue_size > 0 && _msg_queue.size() >= _server->_msg_queue_size) {
+        else if (_server->_msg_queue_size > 0 && _msg_queue.size() >= (uint32_t)(_server->_msg_queue_size)) {
             _msg_queue.pop_front(); // delete the oldest message.
         }
         _msg.mutable_state()->PackFrom(msg);

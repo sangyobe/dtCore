@@ -4,7 +4,7 @@ project(dtProto
   LANGUAGES C CXX
   HOMEPAGE_URL https://github.hmc.co.kr/art_framework/dtProto
   DESCRIPTION "HMC's Art Framework Network Protocol Library"
-  VERSION 1.0.0
+  VERSION 1.0.2
 )
 
 # Get protobuf/grpc generated file output path
@@ -78,6 +78,12 @@ endforeach()
 # Include generated *.pb.h files
 set(PROTOBUF_GEN_DIR ${pb_gen_dir} PARENT_SCOPE)
 
+
+#####################################################################
+# generate version.h
+set(version_h_in ${CMAKE_CURRENT_SOURCE_DIR}/dtProto/version.h.in)
+set(version_h ${CMAKE_CURRENT_BINARY_DIR}/dtProto/version.h)
+configure_file(${version_h_in} ${version_h} @ONLY)
 
 #####################################################################
 # dtProto library

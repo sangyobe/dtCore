@@ -9,6 +9,8 @@ import "dtProto/geometry_msgs/Twist.proto";
 message ControlCmd {
   int32 cmd_mode = 1;
   string arg = 2;
+  repeated int32 arg_n = 3;
+  repeated float arg_f = 4;
 }
 
 message ControlCmdTimeStamped {
