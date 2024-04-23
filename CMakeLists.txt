@@ -4,7 +4,7 @@ project(dtCore
   LANGUAGES C CXX
   HOMEPAGE_URL https://github.hmc.co.kr/art_framework
   DESCRIPTION "HMC's Art Framework Library"
-  VERSION 1.0.2
+  VERSION 1.1.0
 )
 
 cmake_policy(VERSION 3.13)
@@ -55,6 +55,7 @@ OPTION(BUILD_UNIT_TESTS     "Build unit test"                         OFF)
 OPTION(BUILD_EXAMPLES       "Build examples"                          ON)
 OPTION(BUILD_EXAMPLES_eCAL  "Build eCAL examples"                     OFF)
 OPTION(BUILD_EXAMPLES_gRPC  "Build gRPC examples"                     OFF)
+OPTION(BUILD_EXAMPLES_MCAP  "Build MCAP examples"                     OFF)
 OPTION(BUILD_dtProto        "Build dtProto headers and library"       OFF)
 OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
 OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      OFF)
@@ -93,7 +94,8 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
-# CHECK ALL THE SUBMODULES
+
+# CHECK & BUILD SUBMODULES
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extlib/spdlog/CMakeLists.txt")
     message(FATAL_ERROR "The spdlog submodules was not downloaded. GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
@@ -105,7 +107,6 @@ set(SPDLOG_INSTALL ON)
 add_subdirectory(extlib/spdlog)
 set(YAML_CPP_INSTALL ON)
 add_subdirectory(extlib/yaml-cpp)
-
 
 # --------------------------------------------------------
 # Build dtCore modules
@@ -209,6 +210,7 @@ message(STATUS "BUILD_UNIT_TESTS                               : ${BUILD_UNIT_TE
 message(STATUS "BUILD_EXAMPLES                                 : ${BUILD_EXAMPLES}")
 message(STATUS "BUILD_EXAMPLES_eCAL                            : ${BUILD_EXAMPLES_eCAL}")
 message(STATUS "BUILD_EXAMPLES_gRPC                            : ${BUILD_EXAMPLES_gRPC}")
+message(STATUS "BUILD_EXAMPLES_MCAP                            : ${BUILD_EXAMPLES_MCAP}")
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")
 message(STATUS "BUILD_dtProto_gRPC                             : ${BUILD_dtProto_gRPC}")
 message(STATUS "BUILD_dtCore_gRPC                              : ${BUILD_dtCore_gRPC}")

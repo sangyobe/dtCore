@@ -3,6 +3,8 @@
 .vscode
 build
 lib
+data
+logs
 
 # Prerequisites
 ###################

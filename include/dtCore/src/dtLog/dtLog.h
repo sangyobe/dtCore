@@ -99,7 +99,7 @@ public:
                 std::string dname, fname;
                 std::tie(dname, fname) = split_by_directory(filename);
                 rtn = remove(file_basename.c_str());
-                if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+                // if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
                 rtn = symlink(fname.c_str(), file_basename.c_str());
                 if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
             }
@@ -125,7 +125,7 @@ public:
             std::string dname, fname;
             std::tie(dname, fname) = split_by_directory(filename);
             rtn = remove(file_basename.c_str());
-            if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+            // if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
             rtn = symlink(fname.c_str(), file_basename.c_str());
             if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
         }

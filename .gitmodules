@@ -4,3 +4,6 @@
 [submodule "extlib/spdlog"]
 	path = extlib/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "extlib/mcap"]
+	path = extlib/mcap
+	url = https://github.com/foxglove/mcap.git
