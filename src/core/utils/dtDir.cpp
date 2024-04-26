@@ -1,5 +1,5 @@
 //* Related Headers ----------------------------------------------------------*/
-#include "dtDir.h"
+#include "dtCore/src/dtUtils/dtDir.h"
 
 //* C/C++ System Headers -----------------------------------------------------*/
 #include <memory>
@@ -23,8 +23,7 @@ std::string GetExecutableDir()
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
     constexpr char kPathSep = '\\';
-    std::string realpath = [&]() -> std::string
-    {
+    std::string realpath = [&]() -> std::string {
         std::unique_ptr<char[]> realpath(nullptr);
         DWORD buf_size = 128;
         bool success = false;
@@ -77,8 +76,7 @@ std::string GetExecutableDir()
 #else
     const char *path = "/proc/self/exe";
 #endif
-    std::string realpath = [&]() -> std::string
-    {
+    std::string realpath = [&]() -> std::string {
         std::unique_ptr<char[]> realpath(nullptr);
         std::uint32_t buf_size = 128;
         bool success = false;
@@ -143,13 +141,13 @@ std::string GetTasksDir()
     {
         return tasks_dir;
     }
-    return GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1)) + "/control/system";
+    return GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1));
 }
 
 // convenience function for paths
 std::string GetModelPath(std::string path)
 {
-    return GetTasksDir() + "/" + std::string(path);
+    return GetTasksDir() + "/model/" + std::string(path);
 }
 
 // Function to extract the file extension from a file path

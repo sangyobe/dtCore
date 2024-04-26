@@ -133,13 +133,14 @@ public:
   * User should subclass dtCore::dtServiceCallerGrpc::Call and implement their own completion event message handler.
   * @param[in] udata udata is passed as the sole argument of CallType constructor.
   */
-  template <typename CallType> bool StartCall(void *udata = nullptr) {
-    std::shared_ptr<CallType> call =
-        std::make_shared<CallType>(_stub.get(), &_cq, udata);
-    std::lock_guard<std::mutex> lock(_call_list_mtx);
-    _calls[call->GetId()] = call;
-    return true;
-  }
+    template <typename CallType> uint64_t StartCall(void *udata = nullptr)
+    {
+        std::shared_ptr<CallType> call =
+            std::make_shared<CallType>(_stub.get(), &_cq, udata);
+        std::lock_guard<std::mutex> lock(_call_list_mtx);
+        _calls[call->GetId()] = call;
+        return call->GetId();
+    }
 
   /*!
   * Remove call by id.

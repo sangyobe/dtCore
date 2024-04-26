@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dtTerminal.h"
+#include "dtCore/src/dtUtils/dtTerminal.h"
 
 #ifdef _WIN32
 // Some old MinGW/CYGWIN distributions don't define this:

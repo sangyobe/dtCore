@@ -9,6 +9,7 @@ import "dtProto/robot_msgs/RobotInfo.proto";
 import "dtProto/robot_msgs/ControlCmd.proto";
 import "dtProto/robot_msgs/MoveControl.proto";
 import "dtProto/robot_msgs/JointControl.proto";
+import "dtProto/sensor_msgs/Joy.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -18,5 +19,6 @@ service dtService {
   rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
   rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
   rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
+  rpc StreamJoy(stream sensor_msgs.Joy) returns (stream std_msgs.Response);
   rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 }

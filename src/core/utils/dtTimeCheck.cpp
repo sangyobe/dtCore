@@ -1,4 +1,4 @@
-#include "dtTimeCheck.h"
+#include "dtCore/src/dtUtils/dtTimeCheck.h"
 
 #if defined(_WIN32)
 dtTimeCheck::dtTimeCheck()

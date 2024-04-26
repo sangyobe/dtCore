@@ -4,7 +4,7 @@ project(dtCore
   LANGUAGES C CXX
   HOMEPAGE_URL https://github.hmc.co.kr/art_framework
   DESCRIPTION "HMC's Art Framework Library"
-  VERSION 1.1.0
+  VERSION 1.2.0
 )
 
 cmake_policy(VERSION 3.13)
@@ -56,7 +56,8 @@ OPTION(BUILD_EXAMPLES       "Build examples"                          ON)
 OPTION(BUILD_EXAMPLES_eCAL  "Build eCAL examples"                     OFF)
 OPTION(BUILD_EXAMPLES_gRPC  "Build gRPC examples"                     OFF)
 OPTION(BUILD_EXAMPLES_MCAP  "Build MCAP examples"                     OFF)
-OPTION(BUILD_dtProto        "Build dtProto headers and library"       OFF)
+OPTION(BUILD_dtCore         "Build dtCore library"                    ON)
+OPTION(BUILD_dtProto        "Build dtProto library"                   ON)
 OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
 OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      OFF)
 OPTION(dtCore_USE_EIGEN3    "Use Eigen3 as the default math library"  OFF)
@@ -211,6 +212,7 @@ message(STATUS "BUILD_EXAMPLES                                 : ${BUILD_EXAMPLE
 message(STATUS "BUILD_EXAMPLES_eCAL                            : ${BUILD_EXAMPLES_eCAL}")
 message(STATUS "BUILD_EXAMPLES_gRPC                            : ${BUILD_EXAMPLES_gRPC}")
 message(STATUS "BUILD_EXAMPLES_MCAP                            : ${BUILD_EXAMPLES_MCAP}")
+message(STATUS "BUILD_dtCore                                   : ${BUILD_dtCore}")
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")
 message(STATUS "BUILD_dtProto_gRPC                             : ${BUILD_dtProto_gRPC}")
 message(STATUS "BUILD_dtCore_gRPC                              : ${BUILD_dtCore_gRPC}")
