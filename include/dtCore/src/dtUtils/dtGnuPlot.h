@@ -17,8 +17,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "algorithm/dtMath/dtMath.h"
-
+#include <dtMath/dtMath.h>
 
 #if defined(_WIN32)
 //#include <windows.h>
