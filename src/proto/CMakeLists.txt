@@ -4,7 +4,7 @@ project(dtProto
   LANGUAGES C CXX
   HOMEPAGE_URL https://github.hmc.co.kr/art_framework/dtProto
   DESCRIPTION "HMC's Art Framework Network Protocol Library"
-  VERSION 1.1.0
+  VERSION ${CMAKE_PROJECT_VERSION}
 )
 
 # Get protobuf/grpc generated file output path

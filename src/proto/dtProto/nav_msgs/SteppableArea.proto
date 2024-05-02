@@ -5,11 +5,17 @@ package dtproto.nav_msgs;
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Polygon.proto";
 
+
+message SteppablePolygon {
+    geometry_msgs.Polygon3d polygon = 1;
+    uint32 index = 2;
+    uint32 properties = 3;  // LSB for steppable flag (0:steppable, 1:unsteppable)
+                            // Other bits can be used for any user-defined information. 
+}
+
 message SteppableArea {
-  repeated geometry_msgs.Polygon3d steppables = 1;
-  uint32 steppables_count = 2;
-  repeated geometry_msgs.Polygon3d unsteppables = 3;
-  uint32 unsteppables_count = 4;
+    repeated SteppablePolygon steppables = 1;
+    uint32 steppables_count = 2;
 }
 
 message SteppableAreaTimeStamped {
