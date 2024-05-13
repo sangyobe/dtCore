@@ -25,10 +25,10 @@ public:
     {
         _data_srcs.push_back(src);
     }
-    virtual void Update()
+    virtual void Update(void* context = nullptr)
     {
         for(const std::shared_ptr<dtDataSource>& src : _data_srcs) {
-            src->Update();
+            src->Update(context);
         }
     }
 

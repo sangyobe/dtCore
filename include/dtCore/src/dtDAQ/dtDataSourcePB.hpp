@@ -11,6 +11,7 @@
  *
  */
 
+#include <dtCore/define.h>
 #include "dtDataSource.h"
 #include "dtDataSinkPB.hpp"
 
@@ -19,8 +20,9 @@ namespace dtCore {
 template<typename T>
 class dtDataSourcePB : public dtDataSource {
 protected:
-    void UpdateData() {}
-    void UpdateDataSink() {
+    bool UpdateData(void* context) { UNUSED(context); return false; }
+    void UpdateSink(void* context) {
+        UNUSED(context); 
         for (const std::shared_ptr<dtDataSink>& sink : _data_sinks) {
             std::shared_ptr<dtDataSinkPB<T>> s = std::dynamic_pointer_cast<dtDataSinkPB<T>>(sink);
             if (s) {
@@ -35,7 +37,7 @@ protected:
 template<typename T>
 class dtDataSourcePBTimestamped : public dtDataSourcePB<T> {
 protected:
-    void UpdateData() {
+    void UpdateTimestamp() {
         this->_msg.mutable_header()->set_seq(++_cnt);
 #ifdef _WIN32
         FILETIME ft;
@@ -46,10 +48,10 @@ protected:
         this->_msg.mutable_header()->mutable_time_stamp()->set_seconds((INT64)((ticks / 10000000) - 11644473600LL));
         this->_msg.mutable_header()->mutable_time_stamp()->set_nanos((INT32)((ticks % 10000000) * 100));
 #else
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        this->_msg.mutable_header()->mutable_time_stamp()->set_seconds(tv.tv_sec);
-        this->_msg.mutable_header()->mutable_time_stamp()->set_nanos(tv.tv_usec * 1000);
+        struct timespec tp;
+        clock_gettime(CLOCK_REALTIME, &tp);
+        this->_msg.mutable_header()->mutable_time_stamp()->set_seconds(tp.tv_sec);
+        this->_msg.mutable_header()->mutable_time_stamp()->set_nanos(tp.tv_nsec);
 #endif
     }
 protected:
