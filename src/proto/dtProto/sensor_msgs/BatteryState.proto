@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package dtproto.sensor_msgs;
 
+import "dtProto/std_msgs/Header.proto";
+
 message BatteryState {
   enum ChargingStatus {
     ON = 0;
@@ -14,4 +16,9 @@ message BatteryState {
   float design_capacity = 5;            // Ah (Design capacity)
   float percentage = 6;                 // 0...1
   ChargingStatus charging_status = 7;
+}
+
+message BatteryStateTimeStamped {
+    std_msgs.Header header = 1;
+    BatteryState battery = 2;
 }

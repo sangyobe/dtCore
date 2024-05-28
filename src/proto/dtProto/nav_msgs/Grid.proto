@@ -53,5 +53,5 @@ message PackedGrid {
 
 message PackedGridTimeStamped {
     std_msgs.Header header = 1;
-    Grid grid = 2;
+    PackedGrid grid = 2;
 }
