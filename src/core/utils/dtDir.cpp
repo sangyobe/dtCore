@@ -133,7 +133,7 @@ std::string GetExecutableDir()
     return "";
 }
 
-// Returns the directory where tasks are stored
+// returns the directory where tasks are stored
 std::string GetTasksDir()
 {
     const char *tasks_dir = std::getenv("USERCTRL_TASK_DIR");
@@ -144,13 +144,13 @@ std::string GetTasksDir()
     return GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1));
 }
 
-// convenience function for paths
+// returns path to a model XML file given path relative to models dir
 std::string GetModelPath(std::string path)
 {
     return GetTasksDir() + "/model/" + std::string(path);
 }
 
-// Function to extract the file extension from a file path
+// return file extension for the given file
 std::string GetFileExtension(const std::string &filePath)
 {
     size_t pos = filePath.rfind('.');
@@ -162,4 +162,22 @@ std::string GetFileExtension(const std::string &filePath)
     {
         return ""; // No extension found
     }
+}
+
+// returns the current user's home directory
+std::string GetUserHomeDir()
+{
+#if defined(_MSC_VER)
+#if defined(__cplusplus_winrt)
+    return std::string{}; // not supported under uwp
+#else
+    size_t len = 0;
+    char buf[128];
+    bool ok = ::getenv_s(&len, buf, sizeof(buf), "HOME") == 0;
+    return ok ? buf : std::string{};
+#endif
+#else // revert to getenv
+    char *buf = ::getenv("HOME");
+    return buf ? buf : std::string{};
+#endif
 }

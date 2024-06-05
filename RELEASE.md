@@ -1,3 +1,8 @@
+#### [v1.2.2]
+(2024/6/5)
+##### dtDir
+- 유저 home 디렉토리 구하는 함수(GetUserHomeDir()) 추가
+
 #### [v1.2.1]
 (2024/6/5)
 ##### dtServiceListenerGrpc

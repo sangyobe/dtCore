@@ -24,10 +24,12 @@
 //* Public(Exported) Functions -----------------------------------------------*/
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir();
-// Returns the directory where tasks are stored
+// returns the directory where tasks are stored
 std::string GetTasksDir();
 // returns path to a model XML file given path relative to models dir
 std::string GetModelPath(std::string path);
 // return file extension for the given file
 std::string GetFileExtension(const std::string &filePath);
+// returns the current user's home directory
+std::string GetUserHomeDir();
 #endif // SYSTEM_UTILS_DTDIR_H_
