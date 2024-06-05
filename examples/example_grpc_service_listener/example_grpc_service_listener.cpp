@@ -21,7 +21,15 @@ public:
         // LOG(info) << "OnControlCmd session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
     }
     bool OnCompletionEvent(bool ok) override {
-        if (_call_state == CallState::FINISHED) {
+        if (_call_state == CallState::FINISHED)
+        {
+            return true;
+        }
+        else if (_call_state == CallState::WAIT_FINISH)
+        {
+            LOG(info) << "Command[" << _id << "] Finalize service.";
+            // _call_state = CallState::FINISHED;
+            // _server->RemoveSession(_id);
             return false;
         }
         else if (ok) {
@@ -38,14 +46,9 @@ public:
                     _response.set_msg("success");
 
                     _call_state = CallState::WAIT_FINISH;
+                    LOG(trace) << "Command[" << _id << "] Finish()";
                     _responder.Finish(_response, grpc::Status::OK, this);
                 }
-            } 
-            else if (_call_state == CallState::WAIT_FINISH) {
-                LOG(info) << "Command[" << _id << "] Finalize service.";
-                // _call_state = CallState::FINISHED;
-                // _server->RemoveSession(_id);
-                return false;
             }
             else {
                 LOG(err) << "Command[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
@@ -60,6 +63,7 @@ public:
             }
             else {
                 std::lock_guard<std::mutex> lock(_proc_mtx);
+                LOG(trace) << "Command[" << _id << "] Finish()";
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
                 _call_state = CallState::WAIT_FINISH;
             }
@@ -93,7 +97,15 @@ public:
         // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
     }
     bool OnCompletionEvent(bool ok) override {
-        if (_call_state == CallState::FINISHED) {
+        if (_call_state == CallState::FINISHED)
+        {
+            return true;
+        }
+        else if (_call_state == CallState::WAIT_FINISH)
+        {
+            LOG(info) << "QueryRobotInfo[" << _id << "] Finalize service.";
+            // _call_state = CallState::FINISHED;
+            // _server->RemoveSession(_id);
             return false;
         }
         else if (ok) {
@@ -114,14 +126,9 @@ public:
                     _response.set_dof(12);
 
                     _call_state = CallState::WAIT_FINISH;
+                    LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
                     _responder.Finish(_response, grpc::Status::OK, this);
                 }
-            } 
-            else if (_call_state == CallState::WAIT_FINISH) {
-                LOG(info) << "QueryRobotInfo[" << _id << "] Finalize service.";
-                // _call_state = CallState::FINISHED;
-                // _server->RemoveSession(_id);
-                return false;
             }
             else {
                 LOG(err) << "QueryRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
@@ -136,6 +143,7 @@ public:
             }
             else {
                 std::lock_guard<std::mutex> lock(_proc_mtx);
+                LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
                 _call_state == CallState::WAIT_FINISH;
             }

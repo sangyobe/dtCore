@@ -104,16 +104,18 @@ public:
 
   //! Stop all pending rpc calls and close sessions
   void Stop() {
-    // {
-    //   std::lock_guard<std::mutex> lock(_session_list_mtx);
-    //   for (auto it : _sessions) {
-    //     it.second->TryCancelCallAndShutdown();
-    //   }
-    //   //_sessions.clear();
-    // }
+      {
+          std::lock_guard<std::mutex> lock(_session_list_mtx);
+          for (auto it : _sessions)
+          {
+              it.second->TryCancelCallAndShutdown();
+          }
+          // _sessions.clear();
+      }
 
-    _server->Shutdown();
-    _cq->Shutdown();  // drain/signal all completion queue.
+      _running = false;
+      _server->Shutdown();
+      _cq->Shutdown(); // drain/signal all completion queue.
 
 #ifdef USE_THREAD_PTHREAD
     void *th_join_result;
@@ -126,8 +128,6 @@ public:
     void *ignoredTag = nullptr;
     bool ok = false;
     while (_cq->Next(&ignoredTag, &ok)) {}
-
-    _running = false;
   }
   bool IsRun() { return _running.load(); }
 
