@@ -80,7 +80,7 @@ private:
 /////////////////////////////////////////////////////////////////////////
 // OnQueryRobotInfo (Rpc service call handler)
 //
-//     rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
+//     rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 //
 class OnQueryRobotInfo : public dtCore::dtServiceListenerGrpc::Session 
 {
@@ -90,8 +90,8 @@ public:
     OnQueryRobotInfo(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
     : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
         _call_state = CallState::WAIT_CONNECT;
-        (static_cast<ServiceType*>(_service))->RequestQueryRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
-        LOG(info) << "QueryRobotInfo[" << _id << "] Waiting for new service call...";
+        (static_cast<ServiceType *>(_service))->RequestRequestRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
+        LOG(info) << "RequestRobotInfo[" << _id << "] Waiting for new service call...";
     }
     ~OnQueryRobotInfo() {
         // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
@@ -103,14 +103,14 @@ public:
         }
         else if (_call_state == CallState::WAIT_FINISH)
         {
-            LOG(info) << "QueryRobotInfo[" << _id << "] Finalize service.";
+            LOG(info) << "RequestRobotInfo[" << _id << "] Finalize service.";
             // _call_state = CallState::FINISHED;
             // _server->RemoveSession(_id);
             return false;
         }
         else if (ok) {
             if (_call_state == CallState::WAIT_CONNECT) {
-                LOG(info) << "QueryRobotInfo[" << _id << "] NEW service call.";
+                LOG(info) << "RequestRobotInfo[" << _id << "] NEW service call.";
 
                 _server->template AddSession<OnQueryRobotInfo >();
                 {
@@ -126,24 +126,24 @@ public:
                     _response.set_dof(12);
 
                     _call_state = CallState::WAIT_FINISH;
-                    LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
+                    LOG(trace) << "RequestRobotInfo[" << _id << "] Finish()";
                     _responder.Finish(_response, grpc::Status::OK, this);
                 }
             }
             else {
-                LOG(err) << "QueryRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                LOG(err) << "RequestRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
                 GPR_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }
         else {
             if (_call_state == CallState::WAIT_CONNECT) {
-                LOG(err) << "QueryRobotInfo[" << _id << "] Session has been shut down before receiving a matching request.";
+                LOG(err) << "RequestRobotInfo[" << _id << "] Session has been shut down before receiving a matching request.";
                 return false;
             }
             else {
                 std::lock_guard<std::mutex> lock(_proc_mtx);
-                LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
+                LOG(trace) << "RequestRobotInfo[" << _id << "] Finish()";
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
                 _call_state == CallState::WAIT_FINISH;
             }

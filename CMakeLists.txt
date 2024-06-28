@@ -4,7 +4,7 @@ project(dtCore
   LANGUAGES C CXX
   HOMEPAGE_URL https://github.hmc.co.kr/art_framework
   DESCRIPTION "HMC's Art Framework Library"
-  VERSION 1.2.2
+  VERSION 1.3.0
 )
 
 cmake_policy(VERSION 3.13)
@@ -24,7 +24,7 @@ configure_file(${version_h_in} ${version_h} @ONLY)
 #set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g")
 #set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O4 -DNDEBUG")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

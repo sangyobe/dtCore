@@ -151,13 +151,9 @@ dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType
     rtn = pthread_mutex_init(_proc_mtx.native_handle(), &mtx_attr);
     if (rtn) printf("error: pthread_mutex_init (%d)\n\n", rtn);
 
-    
-    
-
-    // LOG(INFO) << "NEW StreamStateSession created.";
-    _service->RequestStreamState(&_ctx, &_request, &_responder, _cq, _cq, this);
+    _service->RequestPublishState(&_ctx, &_request, &_responder, _cq, _cq, this);
     _call_state = CallState::WAIT_CONNECT;
-    // LOG(INFO) << "Wait for new StreamState() service call...";
+    // LOG(INFO) << "Wait for new SubscribeState() service call...";
 }
 
 template<typename StateType>
@@ -170,7 +166,7 @@ template<typename StateType>
 void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
 {
     if (_call_state == CallState::WAIT_CONNECT) {
-        // LOG(INFO) << "NEW StreamState() service call.";
+        // LOG(INFO) << "NEW SubscribeState() service call.";
         _server->AddSession();
         {
             std::lock_guard<std::mutex> lock(_proc_mtx);
@@ -190,7 +186,7 @@ void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
         }
     }
     else if (_call_state == CallState::WAIT_FINISH) {
-        // LOG(INFO) << "Finalize StreamState() service.";
+        // LOG(INFO) << "Finalize SubscribeState() service.";
         //_call_state = CallState::FINISHED;
         _server->RemoveSession(_id);
     }

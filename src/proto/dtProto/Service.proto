@@ -13,12 +13,20 @@ import "dtProto/sensor_msgs/Joy.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-service dtService {
-  rpc Version(google.protobuf.Empty) returns (google.protobuf.StringValue);
-  rpc StreamState(std_msgs.Request) returns (stream std_msgs.State);
-  rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
-  rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
-  rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
-  rpc StreamJoy(stream sensor_msgs.Joy) returns (stream std_msgs.Response);
-  rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
+service dtService 
+{
+    // server publishes information
+    rpc PublishState(std_msgs.Request) returns (stream std_msgs.State);
+
+    // clients request information
+    rpc RequestVersion(google.protobuf.Empty) returns (google.protobuf.StringValue);
+    rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
+
+    // clients send command
+    rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
+    rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
+    rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
+
+    // bi-directional communication
+    rpc StreamJoy(stream sensor_msgs.Joy) returns (stream std_msgs.Response);
 }

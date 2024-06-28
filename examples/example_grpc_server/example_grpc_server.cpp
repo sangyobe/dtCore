@@ -10,10 +10,10 @@
 
 
 class ServiceImpl final : public dtproto::dtService::Service {
-    ::grpc::Status QueryRobotInfo(
-        ::grpc::ServerContext* context, 
-        const ::google::protobuf::Empty* request, 
-        ::dtproto::robot_msgs::RobotInfo* response)
+    ::grpc::Status RequestRobotInfo(
+        ::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request,
+        ::dtproto::robot_msgs::RobotInfo *response)
     {
         response->set_name("QuadIP");
         response->set_version("v0.1");

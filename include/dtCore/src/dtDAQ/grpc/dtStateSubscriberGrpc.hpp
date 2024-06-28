@@ -143,12 +143,12 @@ bool dtStateSubscriberGrpc<StateType>::Session::InitRequest()
     req.set_name(_subscriber->_topic_name);
     req.set_type(dtproto::std_msgs::Request::ON);
     _stream_reader =
-      _stub->PrepareAsyncStreamState(
-        //&_context,
-        &_ctx,
-        req,
-        &_cq);
-    
+        _stub->PrepareAsyncPublishState(
+            //&_context,
+            &_ctx,
+            req,
+            &_cq);
+
     _call_state = RpcCallState::WAIT_START;
     _stream_reader->StartCall((void*)this);
     this->_subscriber->_running = true;
@@ -206,11 +206,11 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
     if (_call_state == RpcCallState::WAIT_START) {
 
         if (!_status.ok()) {
-            // LOG(INFO) << "StreamState rpc call failed.";
+            // LOG(INFO) << "SubscribeState rpc call failed.";
             return false;
         }
 
-        // LOG(INFO) << "StreamState rpc call started.";
+        // LOG(INFO) << "SubscribeState rpc call started.";
 
         _stream_reader->Read(&_msg, (void*)this);
         _call_state = RpcCallState::WAIT_READ_DONE;
@@ -219,7 +219,7 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
     else if (_call_state == RpcCallState::WAIT_READ_DONE) {
 
         if (!_status.ok()) {
-            std::cout << "StreamState rpc stream broken." << std::endl;
+            std::cout << "SubscribeState rpc stream broken." << std::endl;
             return false;
         }
 
@@ -235,7 +235,7 @@ bool dtStateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
 
     }
     else if (_call_state == RpcCallState::WAIT_FINISH) {
-        // LOG(INFO) << "Finalize StreamState() service call.";
+        // LOG(INFO) << "Finalize SubscribeState() service call.";
         _call_state = RpcCallState::FINISHED;
         // Once we're complete, deallocate the call object.
         //delete this;
