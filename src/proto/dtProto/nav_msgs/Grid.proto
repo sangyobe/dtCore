@@ -12,6 +12,7 @@ message Grid {
     google.protobuf.Timestamp acquisition_time = 2; // grid update time
     string frame_id = 3;                            // frmae of reference
     geometry_msgs.Pose3d pose_offset = 4;           // grid origin from the reference frame
+    geometry_msgs.Pose3d grid_center = 11;          // grid center position in map(grid) frame
     uint32 row_count = 5;                           // number of grid rows
     uint32 col_count = 6;                           // number of grid columns
     uint32 cell_stride = 7;                         // number of bytes of each cell data (cell data is interpreted using cell_encoding)
