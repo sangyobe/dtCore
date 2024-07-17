@@ -28,16 +28,3 @@ if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_EXAMPLES_gRPC)
       add_subdirectory(${example_dir})
   endforeach()
 endif()
-
-# dtTrajectory example targets
-foreach(_target examplePoly exampleBezier exampleScurve)
-  add_executable(
-    ${_target}
-    "${_target}.cpp"
-  )
-  target_include_directories(
-    ${_target}
-    PRIVATE
-    "${CMAKE_SOURCE_DIR}/include"
-  )
-endforeach()

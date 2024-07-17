@@ -168,7 +168,7 @@
         <ellipse cx="760" cy="243" rx="50" ry="25" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
         <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="12px">
             <text x="759.5" y="247.5">
-                dtUtil::dtConf
+                dtUtil::Conf
             </text>
         </g>
         <path d="M 424.06 263.34 L 560.72 359" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>

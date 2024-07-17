@@ -4,30 +4,34 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDATASINKPBECAL_H__
-#define __DTCORE_DTDATASINKPBECAL_H__
+#ifndef __DT_DAQ__DATASINKPBECAL_H__
+#define __DT_DAQ__DATASINKPBECAL_H__
 
 /** \defgroup dtDAQ
  *
  */
 
 #include "../dtDataSinkPB.hpp"
-#include <string>
 #include <chrono>
 #include <ecal/ecal.h>
 #include <ecal/msg/protobuf/publisher.h>
+#include <string>
 
 //#define PRINT_PUB_SUB_INFO
 #ifdef PRINT_PUB_SUB_INFO
 #include <iostream>
 #endif
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-template<typename T>
-class dtDataSinkPBEcal : public dtDataSinkPB<T> {
+template <typename T>
+class DataSinkPBEcal : public DataSinkPB<T>
+{
 public:
-    dtDataSinkPBEcal(const std::string& topic_name) : _pub(topic_name) {}
+    DataSinkPBEcal(const std::string &topic_name) : _pub(topic_name) {}
     void Publish(T& msg) {
 #ifdef PRINT_PUB_SUB_INFO
         std::cout << "------------------------------------------" << std::endl;
@@ -54,6 +58,7 @@ protected:
     eCAL::protobuf::CPublisher<T> _pub;
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDATASINKPBECAL_H__
+#endif // __DT_DAQ__DATASINKPBECAL_H__

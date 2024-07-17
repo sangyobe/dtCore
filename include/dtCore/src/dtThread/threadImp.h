@@ -8,8 +8,8 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 
-#ifndef SYSTEM_THREAD_THREADIMP_H_
-#define SYSTEM_THREAD_THREADIMP_H_
+#ifndef __DT_THREAD_THREADIMP_H__
+#define __DT_THREAD_THREADIMP_H__
 
 //* C/C++ System Headers -----------------------------------------------------*/
 #include <unistd.h>
@@ -25,6 +25,8 @@
 //* System-Specific Headers --------------------------------------------------*/
 
 namespace dt
+{
+namespace Thread
 {
 //* Public(Exported) Macro ---------------------------------------------------*/
 //* Public(Exported) Types ---------------------------------------------------*/
@@ -95,6 +97,7 @@ inline void SleepForMillis(unsigned int milliseconds)
 #endif
 }
 
+} // namespace Thread
 } // namespace dt
 
-#endif // REALROBOT_THREAD_THREADIMP_H_
+#endif // __DT_THREAD_THREADIMP_H__

@@ -4,22 +4,27 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDATASINK_H__
-#define __DTCORE_DTDATASINK_H__
+#ifndef __DT_DAQ_DATASINK_H__
+#define __DT_DAQ_DATASINK_H__
 
 /** \defgroup dtDAQ
  *
  */
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-class dtDataSink {
+class DataSink
+{
 public:
-    dtDataSink() {}
-    virtual ~dtDataSink() {}
+    DataSink() {}
+    virtual ~DataSink() {}
     virtual void Publish() {}
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDATASINK_H__
+#endif // __DT_DAQ_DATASINK_H__

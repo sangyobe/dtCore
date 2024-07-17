@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDAQMANAGERECAL_H__
-#define __DTCORE_DTDAQMANAGERECAL_H__
+#ifndef __DT_DAQ__DAQMANAGERECAL_H__
+#define __DT_DAQ__DAQMANAGERECAL_H__
 
 /** \defgroup dtDAQ
  *
@@ -14,12 +14,16 @@
 #include "../dtDAQManager.h"
 #include <ecal/ecal.h>
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-class dtDAQManagerEcal : public dtDAQManager {
+class DAQManagerEcal : public DAQManager
+{
 public:
-    dtDAQManagerEcal() {}
-    virtual ~dtDAQManagerEcal() {}
+    DAQManagerEcal() {}
+    virtual ~DAQManagerEcal() {}
 
     void Initialize() {
         eCAL::Initialize();
@@ -30,6 +34,7 @@ public:
     }
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDAQMANAGERECAL_H__
+#endif // __DT_DAQ__DAQMANAGERECAL_H__

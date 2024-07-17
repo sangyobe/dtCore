@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTSERVICELISTENERGRPC_H__
-#define __DTCORE_DTSERVICELISTENERGRPC_H__
+#ifndef __DT_DAQ_SERVICELISTENERGRPC_H__
+#define __DT_DAQ_SERVICELISTENERGRPC_H__
 
 /** \defgroup dtDAQ
  *
@@ -31,20 +31,22 @@
 
 #define USE_THREAD_PTHREAD
 
-namespace dtCore
+namespace dt
+{
+namespace DAQ
 {
 
 /*!
- * @brief dtServiceListenerGrpc class.
+ * @brief ServiceListenerGrpc class.
  * @details Is serves as the main interface for RPC server.
  * It owns and runs RPC event message dispatcher thread.
- * To initiate a new RPC server, use AddSession() method with proper subclass of dtServiceListenerGrpc::Session template parameter.
+ * To initiate a new RPC server, use AddSession() method with proper subclass of ServiceListenerGrpc::Session template parameter.
  */
-class dtServiceListenerGrpc
+class ServiceListenerGrpc
 {
 public:
-    dtServiceListenerGrpc(std::unique_ptr<grpc::Service> service,
-                          const std::string &server_address)
+    ServiceListenerGrpc(std::unique_ptr<grpc::Service> service,
+                        const std::string &server_address)
         : _service(std::move(service)), _server_address(server_address)
     {
         grpc::ServerBuilder builder;
@@ -56,7 +58,7 @@ public:
         Run();
     }
 
-    ~dtServiceListenerGrpc() { Stop(); }
+    ~ServiceListenerGrpc() { Stop(); }
 
 protected:
 public:
@@ -72,7 +74,7 @@ public:
         pthread_create(
             &_rpc_thread, NULL,
             [](void *arg) -> void * {
-                dtServiceListenerGrpc *client = (dtServiceListenerGrpc *)arg;
+                ServiceListenerGrpc *client = (ServiceListenerGrpc *)arg;
 
                 void *tag;
                 bool ok;
@@ -81,10 +83,10 @@ public:
                     // GPR_ASSERT(ok);
                     if (tag)
                     {
-                        if (!static_cast<dtServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
+                        if (!static_cast<ServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
                         {
-                            static_cast<dtServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
-                            client->RemoveSession(static_cast<dtServiceListenerGrpc::Session *>(tag)->GetId());
+                            static_cast<ServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
+                            client->RemoveSession(static_cast<ServiceListenerGrpc::Session *>(tag)->GetId());
                         }
                     }
                 }
@@ -100,10 +102,10 @@ public:
                 // GPR_ASSERT(ok);
                 if (tag)
                 {
-                    if (!static_cast<dtServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
+                    if (!static_cast<ServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
                     {
-                        static_cast<dtServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
-                        RemoveSession(static_cast<dtServiceListenerGrpc::Session *>(tag)->GetId());
+                        static_cast<ServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
+                        RemoveSession(static_cast<ServiceListenerGrpc::Session *>(tag)->GetId());
                     }
                 }
             }
@@ -161,7 +163,7 @@ public:
     class Session
     {
     public:
-        Session(dtServiceListenerGrpc *server, grpc::Service *service,
+        Session(ServiceListenerGrpc *server, grpc::Service *service,
                 grpc::ServerCompletionQueue *cq,
                 void * /*placeholder for user data*/)
             : _server(server), _service(service), _cq(cq),
@@ -197,7 +199,7 @@ public:
 
     protected:
         uint64_t _id;
-        dtServiceListenerGrpc *_server;
+        ServiceListenerGrpc *_server;
         grpc::Service *_service;
         grpc::ServerCompletionQueue *_cq;
         grpc::ServerContext _ctx;
@@ -242,11 +244,12 @@ protected:
 };
 /*! 
  * @example example_grpc_service_listener.cpp
- * This examples shows how to use dtServiceListenerGrpc and dtServiceListenerGrpc::Session 
+ * This examples shows how to use ServiceListenerGrpc and ServiceListenerGrpc::Session 
  * for handling remove RPC call at server side.
  * @see example_grpc_service_caller.cpp
  */
 
-} // namespace dtCore
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTSERVICELISTENERGRPC_H__
+#endif // __DT_DAQ_SERVICELISTENERGRPC_H__

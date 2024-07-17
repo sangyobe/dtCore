@@ -1,23 +1,24 @@
 #include "dtCore/src/dtDAQ/mcap/dtDataSinkPBMcap.hpp"
-#include "dtProto/robot_msgs/RobotState.pb.h"
-#include "dtProto/robot_msgs/ArbitraryState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
+#include "dtProto/robot_msgs/ArbitraryState.pb.h"
+#include "dtProto/robot_msgs/RobotState.pb.h"
 
 std::function<double(void)> data_gen = ([]() -> double { return (double)rand() / (double)RAND_MAX; });
 
 int main(int argc, char** argv) 
 {
-    dtCore::dtLog::Initialize("state_filesink_mcap", "logs/filesink_mcap.txt");
-    dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+    dt::Log::Initialize("state_filesink_mcap", "logs/filesink_mcap.txt");
+    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
     std::atomic<bool> bRun;
     bRun.store(true);
 
-    std::thread proc_pub_robot_state = std::thread([&bRun] () {
-        dtCore::dtDataSinkPBMcap<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "data/robot_state.mcap");
+    std::thread proc_pub_robot_state = std::thread([&bRun]() {
+        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "data/robot_state.mcap");
         dtproto::robot_msgs::RobotStateTimeStamped msg;
 
-        for (int ji = 0; ji < 3; ji++) {
+        for (int ji = 0; ji < 3; ji++)
+        {
             msg.mutable_state()->add_joint_state();
         }
 
@@ -34,7 +35,8 @@ int main(int argc, char** argv)
             msg.mutable_state()->mutable_base_pose()->mutable_orientation()->set_w(data_gen());
             msg.mutable_state()->mutable_base_velocity()->mutable_linear()->set_x(cos(2.0*3.14*0.5*ts) + 0.3 * data_gen());
             msg.mutable_state()->mutable_base_velocity()->mutable_angular()->set_x(data_gen());
-            for (int ji = 0; ji < 3; ji++) {
+            for (int ji = 0; ji < 3; ji++)
+            {
                 msg.mutable_state()->mutable_joint_state(ji)->set_position(data_gen());
                 msg.mutable_state()->mutable_joint_state(ji)->set_velocity(data_gen());
                 msg.mutable_state()->mutable_joint_state(ji)->set_acceleration(data_gen());
@@ -46,11 +48,12 @@ int main(int argc, char** argv)
         }
     });
 
-    std::thread proc_pub_arbitrary_state = std::thread([&bRun] () {
-        dtCore::dtDataSinkPBMcap<dtproto::robot_msgs::ArbitraryStateTimeStamped> pub("ArbitraryState", "data/arbitrary_state.mcap");
+    std::thread proc_pub_arbitrary_state = std::thread([&bRun]() {
+        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::ArbitraryStateTimeStamped> pub("ArbitraryState", "data/arbitrary_state.mcap");
         dtproto::robot_msgs::ArbitraryStateTimeStamped msg;
 
-        for (int ji = 0; ji < 2; ji++) {
+        for (int ji = 0; ji < 2; ji++)
+        {
             msg.mutable_state()->add_data(0.0);
         }
 
@@ -58,7 +61,8 @@ int main(int argc, char** argv)
         while (bRun.load())
         {
             msg.mutable_header()->set_seq(seq++);
-            for (int ji = 0; ji < 2; ji++) {
+            for (int ji = 0; ji < 2; ji++)
+            {
                 msg.mutable_state()->set_data(ji, data_gen());
             }
             pub.Publish(msg);
@@ -66,7 +70,6 @@ int main(int argc, char** argv)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     });
-
 
     while (bRun.load()) {
         std::cout << "(type \'q\' to quit) >\n";
@@ -79,7 +82,7 @@ int main(int argc, char** argv)
     
     proc_pub_robot_state.join();
     proc_pub_arbitrary_state.join();
-    dtCore::dtLog::Terminate();
+    dt::Log::Terminate();
 
     return 0;
 }

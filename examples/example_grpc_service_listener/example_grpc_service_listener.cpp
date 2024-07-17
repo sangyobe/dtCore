@@ -6,13 +6,14 @@
 //
 //     rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
 //
-class OnControlCmd : public dtCore::dtServiceListenerGrpc::Session 
+class OnControlCmd : public dt::DAQ::ServiceListenerGrpc::Session
 {
-    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
+    using CallState = typename dt::DAQ::ServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
-    OnControlCmd(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
-    : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
+    OnControlCmd(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
+        : dt::DAQ::ServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx)
+    {
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestCommand(&(_ctx), &_request, &_responder, _cq, _cq, this);
         LOG(info) << "Command[" << _id << "] Wait for new service call...";
@@ -82,13 +83,14 @@ private:
 //
 //     rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 //
-class OnQueryRobotInfo : public dtCore::dtServiceListenerGrpc::Session 
+class OnQueryRobotInfo : public dt::DAQ::ServiceListenerGrpc::Session
 {
-    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
+    using CallState = typename dt::DAQ::ServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
-    OnQueryRobotInfo(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
-    : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
+    OnQueryRobotInfo(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
+        : dt::DAQ::ServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx)
+    {
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType *>(_service))->RequestRequestRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
         LOG(info) << "RequestRobotInfo[" << _id << "] Waiting for new service call...";
@@ -163,11 +165,11 @@ private:
 //
 int main(int argc, char** argv) 
 {
-    dtCore::dtLog::Initialize("grpc_service_listener"); //, "logs/grpc_service_listener.txt");
-    dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+    dt::Log::Initialize("grpc_service_listener"); //, "logs/grpc_service_listener.txt");
+    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
-    dtCore::dtServiceListenerGrpc listener(
-        std::make_unique<dtproto::dtService::AsyncService>(), 
+    dt::DAQ::ServiceListenerGrpc listener(
+        std::make_unique<dtproto::dtService::AsyncService>(),
         "0.0.0.0:50052");
 
     listener.template AddSession<OnControlCmd>(nullptr);
@@ -184,6 +186,6 @@ int main(int argc, char** argv)
     }
     listener.Stop();
 
-    dtCore::dtLog::Terminate(); // flush all log messages
+    dt::Log::Terminate(); // flush all log messages
     return 0;
 }

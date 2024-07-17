@@ -1,11 +1,7 @@
 # dtCore
-**dtCore is a ART Foundation C++ (template) library. It includes basic data structures, network messaging framework, trajectory interpolator, file parsers, data logger, etc. ART stands for Articulated Robotics Team**
+**dtCore is a ART Foundation C++ (template) library. It includes basic data structures, network messaging framework, file parsers, data logger, etc. ART stands for Articulated Robotics Team**
 
 ## Description
-
-### dtTrajectory
-* dtPolynomialTrajectory, dtBezierTrajectory, dtScurveTrajectory 및 dtTrajectoryList 는 별도의 빌드 과정이 필요없이 사용할 수 있습니다. 단, 시스템 폴더에 설치(헤더 파일 복사)하기 위해 다음 스크립트를 실행하세요.
-* [TODO] 개발 버전에서는 dtHtransformTrajectory, dtOrientationTrajectory, dtVectorPolynomialTrajectory 테스트를 위해 dtMath가 Eigen3를 사용하고 있습니다. 따라서 빌드 및 사용자 코드에서 헤더를 포함하여 개발하기 위해서는 Eigen3가 시스템에 설치되어 있어야 하며, 시스템 환경 변수에 $EIGEN_ROOT를 Eigen3 설치 디렉토리로 설정합니다. 예를 들어 Eigen3 Dense 헤더파일이 /usr/local/eigen-3.4.0/Eigen/Dense 과 같이 설치된 경우 $EIGEN_ROOT 를 /usr/local/eigen-3.4.0 로 설정합니다. 
 
 ### dtProto
 * Protocol Buffer 기반으로 C++ 메시지 정의 및 serialization을 지원합니다. 
@@ -28,9 +24,6 @@
 * [TODO] Local file로 데이터 저장하는 기능을 구현 계획 중입니다.
 * [TODO] HDF5 등 공용 파일 포맷 지원을 계획 중입니다.
 
-### dtMath
-* [TODO]
-
 ## Build & Installation
 
 ### Dependancies
@@ -46,6 +39,14 @@
 * 개발시 Protocol buffer 3.21.12 버전에서 개발 및 테스트되었습니다.
 * gRPC sub-module 빌드/설치시 함께 설치되므로, 따로 설치할 필요 없습니다.
 
+#### spdlog
+* dt::Log 모듈이 프로그램 실행 중 발생하는 로그를 파일 혹은 터미널에 출력하기 위해 사용합니다.
+
+#### yaml-cpp
+* dt::Utils::Conf 클래스가 yaml 파일 파싱을 위해 사용합니다. yaml에는 프로그램 실행에 필요한 파라미터 등 프로그램 설정이 저장되며, 프로그램은 Conf 클래스를 이용하여 프로그램 시작시 파라미터를 읽어 적용합니다.
+
+#### mcap
+* 메시지를 mcap파일에 저장하거나, 저장된 mcap 파일을 읽기 위해 사용합니다.
 
 ### dtCore & dtProto
 * cmake 빌드 시스템을 이용하여 빌드합니다.
@@ -65,7 +66,6 @@
 | BUILD_EXAMPLES_gRPC | Build gRPC examples or not                        | OFF |
 | BUILD_dtProto      | dtProto 헤더 및 라이브러리(libdtproto.a) 빌드           | OFF  |
 | BUILD_dtProto_gRPC | dtProto gRPC 헤더 및 라이브러리(libdtproto_grpc.a) 빌드 | OFF |
-| dtCore_USE_EIGEN3  | Use Eigen3 as the default math library             | OFF |
 | GIT_SUBMODULE     | Get and build git submodules(spdlog and yaml-cpp)           | ON |
 
 

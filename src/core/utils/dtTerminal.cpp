@@ -22,6 +22,11 @@
 
 #include "dtCore/src/dtUtils/dtTerminal.h"
 
+namespace dt
+{
+namespace Utils
+{
+
 #ifdef _WIN32
 // Some old MinGW/CYGWIN distributions don't define this:
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
@@ -32,7 +37,7 @@ static HANDLE stdoutHandle, stdinHandle;
 static DWORD oriOutMode, oriInMode;
 static CONSOLE_CURSOR_INFO oriCurInfo;
 
-void dtTerm::SetupTerminal(bool showCursor)
+void Term::SetupTerminal(bool showCursor)
 {
     DWORD outMode = 0, inMode = 0;
     CONSOLE_CURSOR_INFO curInfo;
@@ -86,7 +91,7 @@ void dhTerm::RestoreTerminal(void)
 static struct termios oriTerm;
 static struct termios newTerm;
 
-void dtTerm::SetupTerminal(bool showCursor)
+void Term::SetupTerminal(bool showCursor)
 {
     tcgetattr(STDIN_FILENO, &oriTerm);
     newTerm = oriTerm;
@@ -96,7 +101,7 @@ void dtTerm::SetupTerminal(bool showCursor)
     res = showCursor ? system("setterm -cursor on") : system("setterm -cursor off");
 }
 
-void dtTerm::RestoreTerminal(void)
+void Term::RestoreTerminal(void)
 {
     // Reset colors
     printf("\x1b[0m");
@@ -108,7 +113,7 @@ void dtTerm::RestoreTerminal(void)
     res = system("setterm -cursor on");
 }
 
-int dtTerm::kbhit(void)
+int Term::kbhit(void)
 {
     int ch;
     int oldFd;
@@ -129,7 +134,7 @@ int dtTerm::kbhit(void)
 
 #endif
 
-void dtTerm::GetCurPos(int *row, int *col)
+void Term::GetCurPos(int *row, int *col)
 {
     char buff[128];
     int indx = 0;
@@ -151,3 +156,6 @@ void dtTerm::GetCurPos(int *row, int *col)
     sscanf(buff, "\x1b[%d;%dR", row, col);
     fseek(stdin, 0, SEEK_END);
 }
+
+} // namespace Utils
+} // namespace dt

@@ -1,6 +1,10 @@
+namespace dt
+{
+namespace Utils
+{
 
-template<typename m_type>
-inline dtGnuPlot<m_type>::dtGnuPlot(bool persist)
+template <typename m_type>
+inline GnuPlot<m_type>::GnuPlot(bool persist)
 {
     m_pipe = GNUPLOT_POPEN(persist ? "gnuplot -persist -slow" : "gnuplot -slow", "w");
 
@@ -14,8 +18,8 @@ inline dtGnuPlot<m_type>::dtGnuPlot(bool persist)
     }
 }
 
-template<typename m_type>
-inline dtGnuPlot<m_type>::dtGnuPlot(const char * gnuplotName)
+template <typename m_type>
+inline GnuPlot<m_type>::GnuPlot(const char *gnuplotName)
 {
     m_pipe = GNUPLOT_POPEN(gnuplotName, "w");
 
@@ -29,14 +33,14 @@ inline dtGnuPlot<m_type>::dtGnuPlot(const char * gnuplotName)
     }
 }
 
-template<typename m_type>
-inline dtGnuPlot<m_type>::~dtGnuPlot()
+template <typename m_type>
+inline GnuPlot<m_type>::~GnuPlot()
 {
     if (m_pipe) GNUPLOT_PCLOSE(m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Cmd(const char * format, ...)
+template <typename m_type>
+inline void GnuPlot<m_type>::Cmd(const char *format, ...)
 {
     if (!m_pipe) return;
 
@@ -52,15 +56,15 @@ inline void dtGnuPlot<m_type>::Cmd(const char * format, ...)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetData(const char * filePath)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetData(const char *filePath)
 {
     memcpy(m_filePath, filePath, sizeof(m_filePath));
 }
 
-template<typename m_type>
-template<uint16_t row, uint16_t col>
-inline int8_t dtGnuPlot<m_type>::SetData(const dtMath::dtMatrix<row, col, m_type>& mat)
+template <typename m_type>
+template <uint16_t row, uint16_t col>
+inline int8_t GnuPlot<m_type>::SetData(const m_type *mat)
 {
     // file name
     FILE *fp;
@@ -80,7 +84,7 @@ inline int8_t dtGnuPlot<m_type>::SetData(const dtMath::dtMatrix<row, col, m_type
         {
             for (int j = 0; j < col; j++)
             {
-                fprintf(fp, "%f\t", mat(i, j));
+                fprintf(fp, "%f\t", mat[i * col + j]);
             }
             fprintf(fp, "\n");
         }
@@ -91,15 +95,15 @@ inline int8_t dtGnuPlot<m_type>::SetData(const dtMath::dtMatrix<row, col, m_type
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetGrid(bool on)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetGrid(bool on)
 {
     if (on) fputs("set grid x y z vertical\n", m_pipe);
     else fputs("unset grid\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetTitle(const char * name, const int size, const char * font)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetTitle(const char *name, const int size, const char *font)
 {
     char strCmd[1024];
 
@@ -116,8 +120,8 @@ inline void dtGnuPlot<m_type>::SetTitle(const char * name, const int size, const
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetXlabel(const char * name, const int size, const char * font)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetXlabel(const char *name, const int size, const char *font)
 {
     char strCmd[1024];
 
@@ -134,8 +138,8 @@ inline void dtGnuPlot<m_type>::SetXlabel(const char * name, const int size, cons
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetYlabel(const char * name, const int size, const char * font)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetYlabel(const char *name, const int size, const char *font)
 {
     char strCmd[1024];
 
@@ -152,8 +156,8 @@ inline void dtGnuPlot<m_type>::SetYlabel(const char * name, const int size, cons
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetZlabel(const char * name, const int size, const char * font)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetZlabel(const char *name, const int size, const char *font)
 {
     char strCmd[1024];
 
@@ -170,8 +174,8 @@ inline void dtGnuPlot<m_type>::SetZlabel(const char * name, const int size, cons
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetXtics(const int majorTic, const int minorTic)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetXtics(const int majorTic, const int minorTic)
 {
     char strCmd[64];
 
@@ -192,8 +196,8 @@ inline void dtGnuPlot<m_type>::SetXtics(const int majorTic, const int minorTic)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetYtics(const int majorTic, const int minorTic)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetYtics(const int majorTic, const int minorTic)
 {
     char strCmd[64];
 
@@ -214,8 +218,8 @@ inline void dtGnuPlot<m_type>::SetYtics(const int majorTic, const int minorTic)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetZtics(const int majorTic, const int minorTic)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetZtics(const int majorTic, const int minorTic)
 {
     char strCmd[64];
 
@@ -236,8 +240,8 @@ inline void dtGnuPlot<m_type>::SetZtics(const int majorTic, const int minorTic)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetXrange(const m_type min, const m_type max)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetXrange(const m_type min, const m_type max)
 {
     char strCmd[64];
     snprintf(strCmd, sizeof(strCmd), "set xrange [%f:%f]", min, max);
@@ -245,8 +249,8 @@ inline void dtGnuPlot<m_type>::SetXrange(const m_type min, const m_type max)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetYrange(const m_type min, const m_type max)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetYrange(const m_type min, const m_type max)
 {
     char strCmd[64];
     snprintf(strCmd, sizeof(strCmd), "set yrange [%f:%f]", min, max);
@@ -254,8 +258,8 @@ inline void dtGnuPlot<m_type>::SetYrange(const m_type min, const m_type max)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetZrange(const m_type min, const m_type max)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetZrange(const m_type min, const m_type max)
 {
     char strCmd[64];
     snprintf(strCmd, sizeof(strCmd), "set zrange [%f:%f]", min, max);
@@ -263,8 +267,8 @@ inline void dtGnuPlot<m_type>::SetZrange(const m_type min, const m_type max)
     fputs("\n", m_pipe);
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::SetMultiPlot(const int row, const int col, const char * title, const int fontSz, const char * font)
+template <typename m_type>
+inline void GnuPlot<m_type>::SetMultiPlot(const int row, const int col, const char *title, const int fontSz, const char *font)
 {
     char strCmd[1024];
     int strCmdPos = 0;
@@ -282,8 +286,8 @@ inline void dtGnuPlot<m_type>::SetMultiPlot(const int row, const int col, const 
     //m_multiPlot = true;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Point(const char * filePath, const int idxX, const int idxY, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline void GnuPlot<m_type>::Point(const char *filePath, const int idxX, const int idxY, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (!m_firstPlot)
     {
@@ -303,8 +307,8 @@ inline void dtGnuPlot<m_type>::Point(const char * filePath, const int idxX, cons
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Point(const m_type * x, const m_type * y, const int dataLen, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Point(const m_type *x, const m_type *y, const int dataLen, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -324,8 +328,8 @@ inline int8_t dtGnuPlot<m_type>::Point(const m_type * x, const m_type * y, const
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Point(const int idxX, const int idxY, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Point(const int idxX, const int idxY, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -334,8 +338,8 @@ inline int8_t dtGnuPlot<m_type>::Point(const int idxX, const int idxY, const cha
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Line(const char * filePath, const int idxX, const int idxY, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline void GnuPlot<m_type>::Line(const char *filePath, const int idxX, const int idxY, const char *title, const char *colorName, const int lineWidth)
 {
     if (!m_firstPlot)
     {
@@ -353,8 +357,8 @@ inline void dtGnuPlot<m_type>::Line(const char * filePath, const int idxX, const
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Line(const m_type * x, const m_type * y, const int dataLen, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Line(const m_type *x, const m_type *y, const int dataLen, const char *title, const char *colorName, const int lineWidth)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -374,8 +378,8 @@ inline int8_t dtGnuPlot<m_type>::Line(const m_type * x, const m_type * y, const 
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Line(const int idxX, const int idxY, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Line(const int idxX, const int idxY, const char *title, const char *colorName, const int lineWidth)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -384,8 +388,8 @@ inline int8_t dtGnuPlot<m_type>::Line(const int idxX, const int idxY, const char
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::LinePoint(const char * filePath, const int idxX, const int idxY, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline void GnuPlot<m_type>::LinePoint(const char *filePath, const int idxX, const int idxY, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (!m_firstPlot)
     {
@@ -407,8 +411,8 @@ inline void dtGnuPlot<m_type>::LinePoint(const char * filePath, const int idxX, 
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::LinePoint(const m_type * x, const m_type * y, const int dataLen, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::LinePoint(const m_type *x, const m_type *y, const int dataLen, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -428,8 +432,8 @@ inline int8_t dtGnuPlot<m_type>::LinePoint(const m_type * x, const m_type * y, c
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -438,8 +442,8 @@ inline int8_t dtGnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Dash(const char * filePath, const int idxX, const int idxY, const char * title, const char * pattern, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline void GnuPlot<m_type>::Dash(const char *filePath, const int idxX, const int idxY, const char *title, const char *pattern, const char *colorName, const int lineWidth)
 {
     if (!m_firstPlot)
     {
@@ -458,8 +462,8 @@ inline void dtGnuPlot<m_type>::Dash(const char * filePath, const int idxX, const
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Dash(const m_type * x, const m_type * y, const int dataLen, const char * title, const char * pattern, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Dash(const m_type *x, const m_type *y, const int dataLen, const char *title, const char *pattern, const char *colorName, const int lineWidth)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -479,8 +483,8 @@ inline int8_t dtGnuPlot<m_type>::Dash(const m_type * x, const m_type * y, const 
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Dash(const int idxX, const int idxY, const char * title, const char * pattern, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Dash(const int idxX, const int idxY, const char *title, const char *pattern, const char *colorName, const int lineWidth)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -489,8 +493,8 @@ inline int8_t dtGnuPlot<m_type>::Dash(const int idxX, const int idxY, const char
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Point(const char * filePath, const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline void GnuPlot<m_type>::Point(const char *filePath, const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (!m_firstPlot)
     {
@@ -510,8 +514,8 @@ inline void dtGnuPlot<m_type>::Point(const char * filePath, const int idxX, cons
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Point(const m_type * x, const m_type * y, const m_type * z, const int dataLen, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Point(const m_type *x, const m_type *y, const m_type *z, const int dataLen, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -524,8 +528,8 @@ inline int8_t dtGnuPlot<m_type>::Point(const m_type * x, const m_type * y, const
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Point(const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const char pointType, const int pointSz)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Point(const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const char pointType, const int pointSz)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -534,8 +538,8 @@ inline int8_t dtGnuPlot<m_type>::Point(const int idxX, const int idxY, const int
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Line(const char * filePath, const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline void GnuPlot<m_type>::Line(const char *filePath, const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth)
 {
     if (!m_firstPlot)
     {
@@ -553,8 +557,8 @@ inline void dtGnuPlot<m_type>::Line(const char * filePath, const int idxX, const
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Line(const m_type * x, const m_type * y, const m_type * z, const int dataLen, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Line(const m_type *x, const m_type *y, const m_type *z, const int dataLen, const char *title, const char *colorName, const int lineWidth)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -567,8 +571,8 @@ inline int8_t dtGnuPlot<m_type>::Line(const m_type * x, const m_type * y, const 
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Line(const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Line(const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -577,8 +581,8 @@ inline int8_t dtGnuPlot<m_type>::Line(const int idxX, const int idxY, const int 
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::LinePoint(const char * filePath, const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline void GnuPlot<m_type>::LinePoint(const char *filePath, const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (!m_firstPlot)
     {
@@ -600,8 +604,8 @@ inline void dtGnuPlot<m_type>::LinePoint(const char * filePath, const int idxX, 
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::LinePoint(const m_type * x, const m_type * y, const m_type * z, const int dataLen, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::LinePoint(const m_type *x, const m_type *y, const m_type *z, const int dataLen, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -614,8 +618,8 @@ inline int8_t dtGnuPlot<m_type>::LinePoint(const m_type * x, const m_type * y, c
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth, const char pointType, const int pointSz, const int pointInterval)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -624,8 +628,8 @@ inline int8_t dtGnuPlot<m_type>::LinePoint(const int idxX, const int idxY, const
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Dash(const char * filePath, const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth, const char * pattern)
+template <typename m_type>
+inline void GnuPlot<m_type>::Dash(const char *filePath, const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth, const char *pattern)
 {
     if (!m_firstPlot)
     {
@@ -644,8 +648,8 @@ inline void dtGnuPlot<m_type>::Dash(const char * filePath, const int idxX, const
     if (title != nullptr) m_strCmdPos += snprintf(m_strCmd + m_strCmdPos, 4096 - m_strCmdPos, " title \"%s\"", title);
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Dash(const m_type * x, const m_type * y, const m_type * z, const int dataLen, const char * title, const char * colorName, const int lineWidth, const char * pattern)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Dash(const m_type *x, const m_type *y, const m_type *z, const int dataLen, const char *title, const char *colorName, const int lineWidth, const char *pattern)
 {
     if (m_dataNum >= 63) return -1;
 
@@ -658,8 +662,8 @@ inline int8_t dtGnuPlot<m_type>::Dash(const m_type * x, const m_type * y, const 
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::Dash(const int idxX, const int idxY, const int idxZ, const char * title, const char * colorName, const int lineWidth, const char * pattern)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::Dash(const int idxX, const int idxY, const int idxZ, const char *title, const char *colorName, const int lineWidth, const char *pattern)
 {
     if (m_filePath[63][0] == 0) return -1;
 
@@ -668,8 +672,8 @@ inline int8_t dtGnuPlot<m_type>::Dash(const int idxX, const int idxY, const int 
     return 0;
 }
 
-template<typename m_type>
-inline void dtGnuPlot<m_type>::Draw()
+template <typename m_type>
+inline void GnuPlot<m_type>::Draw()
 {
     fputs("clear\n", m_pipe);
 
@@ -680,8 +684,8 @@ inline void dtGnuPlot<m_type>::Draw()
     }
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * y, const int dataLen)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::MakeDataFile(const m_type *y, const int dataLen)
 {
     FILE *fp;
 
@@ -707,8 +711,8 @@ inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * y, const int dataLe
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * x, const m_type * y, const int dataLen)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::MakeDataFile(const m_type *x, const m_type *y, const int dataLen)
 {
     FILE *fp;
 
@@ -734,8 +738,8 @@ inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * x, const m_type * y
     return 0;
 }
 
-template<typename m_type>
-inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * x, const m_type * y, const m_type * z, const int dataLen)
+template <typename m_type>
+inline int8_t GnuPlot<m_type>::MakeDataFile(const m_type *x, const m_type *y, const m_type *z, const int dataLen)
 {
     FILE *fp;
 
@@ -761,3 +765,5 @@ inline int8_t dtGnuPlot<m_type>::MakeDataFile(const m_type * x, const m_type * y
     return 0;
 }
 
+} // namespace Utils
+} // namespace dt

@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDATASINKPBGRPC_H__
-#define __DTCORE_DTDATASINKPBGRPC_H__
+#ifndef __DT_DAQ_DATASINKPBGRPC_H__
+#define __DT_DAQ_DATASINKPBGRPC_H__
 
 /** \defgroup dtDAQ
  *
@@ -13,21 +13,25 @@
 
 #include "../dtDataSinkPB.hpp"
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-template<typename T>
-class dtDataSinkPBGrpc : public dtDataSinkPB<T> {
+template <typename T>
+class DataSinkPBGrpc : public DataSinkPB<T>
+{
 public:
-    dtDataSinkPBGrpc(const std::string& topic_name) : _pub(topic_name) {}
+    DataSinkPBGrpc(const std::string &topic_name) : _pub(topic_name) {}
     void Publish(T& msg) {
-        std::cout << "dtDataSinkPBGrpc::Publish(T&)" << std::endl;
+        std::cout << "DataSinkPBGrpc::Publish(T&)" << std::endl;
     }
 
 protected:
     std::string _pub;
-
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDATASINKPBGRPC_H__
+#endif // __DT_DAQ_DATASINKPBGRPC_H__

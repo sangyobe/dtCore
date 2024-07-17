@@ -8,23 +8,25 @@ using ServiceType = dtproto::dtService;
 //
 //     rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 //
-class OnQueryRobotInfo : public dtCore::dtServiceCallerGrpc<ServiceType>::Call {
-  using CallState =
-      typename dtCore::dtServiceCallerGrpc<ServiceType>::Call::CallState;
+class OnQueryRobotInfo : public dt::DAQ::ServiceCallerGrpc<ServiceType>::Call
+{
+    using CallState =
+        typename dt::DAQ::ServiceCallerGrpc<ServiceType>::Call::CallState;
 
 public:
-  OnQueryRobotInfo(ServiceType::Stub *stub, grpc::CompletionQueue *cq,
-                   void *udata = nullptr)
-      : dtCore::dtServiceCallerGrpc<ServiceType>::Call(stub, cq, udata) {
-      LOG(info) << "RequestRobotInfo[" << this->_id << "] NEW call.";
-      _call_id = *(int *)(udata);
-      _responder =
-          stub->PrepareAsyncRequestRobotInfo(&(this->_ctx), _request, this->_cq);
-      _responder->StartCall();
-      _responder->Finish(&_response, &(this->_status), (void *)this);
-      this->_call_state = CallState::WAIT_FINISH;
-      LOG(info) << "RequestRobotInfo[" << this->_id << "] Wait for response...";
-  }
+    OnQueryRobotInfo(ServiceType::Stub *stub, grpc::CompletionQueue *cq,
+                     void *udata = nullptr)
+        : dt::DAQ::ServiceCallerGrpc<ServiceType>::Call(stub, cq, udata)
+    {
+        LOG(info) << "RequestRobotInfo[" << this->_id << "] NEW call.";
+        _call_id = *(int *)(udata);
+        _responder =
+            stub->PrepareAsyncRequestRobotInfo(&(this->_ctx), _request, this->_cq);
+        _responder->StartCall();
+        _responder->Finish(&_response, &(this->_status), (void *)this);
+        this->_call_state = CallState::WAIT_FINISH;
+        LOG(info) << "RequestRobotInfo[" << this->_id << "] Wait for response...";
+    }
 
   ~OnQueryRobotInfo() {
     // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log
@@ -64,26 +66,28 @@ private:
   int _call_id{-1};
 };
 
-class RpcClient : public dtCore::dtServiceCallerGrpc<ServiceType> {
+class RpcClient : public dt::DAQ::ServiceCallerGrpc<ServiceType>
+{
 public:
-  RpcClient(const std::string &server_address)
-      : dtCore::dtServiceCallerGrpc<ServiceType>(server_address) {}
+    RpcClient(const std::string &server_address)
+        : dt::DAQ::ServiceCallerGrpc<ServiceType>(server_address) {}
 };
 
 /////////////////////////////////////////////////////////////////////////
 // main
 //
 int main(int argc, char **argv) {
-  dtCore::dtLog::Initialize("grpc_service_caller"); //, "logs/grpc_service_caller.txt");
-  dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+    dt::Log::Initialize("grpc_service_caller"); //, "logs/grpc_service_caller.txt");
+    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
-  // initialize RPC client
-  std::unique_ptr<RpcClient> rpcClient =
-      std::make_unique<RpcClient>("localhost:50052");
+    // initialize RPC client
+    std::unique_ptr<RpcClient> rpcClient =
+        std::make_unique<RpcClient>("localhost:50052");
 
-  for (int cid = 0; cid < 5; cid++) {
-    rpcClient->template StartCall<OnQueryRobotInfo>(&cid);
-  }
+    for (int cid = 0; cid < 5; cid++)
+    {
+        rpcClient->template StartCall<OnQueryRobotInfo>(&cid);
+    }
 
   std::atomic<bool> bRun{true};
   while (bRun.load()) {
@@ -96,6 +100,6 @@ int main(int argc, char **argv) {
   }
   rpcClient->Stop();
 
-  dtCore::dtLog::Terminate(); // flush all log messages
+  dt::Log::Terminate(); // flush all log messages
   return 0;
 }

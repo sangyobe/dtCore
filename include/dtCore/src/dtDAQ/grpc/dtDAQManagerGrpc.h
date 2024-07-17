@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDAQMANAGERGRPC_H__
-#define __DTCORE_DTDAQMANAGERGRPC_H__
+#ifndef __DT_DAQ_DAQMANAGERGRPC_H__
+#define __DT_DAQ_DAQMANAGERGRPC_H__
 
 /** \defgroup dtDAQ
  *
@@ -21,12 +21,16 @@
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-class dtDAQManagerGrpc : public dtDAQManager {
+class DAQManagerGrpc : public DAQManager
+{
 public:
-    dtDAQManagerGrpc() {}
-    virtual ~dtDAQManagerGrpc() {}
+    DAQManagerGrpc() {}
+    virtual ~DAQManagerGrpc() {}
 
     void Initialize() {
         grpc::EnableDefaultHealthCheckService(true);
@@ -37,6 +41,7 @@ public:
 private:
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDAQMANAGERECAL_H__
+#endif // __DT_DAQ_DAQMANAGERECAL_H__

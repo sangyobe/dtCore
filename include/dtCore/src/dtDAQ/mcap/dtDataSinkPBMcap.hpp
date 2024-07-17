@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDATASINKPBMCAP_H__
-#define __DTCORE_DTDATASINKPBMCAP_H__
+#ifndef __DT_DAQ_DATASINKPBMCAP_H__
+#define __DT_DAQ_DATASINKPBMCAP_H__
 
 #include <dtCore/src/dtDAQ/dtDataSinkPB.hpp>
 #include <dtCore/src/dtUtils/dtFileHelper.hpp>
@@ -24,21 +24,26 @@
 #define MCAP_IMPLEMENTATION
 #include <mcap/mcap.hpp>
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-template<typename T>
-class dtDataSinkPBMcap : public dtDataSinkPB<T> {
+template <typename T>
+class DataSinkPBMcap : public DataSinkPB<T>
+{
 public:
-    dtDataSinkPBMcap(const std::string& topic_name, const std::string& file_basename = "", bool annot_datetime = true) 
-    : _topic_name(topic_name)
+    DataSinkPBMcap(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true)
+        : _topic_name(topic_name)
     {
         std::string filename = file_basename;
         if (annot_datetime)
-            filename = annotate_filename_datetime(file_basename);
+            filename = dt::Utils::annotate_filename_datetime(file_basename);
 
         std::string dirname;
-        std::tie(dirname, std::ignore) = split_by_directory(filename);
-        if (!create_dir(dirname)) {
+        std::tie(dirname, std::ignore) = dt::Utils::split_by_directory(filename);
+        if (!dt::Utils::create_dir(dirname))
+        {
             std::cerr << "Failed to create containing directory (" << dirname << ")." << std::endl;
         }
 
@@ -111,6 +116,7 @@ protected:
     uint32_t _msg_count{0};
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDATASINKPBMCAP_H__
+#endif // __DT_DAQ_DATASINKPBMCAP_H__

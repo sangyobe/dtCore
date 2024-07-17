@@ -8,8 +8,8 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 
-#ifndef SYSTEM_UTILS_DTDIR_H_
-#define SYSTEM_UTILS_DTDIR_H_
+#ifndef __DT_UTILS_DIR_H__
+#define __DT_UTILS_DIR_H__
 
 //* C/C++ System Headers -----------------------------------------------------*/
 #include <string>
@@ -18,10 +18,11 @@
 //* Project Headers ----------------------------------------------------------*/
 //* System-Specific Headers --------------------------------------------------*/
 
-//* Public(Exported) Macro ---------------------------------------------------*/
-//* Public(Exported) Types ---------------------------------------------------*/
-//* Public(Exported) Variables -----------------------------------------------*/
-//* Public(Exported) Functions -----------------------------------------------*/
+namespace dt
+{
+namespace Utils
+{
+
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir();
 // returns the directory where tasks are stored
@@ -32,4 +33,8 @@ std::string GetModelPath(std::string path);
 std::string GetFileExtension(const std::string &filePath);
 // returns the current user's home directory
 std::string GetUserHomeDir();
-#endif // SYSTEM_UTILS_DTDIR_H_
+
+} // namespace Utils
+} // namespace dt
+
+#endif // __DT_UTILS_DIR_H__

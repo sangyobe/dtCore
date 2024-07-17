@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTSERVICECALLERGRPC_H__
-#define __DTCORE_DTSERVICECALLERGRPC_H__
+#ifndef __DT_DAQ_SERVICECALLERGRPC_H__
+#define __DT_DAQ_SERVICECALLERGRPC_H__
 
 /** \defgroup dtDAQ
  *
@@ -22,26 +22,28 @@
 
 #define USE_THREAD_PTHREAD
 
-namespace dtCore
+namespace dt
+{
+namespace DAQ
 {
 
 /*!
- * @brief dtServiceCallerGrpc class.
+ * @brief ServiceCallerGrpc class.
  * @details Is serves as the main interface for RPC service calls.
  * It owns and runs RPC event message dispatcher thread.
- * To initiate a new RPC call, call StartCall() method with proper subclass of dtServiceCallerGrpc::Call template parameter.
+ * To initiate a new RPC call, call StartCall() method with proper subclass of ServiceCallerGrpc::Call template parameter.
  */
-template <typename ServiceType> class dtServiceCallerGrpc
+template <typename ServiceType> class ServiceCallerGrpc
 {
 public:
-    dtServiceCallerGrpc(const std::string &server_address)
+    ServiceCallerGrpc(const std::string &server_address)
         : _stub(ServiceType::NewStub(grpc::CreateChannel(
               server_address, grpc::InsecureChannelCredentials())))
     {
         Run();
     }
 
-    ~dtServiceCallerGrpc() { Stop(); }
+    ~ServiceCallerGrpc() { Stop(); }
 
 public:
     /*!
@@ -60,8 +62,8 @@ public:
         pthread_create(
             &_rpc_thread, NULL,
             [](void *arg) -> void * {
-                dtServiceCallerGrpc<ServiceType> *client =
-                    (dtServiceCallerGrpc<ServiceType> *)arg;
+                ServiceCallerGrpc<ServiceType> *client =
+                    (ServiceCallerGrpc<ServiceType> *)arg;
 
                 void *tag;
                 bool ok;
@@ -70,10 +72,10 @@ public:
                     // GPR_ASSERT(ok);
                     if (tag)
                     {
-                        if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok))
+                        if (!static_cast<ServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok))
                         {
-                            // static_cast<dtServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
-                            client->RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
+                            // static_cast<ServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
+                            client->RemoveCall(static_cast<ServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
                         }
                     }
                 }
@@ -89,10 +91,10 @@ public:
                 // GPR_ASSERT(ok);
                 if (tag)
                 {
-                    if (!static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok))
+                    if (!static_cast<ServiceCallerGrpc<ServiceType>::Call *>(tag)->OnCompletionEvent(ok))
                     {
-                        // static_cast<dtServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
-                        RemoveCall(static_cast<dtServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
+                        // static_cast<ServiceCallerGrpc<ServiceType>::Call*>(tag)->TryCancelCallAndShutdown();
+                        RemoveCall(static_cast<ServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
                     }
                 }
             });
@@ -208,8 +210,8 @@ public:
 public:
     /*!
      * Initiate a new RPC call.
-     * The template parameter 'CallType' should be one of subclasses of dtCore::dtServiceCallerGrpc::Call.
-     * User should subclass dtCore::dtServiceCallerGrpc::Call and implement their own completion event message handler.
+     * The template parameter 'CallType' should be one of subclasses of dt::DAQ::ServiceCallerGrpc::Call.
+     * User should subclass dt::DAQ::ServiceCallerGrpc::Call and implement their own completion event message handler.
      * @param[in] udata udata is passed as the sole argument of CallType constructor.
      */
     template <typename CallType> uint64_t StartCall(void *udata = nullptr)
@@ -261,11 +263,12 @@ protected:
 };
 /*! 
  * @example example_grpc_service_caller.cpp
- * This examples shows how to use dtServiceCallerGrpc and dtServiceCallerGrpc::Call 
+ * This examples shows how to use ServiceCallerGrpc and ServiceCallerGrpc::Call 
  * for calling RPC at client side.
  * @see example_grpc_service_listener.cpp
  */
 
-} // namespace dtCore
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTSERVICECALLERGRPC_H__
+#endif // __DT_DAQ_SERVICECALLERGRPC_H__

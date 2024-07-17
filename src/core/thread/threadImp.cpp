@@ -23,6 +23,8 @@ extern "C"
 }
 namespace dt
 {
+namespace Thread
+{
 //* Public(Exported) Variables -----------------------------------------------*/
 //* Private Macro ------------------------------------------------------------*/
 //* Private Types ------------------------------------------------------------*/
@@ -411,4 +413,6 @@ error:
     dtTerm::PrintEndLine();
     return -1;
 }
+
+} // namespace Thread
 } // namespace dt

@@ -9,8 +9,8 @@
 \warning    Do Not delete this comment for document history! This is minimal manners!
 */
 
-#ifndef REALROBOT_UTILS_DTTIMECHECK_H
-#define REALROBOT_UTILS_DTTIMECHECK_H
+#ifndef __DT_UTILS_TIMECHECK_H__
+#define __DT_UTILS_TIMECHECK_H__
 
 #if defined(_WIN32)
 #if defined(_WIN64)
@@ -27,12 +27,17 @@
 #include <Arduino.h>
 #endif
 
+namespace dt
+{
+namespace Utils
+{
+
 #if defined(_WIN32)
-class dtTimeCheck
+class TimeCheck
 {
 public:
-    dtTimeCheck();
-    ~dtTimeCheck();
+    TimeCheck();
+    ~TimeCheck();
 
     /*! Start Time Check */
     void Start(void);
@@ -58,11 +63,11 @@ private:
 };
 
 #elif defined(__linux__)
-class dtTimeCheck
+class TimeCheck
 {
 public:
-    dtTimeCheck();
-    ~dtTimeCheck();
+    TimeCheck();
+    ~TimeCheck();
 
     /*! Start Time Check */
     void Start(void);
@@ -86,11 +91,11 @@ private:
 };
 
 #elif defined(ARDUINO)
-class dtTimeCheck
+class TimeCheck
 {
 public:
-    dtTimeCheck();
-    ~dtTimeCheck();
+    TimeCheck();
+    ~TimeCheck();
 
     /*! Start Time Check */
     void Start(void);
@@ -114,4 +119,7 @@ private:
 };
 #endif
 
-#endif /* DH_TIME_CHECK_H */
+} // namespace Utils
+} // namespace dt
+
+#endif // __DT_UTILS_TIMECHECK_H__
