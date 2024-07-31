@@ -7,6 +7,9 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/

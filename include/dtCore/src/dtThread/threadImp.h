@@ -12,13 +12,23 @@
 #define __DT_THREAD_THREADIMP_H__
 
 //* C/C++ System Headers -----------------------------------------------------*/
+extern "C"
+{
 #include <unistd.h>
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+#include <pthread.h>
+#elif defined(__APPLE__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/thread_act.h>
+#include <dispatch/dispatch.h> // semaphore
+#include <pthread.h>
 #else
 #include <pthread.h>
 #include <semaphore.h>
 #endif
+}
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/
@@ -30,6 +40,16 @@ namespace Thread
 {
 //* Public(Exported) Macro ---------------------------------------------------*/
 //* Public(Exported) Types ---------------------------------------------------*/
+#if defined(__APPLE__)
+    using dt_thread_t = pthread_t; // std::thread;
+    using dt_mutex_t = pthread_mutex_t;
+    using dt_sem_t = dispatch_semaphore_t;
+#else
+    using dt_thread_t = pthread_t;
+    using dt_mutex_t = pthread_mutex_t;
+    using dt_sem_t = sem_t;
+#endif
+
 typedef struct _threadTimeInfo
 {
     double targetPeriod_ms = 0;
@@ -48,20 +68,20 @@ typedef struct _threadInfo
     int cpuIdx = 0;
     int priority = 0;
     size_t stackSz = 0;
-    pthread_t id = 0;
+    dt_thread_t id = 0;
     int listIdx = 0;
 } ThreadInfo;
 
 typedef struct _semInfo
 {
     const char *name = nullptr;
-    sem_t sem;
+    dt_sem_t sem;
     int listIdx = 0;
 } SemInfo;
 
 typedef struct _mtxInfo
 {
-    pthread_mutex_t mutex;
+    dt_mutex_t mutex;
     int listIdx = 0;
 } MtxInfo;
 
@@ -75,16 +95,35 @@ int DeleteThread(ThreadInfo &thread);
 int DeleteAllThread();
 
 int CreateSemaphore(SemInfo &semInfo, unsigned int initValue = 0);
-inline int PostSemaphore(SemInfo &semInfo) { return sem_post(&semInfo.sem); }
+inline int PostSemaphore(SemInfo &semInfo);
 void PostAllSemaphore();
-inline int WaitSemaphore(SemInfo &semInfo) { return sem_wait(&semInfo.sem); }
+inline int WaitSemaphore(SemInfo &semInfo);
 int DeleteSemaphore(SemInfo &semInfo);
 int DeleteAllSemaphore();
 
 int CreateMutex(MtxInfo &mtxInfo);
-inline int MutexLock(MtxInfo &mtxInfo) { return pthread_mutex_lock(&mtxInfo.mutex); }
-inline int MutexTryLock(MtxInfo &mtxInfo) { return pthread_mutex_trylock(&mtxInfo.mutex); }
-inline int MutexUnlock(MtxInfo &mtxInfo) { return pthread_mutex_unlock(&mtxInfo.mutex); }
+
+/**
+ * Lock the given mutex.
+ * @param mtxInfo Data structure containing information about mutex to lock.
+ * @return It returns 0 if successful. Otherwise it returns the non-zero error code.
+ */
+inline int MutexLock(MtxInfo &mtxInfo);
+
+/**
+ * Try to lock the given mutex.
+ * @param mtxInfo Data structure containing information about mutex to lock.
+ * @return It returns 0 if a lock on the mutex object that is referenced by the mtxInfo.mutex parameter is acquired. Otherwise it returns the non-zero error code.
+ */
+inline int MutexTryLock(MtxInfo &mtxInfo);
+
+/**
+ * Unlock the given mutex.
+ * @param mtxInfo Data structure containing information about mutex to unlock.
+ * @return It returns 0 if successful. Otherwise it returns the non-zero error code.
+ */
+inline int MutexUnlock(MtxInfo &mtxInfo);
+
 int DeleteMutex(MtxInfo &mtxInfo);
 int DeleteAllMutex();
 

@@ -8,58 +8,44 @@ static std::atomic<bool> bRun = false;
 
 void *threadProc(void *arg)
 {
+    ThreadInfo* th_info = (ThreadInfo*)arg;
     int counter = 0;
     while (bRun.load())
     {
-        for (int i = 0; i < 1000000; i++)
-            ;
-        //std::cout << "counter : " << counter++ << std::endl;
+        dtTerm::Printf("[%s]counter : %d\n", th_info->name, counter++);
 
-        // if (dtTerm::kbhit())
-        // {
-        //     getchar();
-        //     break;
-        // }
+        dt::Thread::SleepForMillis(500);
+        // for (int i = 0; i < 10000000; i++)
+        //     ;
     }
     return 0;
 }
 
 int main(int argc, char **argv)
 {
-    int cpu = 3;
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-    CPU_SET(cpu, &mask);
-
-    pid_t pid = getpid();
-
-    if (sched_setaffinity(pid, sizeof(mask), &mask))
-    {
-        dtTerm::Print("Cannot set cpu affinity.");
-    }
-
     dtTerm::SetupTerminal(false);
 
     bRun.store(true);
 
-    ThreadInfo th_info;
-    th_info.name = "My Thread";
-    th_info.procFunc = threadProc;
-    th_info.procFuncArg = nullptr;
-    th_info.priority = 0;
-    th_info.cpuIdx = 1;
-    th_info.stackSz = 10 * 1024 * 1024;
+    ThreadInfo th1_info;
+    th1_info.name = "My Thread - 1";
+    th1_info.procFunc = threadProc;
+    th1_info.procFuncArg = (void*)&th1_info;
+    th1_info.priority = 0;
+    th1_info.cpuIdx = 2;
+    th1_info.stackSz = 10 * 1024 * 1024;
 
-    int th1 = CreateNonRtThread(th_info);
+    int th1 = CreateNonRtThread(th1_info);
 
-    th_info.name = "My Thread - 2";
-    th_info.procFunc = threadProc;
-    th_info.procFuncArg = nullptr;
-    th_info.priority = 0;
-    th_info.cpuIdx = 2;
-    th_info.stackSz = 10 * 1024 * 1024;
+    ThreadInfo th2_info;
+    th2_info.name = "My Thread - 2";
+    th2_info.procFunc = threadProc;
+    th2_info.procFuncArg = (void*)&th2_info;
+    th2_info.priority = 0;
+    th2_info.cpuIdx = 3;
+    th2_info.stackSz = 10 * 1024 * 1024;
 
-    int th2 = CreateNonRtThread(th_info);
+    int th2 = CreateNonRtThread(th2_info);
 
     while (bRun.load())
     {
