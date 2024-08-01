@@ -374,15 +374,6 @@ error:
     return -1;
 }
 
-inline int PostSemaphore(SemInfo &semInfo) 
-{
-#if defined(__APPLE__)
-    return dispatch_semaphore_signal(semInfo.sem);
-#else
-    return sem_post(&semInfo.sem); 
-#endif
-}
-
 void PostAllSemaphore()
 {
     for (int idx = semNum - 1; idx >= 0; idx--)
@@ -394,15 +385,6 @@ void PostAllSemaphore()
         sem_post(semList[idx]);
 #endif
     }
-}
-
-inline int WaitSemaphore(SemInfo &semInfo) 
-{ 
-#if defined(__APPLE__)
-    return dispatch_semaphore_wait(semInfo.sem, DISPATCH_TIME_FOREVER);
-#else
-    return sem_wait(&semInfo.sem); 
-#endif
 }
 
 int DeleteSemaphore(SemInfo &semInfo)
@@ -472,21 +454,6 @@ error:
     fprintf(stderr, "!Error! CreateMutex() : %s(%d)\n", strerror(errno), errno);
     dtTerm::PrintEndLine();
     return -1;
-}
-
-inline int MutexLock(MtxInfo &mtxInfo)
-{
-    return pthread_mutex_lock(&mtxInfo.mutex);
-}
-
-inline int MutexTryLock(MtxInfo &mtxInfo)
-{
-    return pthread_mutex_trylock(&mtxInfo.mutex); // returns 0 if successful.
-}
-
-inline int MutexUnlock(MtxInfo &mtxInfo)
-{
-    return pthread_mutex_unlock(&mtxInfo.mutex);
 }
 
 int DeleteMutex(MtxInfo &mtxInfo)
