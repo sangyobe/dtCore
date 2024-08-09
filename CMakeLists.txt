@@ -24,7 +24,7 @@ configure_file(${version_h_in} ${version_h} @ONLY)
 #set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g")
 #set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O4 -DNDEBUG")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
