@@ -4,27 +4,32 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTDATASOURCEPB_H__
-#define __DTCORE_DTDATASOURCEPB_H__
+#ifndef __DT_DAQ_DATASOURCEPB_H__
+#define __DT_DAQ_DATASOURCEPB_H__
 
 /** \defgroup dtDAQ
  *
  */
 
-#include <dtCore/define.h>
-#include "dtDataSource.h"
 #include "dtDataSinkPB.hpp"
+#include "dtDataSource.h"
+#include <dtCore/define.h>
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-template<typename T>
-class dtDataSourcePB : public dtDataSource {
+template <typename T>
+class DataSourcePB : public DataSource
+{
 protected:
     bool UpdateData(void* context) { UNUSED(context); return false; }
     void UpdateSink(void* context) {
-        UNUSED(context); 
-        for (const std::shared_ptr<dtDataSink>& sink : _data_sinks) {
-            std::shared_ptr<dtDataSinkPB<T>> s = std::dynamic_pointer_cast<dtDataSinkPB<T>>(sink);
+        UNUSED(context);
+        for (const std::shared_ptr<DataSink> &sink : _data_sinks)
+        {
+            std::shared_ptr<DataSinkPB<T>> s = std::dynamic_pointer_cast<DataSinkPB<T>>(sink);
             if (s) {
                 s->Publish(_msg);
             }
@@ -34,8 +39,9 @@ protected:
     T _msg;
 };
 
-template<typename T>
-class dtDataSourcePBTimestamped : public dtDataSourcePB<T> {
+template <typename T>
+class DataSourcePBTimestamped : public DataSourcePB<T>
+{
 protected:
     void UpdateTimestamp() {
         this->_msg.mutable_header()->set_seq(++_cnt);
@@ -58,6 +64,7 @@ protected:
     uint32_t _cnt {0};
 };
 
-}
+} // namespace DAQ
+} // namespace dt
 
-#endif // __DTCORE_DTDATASOURCEPB_H__
+#endif // __DT_DAQ_DATASOURCEPB_H__

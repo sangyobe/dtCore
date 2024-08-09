@@ -7,17 +7,19 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/
 //* System-Specific Headers --------------------------------------------------*/
 
-//* Public(Exported) Variables -----------------------------------------------*/
-//* Private Macro ------------------------------------------------------------*/
-//* Private Types ------------------------------------------------------------*/
-//* Private Variables --------------------------------------------------------*/
-//* Private Functions --------------------------------------------------------*/
-//* Public(Exported) Functions Definition ------------------------------------*/
+namespace dt
+{
+namespace Utils
+{
+
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir()
 {
@@ -181,3 +183,6 @@ std::string GetUserHomeDir()
     return buf ? buf : std::string{};
 #endif
 }
+
+} // namespace Utils
+} // namespace dt

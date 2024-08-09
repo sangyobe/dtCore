@@ -8,17 +8,27 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 
-#ifndef SYSTEM_THREAD_THREADIMP_H_
-#define SYSTEM_THREAD_THREADIMP_H_
+#ifndef __DT_THREAD_THREADIMP_H__
+#define __DT_THREAD_THREADIMP_H__
 
 //* C/C++ System Headers -----------------------------------------------------*/
+extern "C"
+{
 #include <unistd.h>
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+#include <pthread.h>
+#elif defined(__APPLE__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/thread_act.h>
+#include <dispatch/dispatch.h> // semaphore
+#include <pthread.h>
 #else
 #include <pthread.h>
 #include <semaphore.h>
 #endif
+}
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/
@@ -26,18 +36,36 @@
 
 namespace dt
 {
+namespace Thread
+{
 //* Public(Exported) Macro ---------------------------------------------------*/
 //* Public(Exported) Types ---------------------------------------------------*/
-typedef struct _threadTimeInfo
-{
-    double targetPeriod_ms = 0;
-    double period_ms = 0;
-    double algo_ms = 0;
-    double algoAvg_ms = 0;
-    double algoMax_ms = 0;
-    int overrun = 0;
+#if defined(__APPLE__)
+    using dt_thread_t = pthread_t; // std::thread;
+    using dt_mutex_t = pthread_mutex_t;
+    using dt_sem_t = dispatch_semaphore_t;
+#else
+    using dt_thread_t = pthread_t;
+    using dt_mutex_t = pthread_mutex_t;
+    using dt_sem_t = sem_t;
+#endif
+
+    /**
+ * Data structure to hold runtime statistics of a thread such as period and etc.
+ */
+    typedef struct _threadTimeInfo
+    {
+        double targetPeriod_ms = 0;
+        double period_ms = 0;
+        double algo_ms = 0;
+        double algoAvg_ms = 0;
+        double algoMax_ms = 0;
+        int overrun = 0;
 } ThreadTimeInfo;
 
+/**
+ * Data structure to hold information of a thread created by dt::Thread.
+ */
 typedef struct _threadInfo
 {
     const char *name = nullptr;
@@ -46,46 +74,172 @@ typedef struct _threadInfo
     int cpuIdx = 0;
     int priority = 0;
     size_t stackSz = 0;
-    pthread_t id = 0;
+    dt_thread_t id = 0;
     int listIdx = 0;
 } ThreadInfo;
 
+/**
+ * Information of semaphore created.
+ */
 typedef struct _semInfo
 {
     const char *name = nullptr;
-    sem_t sem;
+    dt_sem_t sem;
     int listIdx = 0;
 } SemInfo;
 
+/**
+ * Information of mutex created.
+ */
 typedef struct _mtxInfo
 {
-    pthread_mutex_t mutex;
+    dt_mutex_t mutex;
     int listIdx = 0;
 } MtxInfo;
 
 //* Public(Exported) Variables -----------------------------------------------*/
 //* Public(Exported) Functions -----------------------------------------------*/
+/**
+ * Count CPU installed.
+ * @return It returns number of CPU installed.
+ */
 int GetCpuCount();
 
+/**
+ * Create a RT thread.
+ * @param[in, out] thread Thread attributes to create.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int CreateRtThread(ThreadInfo &thread);
+
+/**
+ * Create a non-RT thread.
+ * @param[in, out] thread Thread attributes to create.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int CreateNonRtThread(ThreadInfo &thread);
+
+/**
+ * Joint a thread and remove it from thread list.
+ * @param[in] thread Thread to delete.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteThread(ThreadInfo &thread);
+
+/**
+ * Delete all threads registered and clear thread list.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteAllThread();
 
+/**
+ * Create a semaphore.
+ * @param[out] semInfo Data structure that holds information of semaphore created.
+ * @param[in] initValue Initail value of semaphore to create.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int CreateSemaphore(SemInfo &semInfo, unsigned int initValue = 0);
-inline int PostSemaphore(SemInfo &semInfo) { return sem_post(&semInfo.sem); }
+
+/**
+ * Signal semaphore.
+ * @param[in] semInfo Semaphore to signal.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+inline int PostSemaphore(SemInfo &semInfo)
+{
+#if defined(__APPLE__)
+    return dispatch_semaphore_signal(semInfo.sem);
+#else
+    return sem_post(&semInfo.sem);
+#endif
+}
+
+/**
+ * Signal all semaphores.
+ */
 void PostAllSemaphore();
-inline int WaitSemaphore(SemInfo &semInfo) { return sem_wait(&semInfo.sem); }
+
+/**
+ * Wait until it becomes greater than zero.
+ * @param[in] semInfo Semaphore to wait.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+inline int WaitSemaphore(SemInfo &semInfo)
+{
+#if defined(__APPLE__)
+    return dispatch_semaphore_wait(semInfo.sem, DISPATCH_TIME_FOREVER);
+#else
+    return sem_wait(&semInfo.sem);
+#endif
+}
+
+/**
+ * Delete a semaphore and remove it from semaphore list.
+ * @param[in] semInfo Semaphore to delete.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteSemaphore(SemInfo &semInfo);
+
+/**
+ * Delete all semaphores registered.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteAllSemaphore();
 
+/**
+ * Create a mutex with given information.
+ * @param[out] mtxInfo Data structure to hold information about a new mutex to be created.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int CreateMutex(MtxInfo &mtxInfo);
-inline int MutexLock(MtxInfo &mtxInfo) { return pthread_mutex_lock(&mtxInfo.mutex); }
-inline int MutexTryLock(MtxInfo &mtxInfo) { return pthread_mutex_trylock(&mtxInfo.mutex); }
-inline int MutexUnlock(MtxInfo &mtxInfo) { return pthread_mutex_unlock(&mtxInfo.mutex); }
+
+/**
+ * Lock the given mutex.
+ * @param[in] mtxInfo Data structure containing information about mutex to lock.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+inline int MutexLock(MtxInfo &mtxInfo)
+{
+    return pthread_mutex_lock(&mtxInfo.mutex);
+}
+
+/**
+ * Try to lock the given mutex.
+ * @param[in] mtxInfo Data structure containing information about mutex to lock.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+inline int MutexTryLock(MtxInfo &mtxInfo)
+{
+    return pthread_mutex_trylock(&mtxInfo.mutex); // returns 0 if successful.
+}
+
+/**
+ * Unlock the given mutex.
+ * @param[in] mtxInfo Data structure containing information about mutex to unlock.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+inline int MutexUnlock(MtxInfo &mtxInfo)
+{
+    return pthread_mutex_unlock(&mtxInfo.mutex);
+}
+
+/**
+ * Delete specified mutex. 
+ * @param[in] mtxInfo Mutex to delete.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteMutex(MtxInfo &mtxInfo);
+
+/**
+ * Delete all mutex created.
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
 int DeleteAllMutex();
 
+/**
+ * Sleep calling thread.
+ * @param[in] milliseconds Sleep duration in milliseconds.
+ */
 inline void SleepForMillis(unsigned int milliseconds)
 {
 #if defined(_WIN32)
@@ -95,6 +249,7 @@ inline void SleepForMillis(unsigned int milliseconds)
 #endif
 }
 
+} // namespace Thread
 } // namespace dt
 
-#endif // REALROBOT_THREAD_THREADIMP_H_
+#endif // __DT_THREAD_THREADIMP_H__

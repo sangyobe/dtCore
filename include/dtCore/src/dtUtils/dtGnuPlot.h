@@ -1,23 +1,20 @@
 /*!
 \file       dtGnuPlot.h
-\brief      dtGnuPlot, Graphing utility for dtMath in windows
+\brief      GnuPlot, Graphing utility.
 \author     Dong-hyun Lee, phenom8305@gmail.com
-\author     Who is next author?
 \date       2021. 07. 06, 2021. 08. 30
 \version    1.1.0
 \see       gnuplot software must be installed (http://www.gnuplot.info/)
 \warning    Do Not delete this comment for document history! This is minimal manners!
 */
 
-#ifndef DTMATH_DTGNU_PLOT_H_
-#define DTMATH_DTGNU_PLOT_H_
+#ifndef __DT_UTILS_GNUPLOT_H__
+#define __DT_UTILS_GNUPLOT_H__
 
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-
-#include <dtMath/dtMath.h>
 
 #if defined(_WIN32)
 //#include <windows.h>
@@ -32,8 +29,12 @@
 #define GNUPLOT_VSPRINTF vsnprintf 
 #endif
 
+namespace dt
+{
+namespace Utils
+{
 template <typename m_type = float>
-class dtGnuPlot
+class GnuPlot
 {
 public:
     enum PointType
@@ -57,9 +58,9 @@ public:
     };
 
 public:
-    dtGnuPlot(bool persist = true);
-    dtGnuPlot(const char *gnuplotName);
-    ~dtGnuPlot();
+    GnuPlot(bool persist = true);
+    GnuPlot(const char *gnuplotName);
+    ~GnuPlot();
 
     // send a command to gnuplot
     void Cmd(const char *format, ...);
@@ -67,7 +68,7 @@ public:
     // plot data
     void SetData(const char *filePath);
     template <uint16_t row, uint16_t col>
-    int8_t SetData(const dtMath::dtMatrix<row, col, m_type> &mat);
+    int8_t SetData(const m_type *mat);
 
     // plot properties
     void SetGrid(bool on = true);
@@ -183,8 +184,9 @@ private:
     int8_t MakeDataFile(const m_type *x, const m_type *y, const m_type *z, const int dataLen);
 };
 
+} // namespace Utils
+} // namespace dt
 
 #include "dtGnuPlot.tpp"
 
-#endif // DTMATH_DTGNU_PLOT_H_
-
+#endif // __DT_UTILS_GNUPLOT_H__

@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTCORE__
-#define __DTCORE_DTCORE__
+#ifndef __DT_CORE__
+#define __DT_CORE__
 
 /** \defgroup dtCore
  *
@@ -16,8 +16,12 @@
  * \endcode
  */
 
-namespace dtCore {} // namespace dtCore
+namespace dt
+{
+} // namespace dt
 
-#include "dtTrajectory"
+#include "dtDAQ"
+#include "dtLog"
+#include "dtThread"
 
-#endif // __DTCORE_DTCORE__
+#endif // __DT_CORE__

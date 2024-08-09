@@ -13,26 +13,88 @@
 #include "dtCore/src/dtUtils/dtTerminal.h"
 
 //* System-Specific Headers --------------------------------------------------*/
-extern "C"
-{
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
-}
+
 namespace dt
+{
+namespace Thread
 {
 //* Public(Exported) Variables -----------------------------------------------*/
 //* Private Macro ------------------------------------------------------------*/
 //* Private Types ------------------------------------------------------------*/
+#if defined(__APPLE__)
+    #include <TargetConditionals.h>
+
+    #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
+
+    typedef struct cpu_set {
+        uint32_t    count;
+    } cpu_set_t;
+
+    static const size_t
+    CPU_SETSIZE = sizeof(cpu_set_t);
+
+    static inline void
+    CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
+
+    static inline void
+    CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
+
+    static inline int
+    CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
+
+    static inline cpu_set_t *
+    CPU_ALLOC(int count) { return (cpu_set_t *)malloc(sizeof(cpu_set_t)); }
+
+    static inline size_t
+    CPU_ALLOC_SIZE(int count) { return sizeof(cpu_set_t); }
+
+    static inline void
+    CPU_FREE(cpu_set_t *cpuset) { if (cpuset) free(cpuset); }
+
+    int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
+    {
+        int32_t core_count = 0;
+        size_t  len = sizeof(core_count);
+        int ret = sysctlbyname(SYSCTL_CORE_COUNT, &core_count, &len, 0, 0);
+        if (ret) {
+            dtTerm::Printf("error while get core count %d\n", ret);
+            return -1;
+        }
+        mask->count = 0;
+        for (int i = 0; i < core_count; i++) {
+            mask->count |= (1 << i);
+        }
+        return 0;
+    }
+
+    int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)
+    {
+        thread_port_t mach_thread;
+        int core = 0;
+
+        for (core = 0; core < 8 * cpusetsize; core++) {
+            if (CPU_ISSET(core, mask)) break;
+        }
+        dtTerm::Printf("binding to core %d\n", core);
+        thread_affinity_policy_data_t policy = { core };
+        mach_thread = pthread_mach_thread_np(thread);
+        thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1);
+        return 0;
+    }
+
+    int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const cpu_set_t *mask)
+    {
+        return 0;
+    }
+#endif
+
 //* Private Variables --------------------------------------------------------*/
 static int threadNum = 0; // thread list number
 static int semNum = 0;
 static int mtxNum = 0;
-static pthread_t *threadList[32];
-static sem_t *semList[64];
-static pthread_mutex_t *mtxList[64];
+static dt_thread_t *threadList[32];
+static dt_sem_t *semList[64];
+static dt_mutex_t *mtxList[64];
 static int maxCpuCnt = 0;
 //* Private Functions --------------------------------------------------------*/
 int PrintThreadAttr(const pthread_attr_t *attr);
@@ -157,6 +219,9 @@ int CreateRtThread(ThreadInfo &thread)
     /* Step 3. Thread Create */
     dtTerm::Print("Create RT Thread ... ");
     if (pthread_create(&thread.id, &taskAttr, thread.procFunc, thread.procFuncArg)) goto error;
+#if defined(__APPLE__)
+    if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
+#endif
     dtTerm::Print("ok\n");
 
     /* Step 4. Check and Destroy the Attribute */
@@ -215,6 +280,9 @@ int CreateNonRtThread(ThreadInfo &thread)
     /* Step 3. Ctrate Thread */
     dtTerm::Print("Create Non-RT Thread ... ");
     if (pthread_create(&thread.id, &taskAttr, thread.procFunc, thread.procFuncArg)) goto error;
+#if defined(__APPLE__)
+    if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
+#endif
     dtTerm::Print("ok\n");
 
     /* Step 4. Check and Destroy the Attribute */
@@ -280,12 +348,17 @@ error:
     return -1;
 }
 
+
 int CreateSemaphore(SemInfo &semInfo, unsigned int initValue)
 {
     dtTerm::PrintTitle(" Ctreate Semaphore ");
     dtTerm::Print("Initialize Semaphore ... ");
 
+#if defined(__APPLE__)
+    semInfo.sem = dispatch_semaphore_create(initValue);
+#else
     if (sem_init(&semInfo.sem, 0, initValue)) goto error; // 0 means semaphore may only be used by threads in the same process
+#endif
     dtTerm::Print("ok\n");
     dtTerm::Print("Complete\n");
     semList[semNum] = &semInfo.sem;
@@ -306,7 +379,11 @@ void PostAllSemaphore()
     for (int idx = semNum - 1; idx >= 0; idx--)
     {
         if (semList[idx] == nullptr) continue;
+#if defined(__APPLE__)
+        dispatch_semaphore_signal(*semList[idx]);
+#else
         sem_post(semList[idx]);
+#endif
     }
 }
 
@@ -314,7 +391,11 @@ int DeleteSemaphore(SemInfo &semInfo)
 {
     dtTerm::PrintTitle(" Delete Semaphore ");
     dtTerm::Print("Destroy Semaphore ... ");
+#if defined(__APPLE__)
+    dispatch_release(semInfo.sem);
+#else
     if (sem_destroy(&semInfo.sem)) goto error;
+#endif
     dtTerm::Print("ok\n");
     dtTerm::Print("Complete\n");
     semList[semInfo.listIdx] = nullptr;
@@ -336,7 +417,11 @@ int DeleteAllSemaphore()
     for (int idx = semNum - 1; idx >= 0; idx--)
     {
         if (semList[idx] == nullptr) continue;
+#if defined(__APPLE__)
+        dispatch_release(*semList[idx]);
+#else
         if (sem_destroy(semList[idx])) goto error;
+#endif
         num++;
     }
     dtTerm::Printf("Delete %d semaphore ... ok\n", num);
@@ -411,4 +496,6 @@ error:
     dtTerm::PrintEndLine();
     return -1;
 }
+
+} // namespace Thread
 } // namespace dt

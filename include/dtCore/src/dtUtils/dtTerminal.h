@@ -6,7 +6,8 @@
 \version    1.0.0
 */
 
-#pragma once
+#ifndef __DT_UTILS_TERMINAL_H__
+#define __DT_UTILS_TERMINAL_H__
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -77,7 +78,11 @@
         printf("\x1b[%d;%dH\x1b[%dm" fmt "\x1b[0m", row, col, colorCode, ##__VA_ARGS__); \
     } while (0)
 
-namespace dtTerm
+namespace dt
+{
+namespace Utils
+{
+namespace Term
 {
 void SetupTerminal(bool showCursor = true);
 void RestoreTerminal(void);
@@ -278,4 +283,11 @@ static inline int Flush()
 {
     return fflush(stdout);
 }
-} // namespace dtTerm
+
+} // namespace Term
+} // namespace Utils
+} // namespace dt
+
+namespace dtTerm = ::dt::Utils::Term;
+
+#endif // __DT_UTILS_TERMINAL_H__

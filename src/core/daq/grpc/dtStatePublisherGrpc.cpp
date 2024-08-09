@@ -1,8 +1,7 @@
-// #include "dtCore/src/dtDAQ/grpc/dtStatePublisherGrpc.hpp"
+// #include "dtCore/src/dtDAQ/grpc/StatePublisherGrpc.hpp"
 
+// namespace dt {
+// namespace DAQ {
 
-// namespace dtCore {
-
-
-
-// } // namespace dtCore
+// } // namespace DAQ
+// } // namespace dt

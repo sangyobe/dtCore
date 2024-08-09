@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTLOG_H__
-#define __DTCORE_DTLOG_H__
+#ifndef __DT_LOG_H__
+#define __DT_LOG_H__
 
 /** \defgroup dtLog
  *
@@ -20,13 +20,14 @@
 #include <string>
 #include <unistd.h>
 
-#define DTCORE_DTLOG_MT
+#define DT_LOG_MT
 
-namespace dtCore {
+namespace dt
+{
 
 using log_clock = ::std::chrono::system_clock;
 
-class dtLog 
+class Log
 {
 private:
     static std::string annotate_filename_datetime(const std::string file_basename)
@@ -80,7 +81,7 @@ public:
         std::shared_ptr<spdlog::logger> logger{nullptr};
         // Create a logger
         if (file_basename.empty()) {
-#ifdef DTCORE_DTLOG_MT
+#ifdef DT_LOG_MT
             logger = spdlog::stdout_color_mt(log_name);
 #else
             logger = spdlog::stdout_color_st(log_name);
@@ -90,7 +91,7 @@ public:
             spdlog::filename_t filename = file_basename;
             if (annot_datetime)
                 filename = annotate_filename_datetime(file_basename);
-#ifdef DTCORE_DTLOG_MT
+#ifdef DT_LOG_MT
             logger = spdlog::basic_logger_mt(log_name, filename, truncate);
 #else
             logger = spdlog::basic_logger_st(log_name, filename, truncate);
@@ -116,7 +117,7 @@ public:
             filename = annotate_filename_datetime(file_basename);
 
         // Create a logger
-#ifdef DTCORE_DTLOG_MT
+#ifdef DT_LOG_MT
         auto logger = spdlog::basic_logger_mt(log_name, filename, truncate);
 #else
         auto logger = spdlog::basic_logger_st(log_name, filename, truncate);
@@ -258,7 +259,7 @@ public:
 
 };
 
-} // namespace dtCore
+} // namespace dt
 
 /* Might cause macro redefinition errors, you can comment them out if needed */
 // #define INFO info
@@ -266,8 +267,8 @@ public:
 // #define ERROR err
 
 // dtLog to spdlog converter
-#define LOG_S(log_level) dtCore::dtLog::LogStream(spdlog::level::log_level)
-#define LOG_U_S(log_name, log_level) dtCore::dtLog::NamedLogStream(#log_name, spdlog::level::log_level)
+#define LOG_S(log_level) dt::Log::LogStream(spdlog::level::log_level)
+#define LOG_U_S(log_name, log_level) dt::Log::NamedLogStream(#log_name, spdlog::level::log_level)
 
 // log to default logger
 #define LOG(log_level) LOG_S(log_level)
@@ -276,4 +277,4 @@ public:
 
 #include "dtLog.tpp"
 
-#endif // __DTCORE_DTLOG_H__
+#endif // __DT_LOG_H__

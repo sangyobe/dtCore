@@ -13,8 +13,8 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 
-#ifndef __DTCORE_DTSTRINGHELPER_H__
-#define __DTCORE_DTSTRINGHELPER_H__
+#ifndef __DT_UTILS_STRINGHELPER_H__
+#define __DT_UTILS_STRINGHELPER_H__
 
 /** \defgroup dtUtils
  *
@@ -23,7 +23,10 @@
 #include <string>
 #include <stdexcept>
 
-namespace dtCore {
+namespace dt
+{
+namespace Utils
+{
 
 template<typename ... Args>
 std::string string_format(const std::string& format, Args ... args)
@@ -38,6 +41,7 @@ std::string string_format(const std::string& format, Args ... args)
 	return std::string(buf, buf + size - 1); // We don't want the '\0' inside
 }
 
-}
+} // namespace Utils
+} // namespace dt
 
-#endif // __DTCORE_DTSTRINGHELPER_H__
+#endif // __DT_UTILS_STRINGHELPER_H__

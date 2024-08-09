@@ -15,7 +15,7 @@ class RpcClient {
 public:
     RpcClient(const std::string& server_address);
 
-    bool QueryRobotInfo();
+    bool RequestRobotInfo();
     bool ControlCmd(int cmd_mode, const char* fmt, ...);
 
 private:
@@ -29,15 +29,15 @@ RpcClient::RpcClient(const std::string& server_address)
 {
 }
 
-bool RpcClient::QueryRobotInfo()
+bool RpcClient::RequestRobotInfo()
 {
     grpc::ClientContext context;
     ::google::protobuf::Empty req;
     dtproto::robot_msgs::RobotInfo res;
 
-    grpc::Status status = stub_->QueryRobotInfo(&context, req, &res);
+    grpc::Status status = stub_->RequestRobotInfo(&context, req, &res);
     if (!status.ok()) {
-        std::cout << "QueryRobotInfo rpc failed." << std::endl;
+        std::cout << "RequestRobotInfo rpc failed." << std::endl;
         return false;
     } else {
         std::cout << "name : " << res.name() << std::endl;
@@ -81,14 +81,14 @@ int main(int argc, char** argv)
     std::unique_ptr<RpcClient> rpcClient = std::make_unique<RpcClient>("localhost:50052");
     std::cout << "> ControlCmd() call through the 1st channel...\n";
     rpcClient->ControlCmd(1, "");
-    std::cout << "> QueryRobotInfo() call through the 1st channel...\n";
-    rpcClient->QueryRobotInfo();
-    
+    std::cout << "> RequestRobotInfo() call through the 1st channel...\n";
+    rpcClient->RequestRobotInfo();
+
     // open another channel
     std::cout << "> Open another channel to RPC server...\n";
     std::unique_ptr<RpcClient> rpcClient_2 = std::make_unique<RpcClient>("localhost:50052");
-    std::cout << "> QueryRobotInfo() call through the 2nd channel...\n";
-    rpcClient_2->QueryRobotInfo();
+    std::cout << "> RequestRobotInfo() call through the 2nd channel...\n";
+    rpcClient_2->RequestRobotInfo();
 
     return 0;
 }

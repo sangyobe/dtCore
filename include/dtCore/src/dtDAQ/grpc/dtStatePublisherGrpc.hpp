@@ -4,8 +4,8 @@
 // This library is commercial and cannot be redistributed, and/or modified
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
-#ifndef __DTCORE_DTSTATEPUBLISHERGRPC_H__
-#define __DTCORE_DTSTATEPUBLISHERGRPC_H__
+#ifndef __DT_DAQ_STATEPUBLISHERGRPC_H__
+#define __DT_DAQ_STATEPUBLISHERGRPC_H__
 
 /** \defgroup dtDAQ
  *
@@ -34,14 +34,17 @@
 
 #define USE_THREAD_PTHREAD
 
-namespace dtCore {
+namespace dt
+{
+namespace DAQ
+{
 
-template<typename StateType>
-class dtStatePublisherGrpc : public dtDataSinkPB<StateType>
+template <typename StateType>
+class StatePublisherGrpc : public DataSinkPB<StateType>
 { 
 public:
-    dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address, int queue_size = -1);
-    ~dtStatePublisherGrpc();
+    StatePublisherGrpc(const std::string &topic_name, const std::string &server_address, int queue_size = -1);
+    ~StatePublisherGrpc();
 
     void Publish(StateType& msg);
 
@@ -55,7 +58,7 @@ protected:
 
     class Session {
     public:
-        Session(dtStatePublisherGrpc<StateType>* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq);
+        Session(StatePublisherGrpc<StateType> *server, dtproto::dtService::AsyncService *service, grpc::ServerCompletionQueue *cq);
         Session() = delete;
         virtual ~Session();
         virtual void OnCompletionEvent();
@@ -65,7 +68,7 @@ protected:
 
     protected:
         uint64_t _id;
-        dtStatePublisherGrpc<StateType>* _server;
+        StatePublisherGrpc<StateType> *_server;
         dtproto::dtService::AsyncService* _service;
         grpc::ServerCompletionQueue* _cq;
         grpc::ServerContext _ctx;
@@ -112,20 +115,19 @@ protected:
     int _msg_queue_size;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Implementation of dtStatePublisherGrpc::Session
+// Implementation of StatePublisherGrpc::Session
 //
-template<typename StateType>
-uint64_t dtStatePublisherGrpc<StateType>::Session::AllocSessionId()
+template <typename StateType>
+uint64_t StatePublisherGrpc<StateType>::Session::AllocSessionId()
 {
     static std::atomic<uint64_t> _session_id_allocator{0};
     return (++_session_id_allocator);
 }
 
-template<typename StateType>
-dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType>* server, dtproto::dtService::AsyncService* service, grpc::ServerCompletionQueue* cq)
-    : _server(server), _service(service), _cq(cq), _call_state(CallState::WAIT_CONNECT), _responder(&_ctx) 
+template <typename StateType>
+StatePublisherGrpc<StateType>::Session::Session(StatePublisherGrpc<StateType> *server, dtproto::dtService::AsyncService *service, grpc::ServerCompletionQueue *cq)
+    : _server(server), _service(service), _cq(cq), _call_state(CallState::WAIT_CONNECT), _responder(&_ctx)
 {    
     _id = AllocSessionId();
     // LOG(INFO) << "Session id: " << _id;
@@ -151,26 +153,22 @@ dtStatePublisherGrpc<StateType>::Session::Session(dtStatePublisherGrpc<StateType
     rtn = pthread_mutex_init(_proc_mtx.native_handle(), &mtx_attr);
     if (rtn) printf("error: pthread_mutex_init (%d)\n\n", rtn);
 
-    
-    
-
-    // LOG(INFO) << "NEW StreamStateSession created.";
-    _service->RequestStreamState(&_ctx, &_request, &_responder, _cq, _cq, this);
+    _service->RequestPublishState(&_ctx, &_request, &_responder, _cq, _cq, this);
     _call_state = CallState::WAIT_CONNECT;
-    // LOG(INFO) << "Wait for new StreamState() service call...";
+    // LOG(INFO) << "Wait for new SubscribeState() service call...";
 }
 
-template<typename StateType>
-dtStatePublisherGrpc<StateType>::Session::~Session()
+template <typename StateType>
+StatePublisherGrpc<StateType>::Session::~Session()
 {
     // LOG(INFO) << "StreamStateSession deleted.";
 }
 
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Session::OnCompletionEvent()
 {
     if (_call_state == CallState::WAIT_CONNECT) {
-        // LOG(INFO) << "NEW StreamState() service call.";
+        // LOG(INFO) << "NEW SubscribeState() service call.";
         _server->AddSession();
         {
             std::lock_guard<std::mutex> lock(_proc_mtx);
@@ -190,7 +188,7 @@ void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
         }
     }
     else if (_call_state == CallState::WAIT_FINISH) {
-        // LOG(INFO) << "Finalize StreamState() service.";
+        // LOG(INFO) << "Finalize SubscribeState() service.";
         //_call_state = CallState::FINISHED;
         _server->RemoveSession(_id);
     }
@@ -200,8 +198,8 @@ void dtStatePublisherGrpc<StateType>::Session::OnCompletionEvent()
     }
 }
 
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Session::Publish(StateType &msg)
 {
     std::lock_guard<std::mutex> lock(_proc_mtx);
     
@@ -224,14 +222,14 @@ void dtStatePublisherGrpc<StateType>::Session::Publish(StateType& msg)
     }
 }
 
-template<typename StateType>
-uint64_t dtStatePublisherGrpc<StateType>::Session::GetId() 
+template <typename StateType>
+uint64_t StatePublisherGrpc<StateType>::Session::GetId()
 { 
     return _id; 
 }
 
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
 {
     //std::lock_guard<std::mutex> lock(_proc_mtx);
     if (_call_state != CallState::WAIT_CONNECT &&
@@ -251,13 +249,12 @@ void dtStatePublisherGrpc<StateType>::Session::TryCancelCallAndShutdown()
     // _server->RemoveSession(_id);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Implementation of dtStatePublisherGrpc
+// Implementation of StatePublisherGrpc
 //
-template<typename StateType>
-dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_name, const std::string& server_address, int queue_size)
-: _topic_name(topic_name), _server_address(server_address), _msg_queue_size(queue_size)
+template <typename StateType>
+StatePublisherGrpc<StateType>::StatePublisherGrpc(const std::string &topic_name, const std::string &server_address, int queue_size)
+    : _topic_name(topic_name), _server_address(server_address), _msg_queue_size(queue_size)
 {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
@@ -269,14 +266,14 @@ dtStatePublisherGrpc<StateType>::dtStatePublisherGrpc(const std::string& topic_n
     Run();
 }
 
-template<typename StateType>
-dtStatePublisherGrpc<StateType>::~dtStatePublisherGrpc()
+template <typename StateType>
+StatePublisherGrpc<StateType>::~StatePublisherGrpc()
 {
     Stop();
 }
 
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Publish(StateType& msg) 
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Publish(StateType &msg)
 {
     std::lock_guard<std::mutex> lock(_session_mtx);
     for (auto it : _sessions) {
@@ -284,23 +281,26 @@ void dtStatePublisherGrpc<StateType>::Publish(StateType& msg)
     }
 }
 
-template<typename StateType>
-bool dtStatePublisherGrpc<StateType>::AddSession() {
-    std::shared_ptr<dtStatePublisherGrpc<StateType>::Session> session =  std::make_shared<dtStatePublisherGrpc<StateType>::Session>(this, &_service, _cq.get());
+template <typename StateType>
+bool StatePublisherGrpc<StateType>::AddSession()
+{
+    std::shared_ptr<StatePublisherGrpc<StateType>::Session> session = std::make_shared<StatePublisherGrpc<StateType>::Session>(this, &_service, _cq.get());
     std::lock_guard<std::mutex> lock(_session_mtx);
     _sessions[session->GetId()] = session;
     return true;
 }
 
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::RemoveSession(uint64_t session_id) {
+template <typename StateType>
+void StatePublisherGrpc<StateType>::RemoveSession(uint64_t session_id)
+{
     std::lock_guard<std::mutex> lock(_session_mtx);
     _sessions.erase(session_id);
 }
 
 // Stop all pending rpc calls and close sessions
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Stop() {
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Stop()
+{
     // LOG(INFO) << "Shutting down Server.";
 
     {
@@ -324,57 +324,67 @@ void dtStatePublisherGrpc<StateType>::Stop() {
 }
 
 // Run grpc message-dispatcher
-template<typename StateType>
-void dtStatePublisherGrpc<StateType>::Run() {
+template <typename StateType>
+void StatePublisherGrpc<StateType>::Run()
+{
     _running = true;
 
     // rpc event "read done / write done / close(already connected)" call-back by this call completion queue
     // rpc event "new connection / close(waiting for connect)" call-back by this notification completion queue
 #ifdef USE_THREAD_PTHREAD
-    pthread_create(&_rpc_thread, NULL, 
-        [](void* arg) -> void * { 
-            dtStatePublisherGrpc<StateType>* server = (dtStatePublisherGrpc<StateType>*)arg;
+    pthread_create(
+        &_rpc_thread, NULL,
+        [](void *arg) -> void * {
+            StatePublisherGrpc<StateType> *server = (StatePublisherGrpc<StateType> *)arg;
 
             // LOG(INFO) << "RPC new-call handler()";
-            void* tag;
+            void *tag;
             bool ok;
-            while (server->_cq->Next(&tag, &ok)) {
+            while (server->_cq->Next(&tag, &ok))
+            {
                 // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
                 //GPR_ASSERT(ok);
-                if (ok) {
-                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
+                if (ok)
+                {
+                    static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->OnCompletionEvent();
                 }
-                else {
-                    static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+                else
+                {
+                    static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
                 }
             }
-            return 0; 
-        }, (void*)this);
+            return 0;
+        },
+        (void *)this);
 #else
     _rpc_thread = std::thread([this] {
         // LOG(INFO) << "RPC new-call handler()";
-        void* tag;
+        void *tag;
         bool ok;
-        while (_cq->Next(&tag, &ok)) {
+        while (_cq->Next(&tag, &ok))
+        {
             // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
             //GPR_ASSERT(ok);
-            if (ok) {
-                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->OnCompletionEvent();
+            if (ok)
+            {
+                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->OnCompletionEvent();
             }
-            else {
-                static_cast<dtStatePublisherGrpc<StateType>::Session*>(tag)->TryCancelCallAndShutdown();
+            else
+            {
+                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
             }
         }
     });
-#endif    
+#endif
 }
 
-template<typename StateType>
-bool dtStatePublisherGrpc<StateType>::IsRun() {
+template <typename StateType>
+bool StatePublisherGrpc<StateType>::IsRun()
+{
     return _running.load();
 }
 
+} // namespace DAQ
+} // namespace dt
 
-}
-
-#endif // __DTCORE_DTSTATEPUBLISHERGRPC_H__
+#endif // __DT_DAQ_STATEPUBLISHERGRPC_H__

@@ -25,7 +25,7 @@ link_directories(
 #    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
 #)
 
-file(GLOB test_dtTrajectory_SRCS test_dttraj*.cpp test_dttraj*.h)
-add_executable(test_dtTrajectory ${test_dtTrajectory_SRCS})
-add_test(NAME test_dtTrajectory COMMAND test_dtTrajectory)
-target_link_libraries(test_dtTrajectory gtest gtest_main pthread)
+# file(GLOB test_dtTrajectory_SRCS test_dttraj*.cpp test_dttraj*.h)
+# add_executable(test_dtTrajectory ${test_dtTrajectory_SRCS})
+# add_test(NAME test_dtTrajectory COMMAND test_dtTrajectory)
+# target_link_libraries(test_dtTrajectory gtest gtest_main pthread)

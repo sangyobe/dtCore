@@ -6,13 +6,14 @@
 //
 //     rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
 //
-class OnControlCmd : public dtCore::dtServiceListenerGrpc::Session 
+class OnControlCmd : public dt::DAQ::ServiceListenerGrpc::Session
 {
-    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
+    using CallState = typename dt::DAQ::ServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
-    OnControlCmd(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
-    : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
+    OnControlCmd(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
+        : dt::DAQ::ServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx)
+    {
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestCommand(&(_ctx), &_request, &_responder, _cq, _cq, this);
         LOG(info) << "Command[" << _id << "] Wait for new service call...";
@@ -80,18 +81,19 @@ private:
 /////////////////////////////////////////////////////////////////////////
 // OnQueryRobotInfo (Rpc service call handler)
 //
-//     rpc QueryRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
+//     rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 //
-class OnQueryRobotInfo : public dtCore::dtServiceListenerGrpc::Session 
+class OnQueryRobotInfo : public dt::DAQ::ServiceListenerGrpc::Session
 {
-    using CallState = typename dtCore::dtServiceListenerGrpc::Session::CallState;
+    using CallState = typename dt::DAQ::ServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
-    OnQueryRobotInfo(dtCore::dtServiceListenerGrpc* server, grpc::Service* service, grpc::ServerCompletionQueue* cq, void* udata = nullptr)
-    : dtCore::dtServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx) {
+    OnQueryRobotInfo(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
+        : dt::DAQ::ServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx)
+    {
         _call_state = CallState::WAIT_CONNECT;
-        (static_cast<ServiceType*>(_service))->RequestQueryRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
-        LOG(info) << "QueryRobotInfo[" << _id << "] Waiting for new service call...";
+        (static_cast<ServiceType *>(_service))->RequestRequestRobotInfo(&_ctx, &_request, &_responder, _cq, _cq, this);
+        LOG(info) << "RequestRobotInfo[" << _id << "] Waiting for new service call...";
     }
     ~OnQueryRobotInfo() {
         // LOG(info) << "OnQueryRobotInfo session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
@@ -103,14 +105,14 @@ public:
         }
         else if (_call_state == CallState::WAIT_FINISH)
         {
-            LOG(info) << "QueryRobotInfo[" << _id << "] Finalize service.";
+            LOG(info) << "RequestRobotInfo[" << _id << "] Finalize service.";
             // _call_state = CallState::FINISHED;
             // _server->RemoveSession(_id);
             return false;
         }
         else if (ok) {
             if (_call_state == CallState::WAIT_CONNECT) {
-                LOG(info) << "QueryRobotInfo[" << _id << "] NEW service call.";
+                LOG(info) << "RequestRobotInfo[" << _id << "] NEW service call.";
 
                 _server->template AddSession<OnQueryRobotInfo >();
                 {
@@ -126,24 +128,24 @@ public:
                     _response.set_dof(12);
 
                     _call_state = CallState::WAIT_FINISH;
-                    LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
+                    LOG(trace) << "RequestRobotInfo[" << _id << "] Finish()";
                     _responder.Finish(_response, grpc::Status::OK, this);
                 }
             }
             else {
-                LOG(err) << "QueryRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
+                LOG(err) << "RequestRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
                 GPR_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }
         else {
             if (_call_state == CallState::WAIT_CONNECT) {
-                LOG(err) << "QueryRobotInfo[" << _id << "] Session has been shut down before receiving a matching request.";
+                LOG(err) << "RequestRobotInfo[" << _id << "] Session has been shut down before receiving a matching request.";
                 return false;
             }
             else {
                 std::lock_guard<std::mutex> lock(_proc_mtx);
-                LOG(trace) << "QueryRobotInfo[" << _id << "] Finish()";
+                LOG(trace) << "RequestRobotInfo[" << _id << "] Finish()";
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
                 _call_state == CallState::WAIT_FINISH;
             }
@@ -163,11 +165,11 @@ private:
 //
 int main(int argc, char** argv) 
 {
-    dtCore::dtLog::Initialize("grpc_service_listener"); //, "logs/grpc_service_listener.txt");
-    dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+    dt::Log::Initialize("grpc_service_listener"); //, "logs/grpc_service_listener.txt");
+    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
-    dtCore::dtServiceListenerGrpc listener(
-        std::make_unique<dtproto::dtService::AsyncService>(), 
+    dt::DAQ::ServiceListenerGrpc listener(
+        std::make_unique<dtproto::dtService::AsyncService>(),
         "0.0.0.0:50052");
 
     listener.template AddSession<OnControlCmd>(nullptr);
@@ -184,6 +186,6 @@ int main(int argc, char** argv)
     }
     listener.Stop();
 
-    dtCore::dtLog::Terminate(); // flush all log messages
+    dt::Log::Terminate(); // flush all log messages
     return 0;
 }

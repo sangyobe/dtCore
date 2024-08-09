@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(dtCore 
-  LANGUAGES C CXX
-  HOMEPAGE_URL https://github.hmc.co.kr/art_framework
-  DESCRIPTION "HMC's Art Framework Library"
-  VERSION 1.2.2
+project(dtCore
+    LANGUAGES C CXX
+    HOMEPAGE_URL https://github.hmc.co.kr/art_framework
+    DESCRIPTION "HMC's Art Framework Library"
+    VERSION 1.4.0
 )
 
 cmake_policy(VERSION 3.13)
@@ -40,6 +40,16 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
+set(ARTF_INSTALL_DIR "$ENV{ARTF_INSTALL_DIR}")
+
+if("${ARTF_INSTALL_DIR}" STREQUAL "")
+    message(FATAL_ERROR "ARTF_INSTALL_DIR is not set.")
+else()
+    message(STATUS "ARTF_INSTALL_DIR: $ENV{ARTF_INSTALL_DIR}")
+endif()
+
+set(CMAKE_PREFIX_PATH "${ARTF_INSTALL_DIR};${CMAKE_PREFIX_PATH}")
+set(CMAKE_INSTALL_PREFIX "${ARTF_INSTALL_DIR}")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 link_directories(${CMAKE_SOURCE_DIR}/lib)
@@ -59,27 +69,13 @@ OPTION(BUILD_EXAMPLES_MCAP  "Build MCAP examples"                     OFF)
 OPTION(BUILD_dtCore         "Build dtCore library"                    ON)
 OPTION(BUILD_dtProto        "Build dtProto library"                   ON)
 OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
-OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      OFF)
-OPTION(dtCore_USE_EIGEN3    "Use Eigen3 as the default math library"  OFF)
+OPTION(BUILD_dtCore_gRPC "Build dtCore with gRPC DAQ support" OFF)
 
 
 # --------------------------------------------------------
 # Find & Include 3rd-party modules
 # --------------------------------------------------------
 # include(cmake/common.cmake)
-if(dtCore_USE_EIGEN3)
-  # Eigen
-  SET(EIGEN3_ROOT_DIR "$ENV{EIGEN3_ROOT}")
-  IF(NOT EIGEN3_ROOT_DIR)
-      MESSAGE(FATAL_ERROR "Please point the environment variable EIGEN3_ROOT to the include directory of your Eigen3 installation.")
-  ENDIF()
-  find_package(Eigen3 3.3.7 REQUIRED)
-  if(NOT Eigen3_FOUND)
-      MESSAGE(FATAL_ERROR "Eigen3 not found.")
-  endif()
-  MESSAGE(STATUS "Eigen3 was found at ${EIGEN3_INCLUDE_DIR}")
-  INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
-endif()
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -216,4 +212,3 @@ message(STATUS "BUILD_dtCore                                   : ${BUILD_dtCore}
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")
 message(STATUS "BUILD_dtProto_gRPC                             : ${BUILD_dtProto_gRPC}")
 message(STATUS "BUILD_dtCore_gRPC                              : ${BUILD_dtCore_gRPC}")
-message(STATUS "dtCore_USE_EIGEN3                              : ${dtCore_USE_EIGEN3}")

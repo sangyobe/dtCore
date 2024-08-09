@@ -1,7 +1,12 @@
 #include "dtCore/src/dtUtils/dtTimeCheck.h"
 
+namespace dt
+{
+namespace Utils
+{
+
 #if defined(_WIN32)
-dtTimeCheck::dtTimeCheck()
+TimeCheck::TimeCheck()
 {
     bStart = false;
     // Gets the frequency of the performance counter.
@@ -9,12 +14,12 @@ dtTimeCheck::dtTimeCheck()
     QueryPerformanceFrequency(&freq);
 }
 
-dtTimeCheck::~dtTimeCheck()
+TimeCheck::~TimeCheck()
 {
 }
 
 /*! Start Time Check */
-void dtTimeCheck::Start(void)
+void TimeCheck::Start(void)
 {
     // Gets start point value of the performance counter
     QueryPerformanceCounter(&startTime);
@@ -22,7 +27,7 @@ void dtTimeCheck::Start(void)
 }
 
 /*! Stop Time Check */
-int dtTimeCheck::Stop()
+int TimeCheck::Stop()
 {
     // Gets end point value of the performance counter
     QueryPerformanceCounter(&endTime);
@@ -39,45 +44,45 @@ int dtTimeCheck::Stop()
     return 0;
 }
 
-void dtTimeCheck::Reset(void)
+void TimeCheck::Reset(void)
 {
     bStart = false;
 }
 
-double dtTimeCheck::GetElapsedTime_sec(void)
+double TimeCheck::GetElapsedTime_sec(void)
 {
     return elapsedTime_msec / 1E3;
 }
 
-double dtTimeCheck::GetElapsedTime_msec(void)
+double TimeCheck::GetElapsedTime_msec(void)
 {
     return elapsedTime_msec;
 }
 
-double dtTimeCheck::GetElapsedTime_usec()
+double TimeCheck::GetElapsedTime_usec()
 {
     return elapsedTime_usec;
 }
 
 #elif defined(__linux__)
-dtTimeCheck::dtTimeCheck()
+TimeCheck::TimeCheck()
 {
     bStart = false;
 }
 
-dtTimeCheck::~dtTimeCheck()
+TimeCheck::~TimeCheck()
 {
 }
 
 /*! Start Time Check */
-void dtTimeCheck::Start(void)
+void TimeCheck::Start(void)
 {
     clock_gettime(CLOCK_MONOTONIC, &startTime);
     bStart = true;
 }
 
 /*! Stop Time Check */
-int dtTimeCheck::Stop()
+int TimeCheck::Stop()
 {
     clock_gettime(CLOCK_MONOTONIC, &endTime);
 
@@ -90,48 +95,48 @@ int dtTimeCheck::Stop()
     return 0;
 }
 
-void dtTimeCheck::Reset(void)
+void TimeCheck::Reset(void)
 {
     bStart = false;
 }
 
-double dtTimeCheck::GetElapsedTime_sec(void)
+double TimeCheck::GetElapsedTime_sec(void)
 {
     return elapsedTime_msec / 1E3;
 }
 
-double dtTimeCheck::GetElapsedTime_msec(void)
+double TimeCheck::GetElapsedTime_msec(void)
 {
     return elapsedTime_msec;
 }
 
-double dtTimeCheck::GetElapsedTime_usec()
+double TimeCheck::GetElapsedTime_usec()
 {
     return elapsedTime_usec;
 }
 
-long dtTimeCheck::GetElapsedTime_nsec()
+long TimeCheck::GetElapsedTime_nsec()
 {
     return elapsedTime_nsec;
 }
 
 #elif defined(ARDUINO)
 
-dtTimeCheck::dtTimeCheck()
+TimeCheck::TimeCheck()
 {
     bStart = false;
 }
-dtTimeCheck::~dtTimeCheck() {}
+TimeCheck::~TimeCheck() {}
 
 /*! Start Time Check */
-void dtTimeCheck::Start(void)
+void TimeCheck::Start(void)
 {
     startTime = micros();
     bStart = true;
 }
 
 /*! Stop Time Check */
-int dtTimeCheck::Stop()
+int TimeCheck::Stop()
 {
     endTime = micros();
 
@@ -148,24 +153,27 @@ int dtTimeCheck::Stop()
     return 0;
 }
 
-void dtTimeCheck::Reset(void)
+void TimeCheck::Reset(void)
 {
     bStart = false;
 }
 
-double dtTimeCheck::GetElapsedTime_sec(void)
+double TimeCheck::GetElapsedTime_sec(void)
 {
     return (elapsedTime_usec) / 1E6;
 }
 
-double dtTimeCheck::GetElapsedTime_msec(void)
+double TimeCheck::GetElapsedTime_msec(void)
 {
     return (elapsedTime_usec) / 1E3;
 }
 
-double dtTimeCheck::GetElapsedTime_usec()
+double TimeCheck::GetElapsedTime_usec()
 {
     return elapsedTime_usec;
 }
 
 #endif
+
+} // namespace Utils
+} // namespace dt

@@ -1,3 +1,25 @@
+#### [v1.4.0]
+(2024/7/17)
+##### 
+- 'dt' namespace 적용
+- dtTrajectory를 별도의 프로젝트로 분리
+- dtMath 의존성 제거(GnuPlot)
+
+#### [v1.3.1]
+(2024/7/2)
+##### dtProto
+- dtproto.robot_msgs.VisualizeState 메시지 정의 추가
+- dtproto.geometry_msgs.Marker 메시지 정의 추가
+- dtproto.nav_msgs.Grid 메시지 정의 업데이트 : grid_center 추가
+
+#### [v1.3.0]
+(2024/6/28)
+##### dtProto
+- RPC Service name convention 적용 : Request/Publish/Stream/Command
+
+##### dtDAQ
+- ServiceCallerGrpc::GetCall() 인터페애스 추가 : client-side streaming 지원
+
 #### [v1.2.2]
 (2024/6/5)
 ##### dtDir
@@ -5,7 +27,7 @@
 
 #### [v1.2.1]
 (2024/6/5)
-##### dtServiceListenerGrpc
+##### ServiceListenerGrpc
 - Stop() 호출시 연결된 session에 대한 call을 즉시 cancel함.
 - FINISH 상태의 session에 대해 compeletion queue event 처리하지 않음(중복된 Finish() 호출 오류 fix)
 

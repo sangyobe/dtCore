@@ -1,12 +1,12 @@
 #include "dtCore/src/dtDAQ/grpc/dtStateSubscriberGrpc.hpp"
-#include "dtProto/robot_msgs/RobotState.pb.h"
-#include "dtProto/robot_msgs/ArbitraryState.pb.h"
 #include "dtCore/src/dtLog/dtLog.h"
+#include "dtProto/robot_msgs/ArbitraryState.pb.h"
+#include "dtProto/robot_msgs/RobotState.pb.h"
 
 int main(int argc, char** argv) 
 {
-    dtCore::dtLog::Initialize("grpc_state_sub");
-    dtCore::dtLog::SetLogLevel(dtCore::dtLog::LogLevel::trace);
+    dt::Log::Initialize("grpc_state_sub");
+    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
     std::function<void(dtproto::robot_msgs::RobotStateTimeStamped&)> handler_robot_state = [](dtproto::robot_msgs::RobotStateTimeStamped& msg) {
         LOG(info) << "handler_robot_state Got a new message. Type = " << msg.state().GetTypeName();
@@ -26,8 +26,7 @@ int main(int argc, char** argv)
             LOG(trace) << "    joint[" << ji << "].torque = "       << msg.state().joint_state(ji).torque();
         }
     };
-    std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>> sub_robot_state
-        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50053");
+    std::unique_ptr<dt::DAQ::StateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>> sub_robot_state = std::make_unique<dt::DAQ::StateSubscriberGrpc<dtproto::robot_msgs::RobotStateTimeStamped>>("RobotState", "0.0.0.0:50053");
     sub_robot_state->RegMessageHandler(handler_robot_state);
 
     std::function<void(dtproto::robot_msgs::ArbitraryStateTimeStamped&)> handler_arbitrary_state = [](dtproto::robot_msgs::ArbitraryStateTimeStamped& msg) {
@@ -41,8 +40,7 @@ int main(int argc, char** argv)
             LOG(trace) << "  data[" << ji << "] = " << msg.state().data(ji);
         }
     };
-    std::unique_ptr<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>> sub_arbitrary_state
-        = std::make_unique<dtCore::dtStateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>>("ArbitraryState", "0.0.0.0:50052");
+    std::unique_ptr<dt::DAQ::StateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>> sub_arbitrary_state = std::make_unique<dt::DAQ::StateSubscriberGrpc<dtproto::robot_msgs::ArbitraryStateTimeStamped>>("ArbitraryState", "0.0.0.0:50052");
     sub_arbitrary_state->RegMessageHandler(handler_arbitrary_state);
 
 
@@ -77,7 +75,7 @@ int main(int argc, char** argv)
     }
 
     proc_reconnector.join();
-    dtCore::dtLog::Terminate();
+    dt::Log::Terminate();
 
     return 0;
 }

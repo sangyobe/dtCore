@@ -13,8 +13,8 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 
-#ifndef __DTCORE_DTFILEHELPER_H__
-#define __DTCORE_DTFILEHELPER_H__
+#ifndef __DT_UTILS_FILEHELPER_H__
+#define __DT_UTILS_FILEHELPER_H__
 
 /** \defgroup dtUtils
  *
@@ -34,7 +34,10 @@
     #endif
 #endif
 
-namespace dtCore {
+namespace dt
+{
+namespace Utils
+{
 
 bool path_exists(const std::string &filename)
 {
@@ -168,6 +171,7 @@ bool create_dir(const std::string &path) {
     return true;
 }
 
-}
+} // namespace Utils
+} // namespace dt
 
-#endif // __DTCORE_DTFILEHELPER_H__
+#endif // __DT_UTILS_FILEHELPER_H__
