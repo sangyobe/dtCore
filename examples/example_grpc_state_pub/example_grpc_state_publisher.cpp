@@ -10,6 +10,9 @@ std::function<double(void)> data_gen = ([]() -> double { return (double)rand() /
 
 int main(int argc, char** argv) 
 {
+    gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
+    gpr_log(GPR_DEBUG, "Program start.");
+
     //google::InitGoogleLogging(argv[0]);
 
     dt::Log::Initialize("grpc_state_pub", "logs/grpc_state_pub.txt");
