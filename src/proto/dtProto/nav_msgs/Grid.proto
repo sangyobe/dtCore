@@ -3,56 +3,41 @@ syntax = "proto3";
 package dtproto.nav_msgs;
 
 import "dtProto/std_msgs/Header.proto";
-import "dtProto/std_msgs/PackedElementDesc.proto";
 import "dtProto/geometry_msgs/Pose.proto";
+import "dtProto/geometry_msgs/Vector.proto";
 import "google/protobuf/timestamp.proto";
 
 message Grid {
+    message Layer {
+        enum CellFormat {
+            UNKNOWN = 0;
+            FLOAT32 = 1;
+            FLOAT64 = 2;
+            INT8 = 3;
+            UINT8 = 4;
+            INT16 = 5;
+            UINT16 = 6;
+            INT32 = 7;
+            UINT32 = 8;
+            INT64 = 9;
+            UINT64 = 10;
+        }
+        string layer_id = 1;
+        CellFormat cell_format = 2;                     // cell data format
+        bytes data = 3;                                // grid data in row-major
+    }
+
     string grid_id = 1;                             // human readable name of grid
     google.protobuf.Timestamp acquisition_time = 2; // grid update time
     string frame_id = 3;                            // frmae of reference
     geometry_msgs.Pose3d pose_offset = 4;           // grid origin from the reference frame
-    geometry_msgs.Pose3d grid_center = 11;          // grid center position in map(grid) frame
-    uint32 row_count = 5;                           // number of grid rows
-    uint32 col_count = 6;                           // number of grid columns
-    uint32 cell_stride = 7;                         // number of bytes of each cell data (cell data is interpreted using cell_encoding)
-    enum CellFormat {
-        UNKNOWN = 0;
-        FLOAT32 = 1;
-        FLOAT64 = 2;
-        INT8 = 3;
-        UINT8 = 4;
-        INT16 = 5;
-        UINT16 = 6;
-        INT32 = 7;
-        UINT32 = 8;
-        INT64 = 9;
-        UINT64 = 10;
-    }
-    CellFormat cell_format = 8;                     // cell data format
-    double cell_size = 9;                           // size of a single grid(square) in meter [m/cell]
-    bytes data = 10;                                // grid data in row-major
+    geometry_msgs.Pose3d grid_center = 5;           // grid center position in map(grid) frame
+    geometry_msgs.Vector2ui32 grid_dim = 6;         // grid dimension (rows and columns)
+    geometry_msgs.Vector2d cell_size = 7;           // size of a single grid in meter [m/cell] in x/y direction
+    repeated Layer layers = 8;
 }
 
 message GridTimeStamped {
     std_msgs.Header header = 1;
     Grid grid = 2;
-}
-
-message PackedGrid {
-    string grid_id = 1;                             // human readable name of grid
-    google.protobuf.Timestamp acquisition_time = 2; // grid update time
-    string frame_id = 3;                            // frmae of reference
-    geometry_msgs.Pose3d pose_offset = 4;           // grid origin from the reference frame
-    uint32 row_count = 5;                           // number of grid rows
-    uint32 col_count = 6;                           // number of grid columns
-    uint32 cell_stride = 7;                         // number of bytes of each cell data (cell data is interpreted using cell_encoding)
-    repeated std_msgs.PackedElementDesc cell_encoding = 8;   // packed data information of each cell
-    double cell_size = 9;                           // size of a single grid(square) in meter [m/cell]
-    bytes data = 10;                                // grid data in row-major
-}
-
-message PackedGridTimeStamped {
-    std_msgs.Header header = 1;
-    PackedGrid grid = 2;
 }
