@@ -198,6 +198,17 @@ install(DIRECTORY ./include/dtCore
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    artfConfigVersion.cmake
+    VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+    COMPATIBILITY ExactVersion)
+
+configure_file(cmake/artfConfig.cmake.in artfConfig.cmake @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/artfConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/artfConfigVersion.cmake"
+    "cmake/artfTargets.cmake"
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/artf)
 
 # --------------------------------------------------------
 # Finalize configuration and print options
