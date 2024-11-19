@@ -29,6 +29,10 @@ public:
     {
         _rootNode = YAML::LoadFile(yaml_file);
     }
+    Conf(const char *str)
+    {
+        _rootNode = YAML::Load(str);
+    }
     Conf(const YAML::Node &node)
     {
         _rootNode = node;
