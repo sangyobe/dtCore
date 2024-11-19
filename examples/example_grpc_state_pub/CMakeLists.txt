@@ -1,19 +1,17 @@
-GetCurrentDirectoryName(PrjName)
+cmake_minimum_required(VERSION 3.13)
+project(example_grpc_state_pub)
 
-project(${PrjName})
-
-find_package(spdlog REQUIRED CONFIG)
+list(APPEND CMAKE_PREFIX_PATH "$ENV{ARTF_INSTALL_DIR}/lib/cmake")
+find_package(artf CONFIG REQUIRED)
 
 file(GLOB SRCS "*.cpp")
-add_executable(${PROJECT_NAME}
-    ${SRCS}
+add_executable(${PROJECT_NAME} ${SRCS})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    artf::dtcore_grpc
+    artf::dtproto_grpc
 )
-target_link_libraries(
+set_target_properties(
     ${PROJECT_NAME}
-    dtproto_grpc
-    dtcore_grpc
-    spdlog::spdlog
+    PROPERTIES
+    CXX_STANDARD 17
 )
-
-# get_target_property(${PROJECT_NAME}_link_libraries ${PROJECT_NAME} LINK_LIBRARIES)
-# message(STATUS "${PROJECT_NAME}_link_libraries: ${${PROJECT_NAME}_link_libraries}")

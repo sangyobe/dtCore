@@ -1,31 +1,17 @@
-GetCurrentDirectoryName(PrjName)
+cmake_minimum_required(VERSION 3.13)
+project(example_grpc_server)
 
-project(${PrjName})
-
-# find_package(spdlog REQUIRED CONFIG)
-find_package(Protobuf CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-
-set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-set(_GRPC_GRPCPP gRPC::grpc++)
-set(_GRPC_REFLECTION gRPC::grpc++_reflection)
+list(APPEND CMAKE_PREFIX_PATH "$ENV{ARTF_INSTALL_DIR}/lib/cmake")
+find_package(artf CONFIG REQUIRED)
 
 file(GLOB SRCS "*.cpp")
-add_executable(${PROJECT_NAME}
-    ${SRCS}
+add_executable(${PROJECT_NAME} ${SRCS})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    artf::dtcore_grpc
+    artf::dtproto_grpc
 )
-target_link_libraries(
+set_target_properties(
     ${PROJECT_NAME}
-    dtproto_grpc
-#    spdlog::spdlog
-    ${_PROTOBUF_LIBPROTOBUF}
-    ${_GRPC_GRPCPP}
-    ${_GRPC_REFLECTION}
+    PROPERTIES
+    CXX_STANDARD 17
 )
-# target_link_options(
-#     ${PROJECT_NAME}
-#     PRIVATE -Wl,--whole-archive
-# )
-
-get_target_property(${PROJECT_NAME}_link_libraries ${PROJECT_NAME} LINK_LIBRARIES)
-message(STATUS "${PROJECT_NAME}_link_libraries: ${${PROJECT_NAME}_link_libraries}")

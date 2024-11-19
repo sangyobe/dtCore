@@ -1,6 +1,15 @@
 include(DebugUtil)
 include(GetDirectoryName)
 
+include_directories(
+    "${CMAKE_SOURCE_DIR}/extlib/spdlog/include"
+    "${CMAKE_SOURCE_DIR}/extlib/yaml-cpp/include"
+    "${CMAKE_SOURCE_DIR}/extlib/mcap/cpp/mcap/include"
+)
+link_directories(
+    "${CMAKE_SOURCE_DIR}/lib"
+)
+
 if(BUILD_dtProto)
   include_directories("${PROTOBUF_GEN_DIR}")
 endif()
@@ -30,7 +39,7 @@ if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_EXAMPLES_gRPC)
 endif()
 
 # other examples
-file(GLOB EXAMPLE_DIRS "example_thread_*")
+file(GLOB EXAMPLE_DIRS "example_thread_*" "example_log_*" "example_utils_*")
 
 foreach(example_dir ${EXAMPLE_DIRS})
     add_subdirectory(${example_dir})

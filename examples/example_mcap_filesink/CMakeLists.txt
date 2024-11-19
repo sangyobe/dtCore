@@ -1,20 +1,14 @@
-GetCurrentDirectoryName(PrjName)
+cmake_minimum_required(VERSION 3.13)
+project(example_mcap_filesink)
 
-project(${PrjName})
+list(APPEND CMAKE_PREFIX_PATH "$ENV{ARTF_INSTALL_DIR}/lib/cmake")
+find_package(artf CONFIG REQUIRED)
 
 file(GLOB SRCS "*.cpp")
-add_executable(${PROJECT_NAME}
-    ${SRCS}
-)
-target_link_libraries(
-    ${PROJECT_NAME}
-    dtproto
-    spdlog::spdlog
-)
-target_include_directories(
-    ${PROJECT_NAME}
-    PRIVATE
-    "${CMAKE_SOURCE_DIR}/extlib/mcap/cpp/mcap/include"
+add_executable(${PROJECT_NAME} ${SRCS})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    artf::dtcore
+    artf::dtproto
 )
 set_target_properties(
     ${PROJECT_NAME}
