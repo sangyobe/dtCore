@@ -1,8 +1,15 @@
+#### [v1.5.1]
+(2024/8/27)
+##### 
+- add cmake config to support find_package().
+- dt::Utils::dtConf gets character string as constructor argument.
+- add dt::Utils::Watchdog.
+
 #### [v1.5.0]
 (2024/8/27)
 ##### 
 - dtproto.nav_msgs.Grid 데이터 정의 변경 (multi-layer gridmap 데이터 전송을 위해 데이터 구조 확장)
-- 
+ 
 #### [v1.4.0]
 (2024/7/17)
 ##### 
