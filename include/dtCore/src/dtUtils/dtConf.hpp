@@ -29,9 +29,9 @@ public:
     {
         _rootNode = YAML::LoadFile(yaml_file);
     }
-    Conf(const char *str)
+    Conf(const std::istream &yaml_str)
     {
-        _rootNode = YAML::Load(str);
+        _rootNode = YAML::Load(const_cast<std::istream &>(yaml_str));
     }
     Conf(const YAML::Node &node)
     {

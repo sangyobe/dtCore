@@ -12,7 +12,8 @@ dynamics:                   \n\
 
 int main(int argc, const char **argv)
 {
-    dt::Utils::Conf conf(yaml);
+    std::stringstream stream(yaml);
+    dt::Utils::Conf conf(stream);
     std::cout << "type: " << conf["type"].toString() << std::endl;
     std::cout << "name: " << conf["name"].toString() << std::endl;
     std::cout << "version: " << conf["version"].toString() << std::endl;

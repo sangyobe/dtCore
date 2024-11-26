@@ -1,5 +1,10 @@
+#### [v1.5.2]
+(2024/11/26)
+##### 
+- Conf(const char *yaml_str) -> Conf(const std::istream &yaml_str)
+
 #### [v1.5.1]
-(2024/8/27)
+(2024/11/25)
 ##### 
 - add cmake config to support find_package().
 - dt::Utils::dtConf gets character string as constructor argument.
