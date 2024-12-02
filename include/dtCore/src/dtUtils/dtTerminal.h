@@ -9,6 +9,7 @@
 #ifndef __DT_UTILS_TERMINAL_H__
 #define __DT_UTILS_TERMINAL_H__
 
+#include <cstdint>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

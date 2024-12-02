@@ -1,3 +1,6 @@
+
+- dt::Utils::Conf supports load(save) from(to) a file
+
 #### [v1.5.2]
 (2024/11/26)
 ##### 

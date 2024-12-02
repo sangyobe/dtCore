@@ -2,6 +2,7 @@
 #include "dtCore/src/dtUtils/dtDir.h"
 
 //* C/C++ System Headers -----------------------------------------------------*/
+#include <cstdint>
 #include <memory>
 #include <stdio.h>
 #include <string.h>

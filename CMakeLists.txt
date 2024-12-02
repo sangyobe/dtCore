@@ -178,13 +178,13 @@ if(BUILD_DOCS)
           COMMENT "Generating API documentation with Doxygen"
           VERBATIM)
 
-      # TODO: Where docs will be installed.
-      # Note: if docs shall be not a part of final config, delete this install command,
-      # docs will be only available in [build_dir]/doc/doc/index.html
-      # install(
-      #     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
-      #     DESTINATION ./share/doc/${PROJECT_NAME}
-      #     OPTIONAL)
+        # TODO: Where docs will be installed.
+        # Note: if docs shall be not a part of final config, delete this install command,
+        # docs will be only available in [build_dir]/doc/doc/index.html
+        install(
+            DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
+            DESTINATION ./share/doc/${PROJECT_NAME}
+            OPTIONAL)
   else(DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
   endif(DOXYGEN_FOUND)

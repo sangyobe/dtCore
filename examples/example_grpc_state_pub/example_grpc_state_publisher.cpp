@@ -8,26 +8,17 @@ dt::DAQ::DAQManagerGrpc DAQ;
 
 std::function<double(void)> data_gen = ([]() -> double { return (double)rand() / (double)RAND_MAX; });
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
-    gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
-    gpr_log(GPR_DEBUG, "Program start.");
-
-    //google::InitGoogleLogging(argv[0]);
-
     dt::Log::Initialize("grpc_state_pub", "logs/grpc_state_pub.txt");
     dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
 
     DAQ.Initialize();
-    // grpc::EnableDefaultHealthCheckService(true);
-    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    
 
     std::atomic<bool> bRun;
     bRun.store(true);
 
     std::thread proc_pub_robot_state = std::thread([&bRun]() {
-        //std::shared_ptr<dt::DAQ::DataSink> pub = std::make_shared<dt::DAQ::StatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> >("RobotState", "0.0.0.0:50051");
         dt::DAQ::StatePublisherGrpc<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "0.0.0.0:50053");
         dtproto::robot_msgs::RobotStateTimeStamped msg;
 
