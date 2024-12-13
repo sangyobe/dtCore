@@ -227,7 +227,6 @@ public:
      * Remove call by id.
      * It might be not called by user-code.
      * @param[in] call_id Id of Call instance to remove.
-     * @return void
      */
     void RemoveCall(uint64_t call_id)
     {
