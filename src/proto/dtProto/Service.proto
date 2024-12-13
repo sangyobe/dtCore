@@ -10,6 +10,7 @@ import "dtProto/robot_msgs/ControlCmd.proto";
 import "dtProto/robot_msgs/MoveControl.proto";
 import "dtProto/robot_msgs/JointControl.proto";
 import "dtProto/sensor_msgs/Joy.proto";
+import "dtProto/perception_msgs/Object.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -29,4 +30,9 @@ service dtService
 
     // bi-directional communication
     rpc StreamJoy(stream sensor_msgs.Joy) returns (stream std_msgs.Response);
+}
+
+service perception
+{
+    rpc SubscribePerceivedObjects (stream perception_msgs.ObjectArrayTimeStamped) returns (std_msgs.Response);
 }

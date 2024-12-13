@@ -1,6 +1,10 @@
-
+#### [v1.6.0]
+(2024/12/13)
+##### 
+- perception_msgs added.
+- dtproto.perception service added.
 - dt::Utils::Conf supports load(save) from(to) a file
-
+ 
 #### [v1.5.2]
 (2024/11/26)
 ##### 
