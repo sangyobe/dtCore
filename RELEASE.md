@@ -1,3 +1,8 @@
+#### [v1.6.1]
+(2024/12/18)
+##### 
+- reset ServiceCallerGrpc::_running flag as false when message queue thread exits.
+
 #### [v1.6.0]
 (2024/12/13)
 ##### 
