@@ -1,3 +1,8 @@
+#### [v1.7.0]
+(2025/1/20)
+##### 
+- add DataSinkPBMcapRotator to support rotating filename based on file maximum size.
+- 
 #### [v1.6.1]
 (2024/12/18)
 ##### 
