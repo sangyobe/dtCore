@@ -93,6 +93,17 @@ public:
         }
     }
 
+    void Write(const mcap::Message &msg)
+    {
+        const auto res = _writer.write(msg);
+        if (!res.ok())
+        {
+            std::cerr << "Failed to write message: " << res.message << "\n";
+            _writer.terminate();
+            _writer.close();
+        }
+    }
+
 protected:
     google::protobuf::FileDescriptorSet BuildFileDescriptorSet(const google::protobuf::Descriptor* toplevelDescriptor) 
     {

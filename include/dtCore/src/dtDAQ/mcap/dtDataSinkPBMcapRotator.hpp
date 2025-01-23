@@ -58,6 +58,26 @@ public:
         _current_file_size = new_file_size;
     }
 
+    void Write(const mcap::Message &msg)
+    {
+        if (!_current_mcap)
+            return;
+
+        std::size_t expected_msg_size = msg.dataSize;
+        std::size_t new_file_size = _current_file_size + expected_msg_size;
+
+        if (new_file_size > _max_file_size)
+        {
+            // rotate mcap files
+            Rotate();
+            //reset current file size
+            new_file_size = expected_msg_size;
+        }
+
+        _current_mcap->Write(msg);
+        _current_file_size = new_file_size;
+    }
+
 protected:
     void Rotate()
     {

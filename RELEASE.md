@@ -1,8 +1,14 @@
+#### [v1.7.1]
+(2025/1/23)
+##### 
+- add DataSinkPBMcap::Write() interface to copy a raw mcap message.
+- add dtTimeUtil.hpp implementing time manipulation utilities.
+
 #### [v1.7.0]
 (2025/1/20)
 ##### 
 - add DataSinkPBMcapRotator to support rotating filename based on file maximum size.
-- 
+ 
 #### [v1.6.1]
 (2024/12/18)
 ##### 
