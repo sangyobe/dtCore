@@ -5,6 +5,7 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/extlib/spdlog/include"
     "${CMAKE_SOURCE_DIR}/extlib/yaml-cpp/include"
     "${CMAKE_SOURCE_DIR}/extlib/mcap/cpp/mcap/include"
+    "${CMAKE_SOURCE_DIR}/include"
 )
 link_directories(
     "${CMAKE_SOURCE_DIR}/lib"

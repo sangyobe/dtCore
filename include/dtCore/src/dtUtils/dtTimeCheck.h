@@ -21,7 +21,7 @@
 // define something for Windows (32-bit or 64-bit)
 #define NOMINMAX
 #include <Windows.h>
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 #include <time.h>
 #elif defined(ARDUINO)
 #include <Arduino.h>
@@ -62,7 +62,7 @@ private:
     LARGE_INTEGER endTime;
 };
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 class TimeCheck
 {
 public:

@@ -64,7 +64,7 @@ double TimeCheck::GetElapsedTime_usec()
     return elapsedTime_usec;
 }
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 TimeCheck::TimeCheck()
 {
     bStart = false;
