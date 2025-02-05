@@ -159,12 +159,22 @@ public:
 
         Call() = delete;
         virtual ~Call() = default;
+
         /*!
          * Completion event handler.
          * All subclasses should implement their own completion event handler properly.
          * This is called whenever async call requests completed such as Prepare(), Read(), Write(), Finalize(), etc.
+         * @return true if message is handled successfully. if it returns false, this Call object will be deleted.
          */
         virtual bool OnCompletionEvent(bool ok) = 0;
+
+        /*!
+         * Send message interface.
+         * This may be implemented by user's sub-class implementation of Call.
+         * @param[in] udata placeholder for user data.
+         * @return true if it sends a message successfully.
+         */
+        virtual bool Send(void *udata = nullptr) { return false; }
 
         /*!
          * Returns id for this Call instance.

@@ -60,7 +60,6 @@ public:
 
     ~ServiceListenerGrpc() { Stop(); }
 
-protected:
 public:
     //! Run grpc message-dispatcher
     void Run()
@@ -144,22 +143,6 @@ public:
     bool IsRun() { return _running.load(); }
 
 public:
-    template <typename SessionType> bool AddSession(void *udata = nullptr)
-    {
-        std::shared_ptr<SessionType> session =
-            std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
-        std::lock_guard<std::mutex> lock(_session_list_mtx);
-        _sessions[session->GetId()] = session;
-        return true;
-    }
-
-    void RemoveSession(uint64_t session_id)
-    {
-        std::lock_guard<std::mutex> lock(_session_list_mtx);
-        _sessions.erase(session_id);
-    }
-
-public:
     class Session
     {
     public:
@@ -175,8 +158,27 @@ public:
 
         Session() = delete;
         virtual ~Session() = default;
+
+        /*!
+         * Completion event handler.
+         * All subclasses should implement their own completion event handler properly.
+         * This is called whenever async call requests completed such as Prepare(), Read(), Write(), Finalize(), etc.
+         * @return true if message is handled successfully. if it returns false, this Call object will be deleted.
+         */
         virtual bool OnCompletionEvent(bool ok) = 0;
 
+        /*!
+         * Send message interface.
+         * This may be implemented by user's sub-class implementation of Session.
+         * @param[in] udata placeholder for user data.
+         * @return true if it sends a message successfully.
+         */
+        virtual bool Send(void *udata = nullptr) { return false; }
+
+        /*!
+         * Returns id for this Session instance.
+         * @return session id.
+         */
         uint64_t GetId() { return _id; }
 
         void TryCancelCallAndShutdown()
@@ -225,8 +227,47 @@ public:
             return (++_session_id_allocator);
         }
     };
-
     friend class Session;
+
+    /*!
+     * Initiate a new RPC session.
+     * The template parameter 'SessionType' should be one of subclasses of dt::DAQ::ServiceListenerGrpc::Session.
+     * User should subclass dt::DAQ::ServiceListenerGrpc::Session and implement their own completion event message handler.
+     * @param[in] udata udata is passed as the sole argument of SessionType constructor.
+     */
+    template <typename SessionType> uint64_t AddSession(void *udata = nullptr)
+    {
+        std::shared_ptr<SessionType> session =
+            std::make_shared<SessionType>(this, _service.get(), _cq.get(), udata);
+        std::lock_guard<std::mutex> lock(_session_list_mtx);
+        _sessions[session->GetId()] = session;
+        return session->GetId();
+    }
+
+    /*!
+     * Remove session by id.
+     * It might be not called by user-code.
+     * @param[in] session_id Id of Session instance to remove.
+     */
+    void RemoveSession(uint64_t session_id)
+    {
+        std::lock_guard<std::mutex> lock(_session_list_mtx);
+        _sessions.erase(session_id);
+    }
+
+    /*!
+     * Get session by id.
+     * @param[in] session_id Id of Session instance.
+     * @return Shared pointer to the Session instance.
+     */
+    std::shared_ptr<Session> GetSession(uint64_t session_id)
+    {
+        auto session = _sessions.find(session_id);
+        if (session != _sessions.end())
+            return session->second;
+        else
+            return std::shared_ptr<Session>();
+    }
 
 protected:
     std::unique_ptr<grpc::Server> _server;

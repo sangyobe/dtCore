@@ -1,3 +1,11 @@
+#### [v1.7.2]
+(2025/2/5)
+##### 
+- dt::DAQ::ServiceListenerGrpc::AddSession() returns session id created.
+- dt::DAQ::ServiceListenerGrpc::GetSession() is added.
+- dt::DAQ::ServiceListenerGrpc::Session::Send() is added.
+- dt::DAQ::ServiceCallerGrpc::Call::Send() is added.
+
 #### [v1.7.1]
 (2025/1/23)
 ##### 
