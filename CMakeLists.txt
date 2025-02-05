@@ -4,7 +4,7 @@ project(dtCore
     LANGUAGES C CXX
     HOMEPAGE_URL https://github.hmc.co.kr/art_framework
     DESCRIPTION "HMC's Art Framework Library"
-    VERSION 1.5.1
+    VERSION 1.7.1
 )
 
 cmake_policy(VERSION 3.13)
@@ -62,14 +62,14 @@ set(PROTOBUF_GEN_DIR "") # this variable will be set while configuring 'src' dir
 # --------------------------------------------------------
 OPTION(BUILD_DOCS           "Build documents"                         OFF)
 OPTION(BUILD_UNIT_TESTS     "Build unit test"                         OFF)
-OPTION(BUILD_EXAMPLES       "Build examples"                          ON)
+OPTION(BUILD_EXAMPLES       "Build examples"                          OFF)
 OPTION(BUILD_EXAMPLES_eCAL  "Build eCAL examples"                     OFF)
 OPTION(BUILD_EXAMPLES_gRPC  "Build gRPC examples"                     OFF)
 OPTION(BUILD_EXAMPLES_MCAP  "Build MCAP examples"                     OFF)
 OPTION(BUILD_dtCore         "Build dtCore library"                    ON)
 OPTION(BUILD_dtProto        "Build dtProto library"                   ON)
-OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" OFF)
-OPTION(BUILD_dtCore_gRPC "Build dtCore with gRPC DAQ support" OFF)
+OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" ON)
+OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      ON)
 
 
 # --------------------------------------------------------
@@ -178,13 +178,13 @@ if(BUILD_DOCS)
           COMMENT "Generating API documentation with Doxygen"
           VERBATIM)
 
-      # TODO: Where docs will be installed.
-      # Note: if docs shall be not a part of final config, delete this install command,
-      # docs will be only available in [build_dir]/doc/doc/index.html
-      # install(
-      #     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
-      #     DESTINATION ./share/doc/${PROJECT_NAME}
-      #     OPTIONAL)
+        # TODO: Where docs will be installed.
+        # Note: if docs shall be not a part of final config, delete this install command,
+        # docs will be only available in [build_dir]/doc/doc/index.html
+        install(
+            DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
+            DESTINATION ./share/doc/${PROJECT_NAME}
+            OPTIONAL)
   else(DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
   endif(DOXYGEN_FOUND)

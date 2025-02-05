@@ -14,6 +14,7 @@
 #include <string>
 //#include <cassert>
 #include "yaml-cpp/yaml.h"
+#include <fstream>
 
 namespace dt
 {
@@ -29,13 +30,46 @@ public:
     {
         _rootNode = YAML::LoadFile(yaml_file);
     }
-    Conf(const char *str)
+    Conf(const std::istream &yaml_str)
     {
-        _rootNode = YAML::Load(str);
+        _rootNode = YAML::Load(const_cast<std::istream &>(yaml_str));
     }
     Conf(const YAML::Node &node)
     {
         _rootNode = node;
+    }
+
+    // load from a file
+    bool Load(const std::string &yaml_file)
+    {
+        std::ifstream fin(yaml_file);
+        if (fin.is_open())
+        {
+            _rootNode = YAML::Load(fin);
+            return true;
+        }
+        else
+            return false;
+    }
+
+    // load from memory
+    bool Load(const std::istream &yaml_str)
+    {
+        _rootNode = YAML::Load(const_cast<std::istream &>(yaml_str));
+        return true;
+    }
+
+    // save content as a file
+    bool Dump(const std::string &out_file)
+    {
+        std::ofstream fout(out_file);
+        if (fout.is_open())
+        {
+            fout << _rootNode;
+            return true;
+        }
+        else
+            return false;
     }
 
     // indexer

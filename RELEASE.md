@@ -1,5 +1,33 @@
+#### [v1.7.1]
+(2025/1/23)
+##### 
+- add DataSinkPBMcap::Write() interface to copy a raw mcap message.
+- add dtTimeUtil.hpp implementing time manipulation utilities.
+
+#### [v1.7.0]
+(2025/1/20)
+##### 
+- add DataSinkPBMcapRotator to support rotating filename based on file maximum size.
+ 
+#### [v1.6.1]
+(2024/12/18)
+##### 
+- reset ServiceCallerGrpc::_running flag as false when message queue thread exits.
+
+#### [v1.6.0]
+(2024/12/13)
+##### 
+- perception_msgs added.
+- dtproto.perception service added.
+- dt::Utils::Conf supports load(save) from(to) a file
+ 
+#### [v1.5.2]
+(2024/11/26)
+##### 
+- Conf(const char *yaml_str) -> Conf(const std::istream &yaml_str)
+
 #### [v1.5.1]
-(2024/8/27)
+(2024/11/25)
 ##### 
 - add cmake config to support find_package().
 - dt::Utils::dtConf gets character string as constructor argument.

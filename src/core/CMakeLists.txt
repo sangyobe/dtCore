@@ -3,7 +3,7 @@ set(CORE_HDRS "")
 
 if(BUILD_dtCore)
     file(GLOB_RECURSE CORE_SRCS "./thread/*.cpp" "./utils/*.cpp")
-    message(STATUS "CORE_SRCS: ${CORE_SRCS}")
+    # message(STATUS "CORE_SRCS: ${CORE_SRCS}")
 
     if(CORE_SRCS)
         add_library(dtcore STATIC
@@ -39,8 +39,8 @@ endif()
 if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_dtCore_gRPC)
     file(GLOB_RECURSE GRPC_SRCS "./daq/grpc/*.cpp")
     list(APPEND CORE_SRCS ${GRPC_SRCS})
-    message(STATUS "GRPC_SRCS: ${GRPC_SRCS}")
-    message(STATUS "CORE_SRCS: ${CORE_SRCS}")
+    # message(STATUS "GRPC_SRCS: ${GRPC_SRCS}")
+    # message(STATUS "CORE_SRCS: ${CORE_SRCS}")
 
     if(CORE_SRCS)
         add_library(dtcore_grpc STATIC

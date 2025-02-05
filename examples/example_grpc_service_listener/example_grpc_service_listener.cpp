@@ -53,7 +53,7 @@ public:
             }
             else {
                 LOG(err) << "Command[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
-                GPR_ASSERT(false && "Invalid Session Status.");
+                ABSL_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }
@@ -134,7 +134,7 @@ public:
             }
             else {
                 LOG(err) << "RequestRobotInfo[" << _id << "] Invalid session status (" << static_cast<int>(_call_state) << ")";
-                GPR_ASSERT(false && "Invalid Session Status.");
+                ABSL_ASSERT(false && "Invalid Session Status.");
                 return false;
             }
         }

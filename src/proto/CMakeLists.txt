@@ -23,7 +23,7 @@ set(pb_grpc_srcs "")
 set(pb_grpc_hdrs "")
 set(pb_gen_dir ${CMAKE_CURRENT_BINARY_DIR})
 
-file(GLOB_RECURSE PB_SRCS "./" "*.proto")
+file(GLOB_RECURSE PB_SRCS "*.proto")
 foreach(pb_src ${PB_SRCS})
     # message(STATUS "pb_src: ${pb_src}")
     get_filename_component(pb_proto_path "${pb_src}" PATH)

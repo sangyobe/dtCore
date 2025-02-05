@@ -33,24 +33,25 @@ template <typename T>
 class DataSinkPBMcap : public DataSinkPB<T>
 {
 public:
-    DataSinkPBMcap(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true)
+    DataSinkPBMcap(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true, bool truncate = true)
         : _topic_name(topic_name)
     {
-        std::string filename = file_basename;
         if (annot_datetime)
-            filename = dt::Utils::annotate_filename_datetime(file_basename);
+            _file_name = dt::Utils::annotate_filename_datetime(file_basename);
+        else
+            _file_name = file_basename;
 
         std::string dirname;
-        std::tie(dirname, std::ignore) = dt::Utils::split_by_directory(filename);
-        if (!dt::Utils::create_dir(dirname))
+        std::tie(dirname, std::ignore) = dt::Utils::split_by_directory(_file_name);
+        if (!dirname.empty() && !dt::Utils::create_dir(dirname))
         {
             std::cerr << "Failed to create containing directory (" << dirname << ")." << std::endl;
         }
 
         auto options = mcap::McapWriterOptions("");
-        const auto res = _writer.open(filename, options);
+        const auto res = _writer.open(_file_name, options);
         if (!res.ok()) {
-            std::cerr << "Failed to open " << filename << " for writing: " << res.message << std::endl;
+            std::cerr << "Failed to open " << _file_name << " for writing: " << res.message << std::endl;
         }
 
         // add schema
@@ -64,6 +65,11 @@ public:
         mcap::Channel channel(topic_name, "protobuf", schema.id);
         _writer.addChannel(channel);
         _channel_id = channel.id;
+    }
+
+    ~DataSinkPBMcap()
+    {
+        _writer.close();
     }
 
     void Publish(T& msg) 
@@ -81,6 +87,17 @@ public:
         mcap_msg.dataSize = serialized.size();
         const auto res = _writer.write(mcap_msg);
         if (!res.ok()) {
+            std::cerr << "Failed to write message: " << res.message << "\n";
+            _writer.terminate();
+            _writer.close();
+        }
+    }
+
+    void Write(const mcap::Message &msg)
+    {
+        const auto res = _writer.write(msg);
+        if (!res.ok())
+        {
             std::cerr << "Failed to write message: " << res.message << "\n";
             _writer.terminate();
             _writer.close();
@@ -111,6 +128,7 @@ protected:
 
 protected:
     std::string _topic_name;
+    std::string _file_name;
     mcap::McapWriter _writer;
     mcap::ChannelId _channel_id;
     uint32_t _msg_count{0};

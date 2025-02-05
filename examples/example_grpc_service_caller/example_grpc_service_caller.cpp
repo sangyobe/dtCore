@@ -52,7 +52,7 @@ public:
         return false; // remove this call
       } else {
           LOG(err) << "RequestRobotInfo[" << this->_id << "] Invalid call state (" << static_cast<int>(_call_state) << ")";
-          GPR_ASSERT(false && "Invalid Call State.");
+          ABSL_ASSERT(false && "Invalid Call State.");
           return false;
       }
     }

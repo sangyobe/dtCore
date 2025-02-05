@@ -79,11 +79,12 @@ public:
                         }
                     }
                 }
+                client->_running = false;
                 return 0;
             },
             (void *)this);
 #else
-    _rpc_thread = std::thread([this] {
+        _rpc_thread = std::thread([this] {
             void *tag;
             bool ok;
             while (_cq.Next(&tag, &ok))
@@ -97,7 +98,9 @@ public:
                         RemoveCall(static_cast<ServiceCallerGrpc<ServiceType>::Call *>(tag)->GetId());
                     }
                 }
-            });
+            }
+            this->_running = false;
+        });
 #endif
     }
 
@@ -227,7 +230,6 @@ public:
      * Remove call by id.
      * It might be not called by user-code.
      * @param[in] call_id Id of Call instance to remove.
-     * @return void
      */
     void RemoveCall(uint64_t call_id)
     {

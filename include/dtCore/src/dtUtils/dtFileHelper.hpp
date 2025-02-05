@@ -140,6 +140,24 @@ std::string annotate_filename_datetime(const std::string file_basename)
 }
 
 /**
+ * append index(number) to given filename
+ */
+std::string annotate_filename_index(const std::string file_basename, std::size_t index)
+{
+    if (index == 0u)
+    {
+        return file_basename;
+    }
+
+    std::string basename, ext, filename;
+    std::tie(basename, ext) = split_by_extension(file_basename);
+
+    filename = string_format("%s.%d%s", basename.c_str(), index, ext.c_str());
+
+    return filename;
+}
+
+/**
  * create the given directory - and all directories leading to it
  * return true on success or if the directory already exists
  */
@@ -169,6 +187,70 @@ bool create_dir(const std::string &path) {
     } while (search_offset < path.size());
 
     return true;
+}
+
+/**
+ * delete the target if exists, and rename the src file to target
+ * return true on success, false otherwise.
+ */
+bool rename_file(const std::string &src_filename, const std::string &target_filename) noexcept
+{
+    // try to delete the target file in case it already exists.
+    std::remove(target_filename.c_str());
+    return std::rename(src_filename.c_str(), target_filename.c_str()) == 0;
+}
+
+/**
+ * Return file size according to open FILE* object
+ */
+std::size_t filesize(FILE *f)
+{
+    if (f == nullptr)
+    {
+        throw("Failed getting file size. fd is null");
+    }
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    int fd = ::_fileno(f);
+#if defined(_WIN64) // 64 bits
+    __int64 ret = ::_filelengthi64(fd);
+    if (ret >= 0)
+    {
+        return static_cast<size_t>(ret);
+    }
+
+#else // windows 32 bits
+    long ret = ::_filelength(fd);
+    if (ret >= 0)
+    {
+        return static_cast<size_t>(ret);
+    }
+#endif
+
+#else // unix
+// OpenBSD and AIX doesn't compile with :: before the fileno(..)
+#if defined(__OpenBSD__) || defined(_AIX)
+    int fd = fileno(f);
+#else
+    int fd = ::fileno(f);
+#endif
+// 64 bits(but not in osx, linux/musl or cygwin, where fstat64 is deprecated)
+#if ((defined(__linux__) && defined(__GLIBC__)) || defined(__sun) || defined(_AIX)) && \
+    (defined(__LP64__) || defined(_LP64))
+    struct stat64 st;
+    if (::fstat64(fd, &st) == 0)
+    {
+        return static_cast<size_t>(st.st_size);
+    }
+#else // other unix or linux 32 bits or cygwin
+    struct stat st;
+    if (::fstat(fd, &st) == 0)
+    {
+        return static_cast<size_t>(st.st_size);
+    }
+#endif
+#endif
+    throw("Failed getting file size from fd", errno);
+    return 0; // will not be reached.
 }
 
 } // namespace Utils

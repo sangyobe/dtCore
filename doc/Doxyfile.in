@@ -14,11 +14,11 @@ PROJECT_NUMBER         = @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJEC
 STRIP_FROM_PATH        = @CMAKE_CURRENT_SOURCE_DIR_LINUX@ \ 
                          @PROJECT_SOURCE_DIR_LINUX@
 INPUT                  = @CMAKE_CURRENT_SOURCE_DIR_LINUX@/include \
-#                         @PROJECT_SOURCE_DIR_LINUX@/source \
                          @CMAKE_CURRENT_SOURCE_DIR_LINUX@/README.md
 
 FILE_PATTERNS          = *.h \
                          *.hpp \
+                         *.ipp \
                          *.hh \
                          *.c \
                          *.cc \
