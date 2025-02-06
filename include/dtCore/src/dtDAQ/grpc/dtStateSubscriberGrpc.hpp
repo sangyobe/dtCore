@@ -285,10 +285,16 @@ void StateSubscriberGrpc<StateType>::Session::Stop()
     _cq.Shutdown();
     // LOG(INFO) << "CQ shutdown.";
 #ifdef USE_THREAD_PTHREAD
-    void* th_join_result;
-    pthread_join(_rpc_recv_thread, &th_join_result);
+        if (_rpc_recv_thread)
+        {
+            pthread_join(_rpc_recv_thread, nullptr);
+            _rpc_recv_thread = (pthread_t)nullptr;
+        }
 #else
-    _rpc_recv_thread.join();
+        if (_rpc_recv_thread.joinable())
+        {
+            _rpc_recv_thread.join();
+        }
 #endif
     // LOG(INFO) << "Session shutdown.";
 }

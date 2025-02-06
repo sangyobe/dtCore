@@ -110,21 +110,27 @@ public:
      */
     void Stop()
     {
-        // {
-        //   std::lock_guard<std::mutex> lock(_call_list_mtx);
-        //   for (auto it : _calls) {
-        //     it.second->TryCancelCallAndShutdown();
-        //   }
-        //   //_calls.clear();
-        // }
+        {
+            std::lock_guard<std::mutex> lock(_call_list_mtx);
+            for (auto it : _calls) {
+                it.second->TryCancelCallAndShutdown();
+            }
+            //_calls.clear();
+        }
 
         _cq.Shutdown();
 
 #ifdef USE_THREAD_PTHREAD
-        void *th_join_result;
-        pthread_join(_rpc_thread, &th_join_result);
+        if (_rpc_thread)
+        {
+            pthread_join(_rpc_thread, nullptr);
+            _rpc_thread = (pthread_t)nullptr;
+        }
 #else
-        _rpc_thread.join();
+        if (_rpc_thread.joinable())
+        {
+            _rpc_thread.join();
+        }
 #endif
 
         // drain the queue
@@ -184,7 +190,7 @@ public:
 
         bool TryCancelCallAndShutdown()
         {
-            std::lock_guard<std::mutex> lock(_proc_mtx);
+            // std::lock_guard<std::mutex> lock(_proc_mtx);
             _ctx.TryCancel();
             return true;
         }
