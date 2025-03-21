@@ -74,7 +74,7 @@ void Term::SetupTerminal(bool showCursor)
     }
 }
 
-void dhTerm::RestoreTerminal(void)
+void Term::RestoreTerminal(void)
 {
     // Reset colors
     printf("\x1b[0m");

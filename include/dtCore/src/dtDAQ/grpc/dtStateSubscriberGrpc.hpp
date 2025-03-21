@@ -25,8 +25,6 @@
 
 #include "dtProto/Service.grpc.pb.h"
 
-#define USE_THREAD_PTHREAD
-
 namespace dt
 {
 namespace DAQ
@@ -76,10 +74,10 @@ private:
             PEER_DISCONNECTED
         };
         RpcCallState _call_state {RpcCallState::WAIT_START};
-#ifdef USE_THREAD_PTHREAD
-        pthread_t _rpc_recv_thread;
-#else
+#if defined(_WIN32) || defined(__CYGWIN__)
         std::thread _rpc_recv_thread;
+#else
+        pthread_t _rpc_recv_thread;
 #endif
         std::mutex _call_mtx;
         StateSubscriberGrpc<StateType> *_subscriber;
@@ -157,7 +155,26 @@ bool StateSubscriberGrpc<StateType>::Session::InitRequest()
     _stream_reader->StartCall((void*)this);
     this->_subscriber->_running = true;
 
-#ifdef USE_THREAD_PTHREAD
+#if defined(_WIN32) || defined(__CYGWIN__)
+    _rpc_recv_thread = std::thread([this] {
+        // LOG(INFO) << "RPC new-call handler()";
+        void* tag;
+        bool ok;
+        while (_cq.Next(&tag, &ok)) {
+            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+            if (ok && static_cast<StateSubscriberGrpc<StateType>::Session *>(tag)->OnCompletionEvent())
+            {
+                continue;
+            }
+            else {
+                static_cast<StateSubscriberGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
+                break;
+            }
+        }
+        // LOG(INFO) << "RPC handler() exits.";
+        this->_subscriber->_running = false;
+    });
+#else
     pthread_create(
         &_rpc_recv_thread, NULL,
         [](void *arg) -> void * {
@@ -184,25 +201,6 @@ bool StateSubscriberGrpc<StateType>::Session::InitRequest()
             return 0;
         },
         (void *)this);
-#else
-    _rpc_recv_thread = std::thread([this] {
-        // LOG(INFO) << "RPC new-call handler()";
-        void* tag;
-        bool ok;
-        while (_cq.Next(&tag, &ok)) {
-            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
-            if (ok && static_cast<StateSubscriberGrpc<StateType>::Session *>(tag)->OnCompletionEvent())
-            {
-                continue;
-            }
-            else {
-                static_cast<StateSubscriberGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
-                break;
-            }
-        }
-        // LOG(INFO) << "RPC handler() exits.";
-        this->_subscriber->_running = false;
-    });
 #endif
 
     return true;
@@ -284,17 +282,17 @@ void StateSubscriberGrpc<StateType>::Session::Stop()
     TryCancelCallAndShutdown();
     _cq.Shutdown();
     // LOG(INFO) << "CQ shutdown.";
-#ifdef USE_THREAD_PTHREAD
-        if (_rpc_recv_thread)
-        {
-            pthread_join(_rpc_recv_thread, nullptr);
-            _rpc_recv_thread = (pthread_t)nullptr;
-        }
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (_rpc_recv_thread.joinable())
+    {
+        _rpc_recv_thread.join();
+    }
 #else
-        if (_rpc_recv_thread.joinable())
-        {
-            _rpc_recv_thread.join();
-        }
+    if (_rpc_recv_thread)
+    {
+        pthread_join(_rpc_recv_thread, nullptr);
+        _rpc_recv_thread = (pthread_t)nullptr;
+    }
 #endif
     // LOG(INFO) << "Session shutdown.";
 }

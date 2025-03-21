@@ -7,7 +7,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #endif

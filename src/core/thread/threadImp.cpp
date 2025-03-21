@@ -6,7 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
 #include <unistd.h>
+#endif
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/
@@ -22,70 +25,70 @@ namespace Thread
 //* Private Macro ------------------------------------------------------------*/
 //* Private Types ------------------------------------------------------------*/
 #if defined(__APPLE__)
-    #include <TargetConditionals.h>
+#include <TargetConditionals.h>
 
-    #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
+#define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
 
-    typedef struct cpu_set {
-        uint32_t    count;
-    } cpu_set_t;
+typedef struct cpu_set {
+    uint32_t    count;
+} cpu_set_t;
 
-    static const size_t
-    CPU_SETSIZE = sizeof(cpu_set_t);
+static const size_t
+CPU_SETSIZE = sizeof(cpu_set_t);
 
-    static inline void
-    CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
+static inline void
+CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
 
-    static inline void
-    CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
+static inline void
+CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
 
-    static inline int
-    CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
+static inline int
+CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
 
-    static inline cpu_set_t *
-    CPU_ALLOC(int count) { return (cpu_set_t *)malloc(sizeof(cpu_set_t)); }
+static inline cpu_set_t *
+CPU_ALLOC(int count) { return (cpu_set_t *)malloc(sizeof(cpu_set_t)); }
 
-    static inline size_t
-    CPU_ALLOC_SIZE(int count) { return sizeof(cpu_set_t); }
+static inline size_t
+CPU_ALLOC_SIZE(int count) { return sizeof(cpu_set_t); }
 
-    static inline void
-    CPU_FREE(cpu_set_t *cpuset) { if (cpuset) free(cpuset); }
+static inline void
+CPU_FREE(cpu_set_t *cpuset) { if (cpuset) free(cpuset); }
 
-    int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
-    {
-        int32_t core_count = 0;
-        size_t  len = sizeof(core_count);
-        int ret = sysctlbyname(SYSCTL_CORE_COUNT, &core_count, &len, 0, 0);
-        if (ret) {
-            dtTerm::Printf("error while get core count %d\n", ret);
-            return -1;
-        }
-        mask->count = 0;
-        for (int i = 0; i < core_count; i++) {
-            mask->count |= (1 << i);
-        }
-        return 0;
+int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
+{
+    int32_t core_count = 0;
+    size_t  len = sizeof(core_count);
+    int ret = sysctlbyname(SYSCTL_CORE_COUNT, &core_count, &len, 0, 0);
+    if (ret) {
+        dtTerm::Printf("error while get core count %d\n", ret);
+        return -1;
     }
-
-    int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)
-    {
-        thread_port_t mach_thread;
-        int core = 0;
-
-        for (core = 0; core < 8 * cpusetsize; core++) {
-            if (CPU_ISSET(core, mask)) break;
-        }
-        dtTerm::Printf("binding to core %d\n", core);
-        thread_affinity_policy_data_t policy = { core };
-        mach_thread = pthread_mach_thread_np(thread);
-        thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1);
-        return 0;
+    mask->count = 0;
+    for (int i = 0; i < core_count; i++) {
+        mask->count |= (1 << i);
     }
+    return 0;
+}
 
-    int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const cpu_set_t *mask)
-    {
-        return 0;
+int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)
+{
+    thread_port_t mach_thread;
+    int core = 0;
+
+    for (core = 0; core < 8 * cpusetsize; core++) {
+        if (CPU_ISSET(core, mask)) break;
     }
+    dtTerm::Printf("binding to core %d\n", core);
+    thread_affinity_policy_data_t policy = { core };
+    mach_thread = pthread_mach_thread_np(thread);
+    thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1);
+    return 0;
+}
+
+int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const cpu_set_t *mask)
+{
+    return 0;
+}
 #endif
 
 //* Private Variables --------------------------------------------------------*/
@@ -97,9 +100,14 @@ static dt_sem_t *semList[64];
 static dt_mutex_t *mtxList[64];
 static int maxCpuCnt = 0;
 //* Private Functions --------------------------------------------------------*/
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
 int PrintThreadAttr(const pthread_attr_t *attr);
+#endif
 
 //* Private Functions Definition ---------------------------------------------*/
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
 int PrintThreadAttr(const pthread_attr_t *attr)
 {
     size_t memSize;
@@ -148,8 +156,11 @@ error:
     dtTerm::PrintEndLine();
     return -1;
 }
+#endif
 
 //* Public(Exported) Functions Definition ------------------------------------*/
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
 int GetCpuCount(void)
 {
     // start by assuming a maximum of 128 hardware threads and keep growing until
@@ -496,6 +507,7 @@ error:
     dtTerm::PrintEndLine();
     return -1;
 }
+#endif
 
 } // namespace Thread
 } // namespace dt

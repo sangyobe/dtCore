@@ -32,8 +32,6 @@
 
 #include "../dtDataSinkPB.hpp"
 
-#define USE_THREAD_PTHREAD
-
 namespace dt
 {
 namespace DAQ
@@ -105,10 +103,10 @@ protected:
     std::unique_ptr<grpc::ServerCompletionQueue> _cq;
     dtproto::dtService::AsyncService _service;
     std::atomic<bool> _running {false};
-#ifdef USE_THREAD_PTHREAD
-    pthread_t _rpc_thread;
-#else
+#if defined(_WIN32) || defined(__CYGWIN__)
     std::thread _rpc_thread;
+#else
+    pthread_t _rpc_thread;
 #endif    
     std::mutex _session_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session> > _sessions;
@@ -314,17 +312,17 @@ void StatePublisherGrpc<StateType>::Stop()
     _running = false;
     _server->Shutdown();
     _cq->Shutdown();
-#ifdef USE_THREAD_PTHREAD
-        if (_rpc_thread)
-        {
-            pthread_join(_rpc_thread, nullptr);
-            _rpc_thread = (pthread_t)nullptr;
-        }
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (_rpc_thread.joinable())
+    {
+        _rpc_thread.join();
+    }
 #else
-        if (_rpc_thread.joinable())
-        {
-            _rpc_thread.join();
-        }
+    if (_rpc_thread)
+    {
+        pthread_join(_rpc_thread, nullptr);
+        _rpc_thread = (pthread_t)nullptr;
+    }
 #endif
     // LOG(INFO) << "Server shutdown.";
 }
@@ -337,7 +335,26 @@ void StatePublisherGrpc<StateType>::Run()
 
     // rpc event "read done / write done / close(already connected)" call-back by this call completion queue
     // rpc event "new connection / close(waiting for connect)" call-back by this notification completion queue
-#ifdef USE_THREAD_PTHREAD
+#if defined(_WIN32) || defined(__CYGWIN__)
+    _rpc_thread = std::thread([this] {
+        // LOG(INFO) << "RPC new-call handler()";
+        void *tag;
+        bool ok;
+        while (_cq->Next(&tag, &ok))
+        {
+            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
+            //GPR_ASSERT(ok);
+            if (ok)
+            {
+                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->OnCompletionEvent();
+            }
+            else
+            {
+                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
+            }
+        }
+    });
+#else
     pthread_create(
         &_rpc_thread, NULL,
         [](void *arg) -> void * {
@@ -362,25 +379,6 @@ void StatePublisherGrpc<StateType>::Run()
             return 0;
         },
         (void *)this);
-#else
-    _rpc_thread = std::thread([this] {
-        // LOG(INFO) << "RPC new-call handler()";
-        void *tag;
-        bool ok;
-        while (_cq->Next(&tag, &ok))
-        {
-            // LOG(INFO) << "CQ_CALL(" << (ok ? "true" : "false") << ")";
-            //GPR_ASSERT(ok);
-            if (ok)
-            {
-                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->OnCompletionEvent();
-            }
-            else
-            {
-                static_cast<StatePublisherGrpc<StateType>::Session *>(tag)->TryCancelCallAndShutdown();
-            }
-        }
-    });
 #endif
 }
 

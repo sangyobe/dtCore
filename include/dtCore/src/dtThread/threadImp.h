@@ -14,11 +14,15 @@
 //* C/C++ System Headers -----------------------------------------------------*/
 extern "C"
 {
-#include <unistd.h>
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+//#include <thread>
+//#include <mutex>
+// #include <semaphore>
+#else
 #include <pthread.h>
-#elif defined(__APPLE__)
+#include <unistd.h>
+#if defined(__APPLE__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <mach/thread_act.h>
@@ -27,6 +31,7 @@ extern "C"
 #else
 #include <pthread.h>
 #include <semaphore.h>
+#endif
 #endif
 }
 
@@ -40,7 +45,11 @@ namespace Thread
 {
 //* Public(Exported) Macro ---------------------------------------------------*/
 //* Public(Exported) Types ---------------------------------------------------*/
-#if defined(__APPLE__)
+#if defined(_WIN32) || defined(__CYGWIN__)
+    using dt_thread_t = HANDLE; //std::thread;
+    using dt_mutex_t = HANDLE; //std::mutex;
+    using dt_sem_t = HANDLE; //counting_semaphore;
+#elif defined(__APPLE__)
     using dt_thread_t = pthread_t; // std::thread;
     using dt_mutex_t = pthread_mutex_t;
     using dt_sem_t = dispatch_semaphore_t;
@@ -50,10 +59,10 @@ namespace Thread
     using dt_sem_t = sem_t;
 #endif
 
-    /**
+/**
  * Data structure to hold runtime statistics of a thread such as period and etc.
  */
-    typedef struct _threadTimeInfo
+typedef struct _threadTimeInfo
     {
         double targetPeriod_ms = 0;
         double period_ms = 0;
@@ -147,7 +156,9 @@ int CreateSemaphore(SemInfo &semInfo, unsigned int initValue = 0);
  */
 inline int PostSemaphore(SemInfo &semInfo)
 {
-#if defined(__APPLE__)
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 0;
+#elif defined(__APPLE__)
     return dispatch_semaphore_signal(semInfo.sem);
 #else
     return sem_post(&semInfo.sem);
@@ -166,7 +177,9 @@ void PostAllSemaphore();
  */
 inline int WaitSemaphore(SemInfo &semInfo)
 {
-#if defined(__APPLE__)
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 0;
+#elif defined(__APPLE__)
     return dispatch_semaphore_wait(semInfo.sem, DISPATCH_TIME_FOREVER);
 #else
     return sem_wait(&semInfo.sem);
@@ -200,7 +213,11 @@ int CreateMutex(MtxInfo &mtxInfo);
  */
 inline int MutexLock(MtxInfo &mtxInfo)
 {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 0;
+#else
     return pthread_mutex_lock(&mtxInfo.mutex);
+#endif
 }
 
 /**
@@ -210,7 +227,11 @@ inline int MutexLock(MtxInfo &mtxInfo)
  */
 inline int MutexTryLock(MtxInfo &mtxInfo)
 {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 0;
+#else
     return pthread_mutex_trylock(&mtxInfo.mutex); // returns 0 if successful.
+#endif
 }
 
 /**
@@ -220,7 +241,11 @@ inline int MutexTryLock(MtxInfo &mtxInfo)
  */
 inline int MutexUnlock(MtxInfo &mtxInfo)
 {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 0;
+#else
     return pthread_mutex_unlock(&mtxInfo.mutex);
+#endif
 }
 
 /**
@@ -242,7 +267,7 @@ int DeleteAllMutex();
  */
 inline void SleepForMillis(unsigned int milliseconds)
 {
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
     ::Sleep(milliseconds);
 #else
     usleep(milliseconds * 1E3);

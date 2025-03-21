@@ -8,7 +8,7 @@ project(dtCore
 )
 
 cmake_policy(VERSION 3.13)
-cmake_policy(SET CMP0077 NEW)
+cmake_policy(SET CMP0077 NEW) # option() honors normal variables
 
 # generate version.h
 set(version_h_in ${CMAKE_CURRENT_SOURCE_DIR}/include/dtCore/version.h.in)

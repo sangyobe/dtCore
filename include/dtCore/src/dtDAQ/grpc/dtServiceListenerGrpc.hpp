@@ -29,8 +29,6 @@
 
 #include <dtProto/Service.grpc.pb.h>
 
-#define USE_THREAD_PTHREAD
-
 namespace dt
 {
 namespace DAQ
@@ -69,7 +67,24 @@ public:
         // rpc event "read done / write done / close(already connected)" call-back
         // by this call completion queue rpc event "new connection / close(waiting
         // for connect)" call-back by this notification completion queue
-#ifdef USE_THREAD_PTHREAD
+#if defined(_WIN32) || defined(__CYGWIN__)
+        _rpc_thread = std::thread([this] {
+            void *tag;
+            bool ok;
+            while (_cq->Next(&tag, &ok))
+            {
+                // GPR_ASSERT(ok);
+                if (tag)
+                {
+                    if (!static_cast<ServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
+                    {
+                        static_cast<ServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
+                        RemoveSession(static_cast<ServiceListenerGrpc::Session *>(tag)->GetId());
+                    }
+                }
+            }
+        });
+#else
         pthread_create(
             &_rpc_thread, NULL,
             [](void *arg) -> void * {
@@ -92,23 +107,6 @@ public:
                 return 0;
             },
             (void *)this);
-#else
-        _rpc_thread = std::thread([this] {
-            void *tag;
-            bool ok;
-            while (_cq->Next(&tag, &ok))
-            {
-                // GPR_ASSERT(ok);
-                if (tag)
-                {
-                    if (!static_cast<ServiceListenerGrpc::Session *>(tag)->OnCompletionEvent(ok))
-                    {
-                        static_cast<ServiceListenerGrpc::Session *>(tag)->TryCancelCallAndShutdown();
-                        RemoveSession(static_cast<ServiceListenerGrpc::Session *>(tag)->GetId());
-                    }
-                }
-            }
-        });
 #endif
     }
 
@@ -128,16 +126,16 @@ public:
         _server->Shutdown();
         _cq->Shutdown(); // drain/signal all completion queue.
 
-#ifdef USE_THREAD_PTHREAD
+#if defined(_WIN32) || defined(__CYGWIN__)
+        if (_rpc_thread.joinable())
+        {
+            _rpc_thread.join();
+        }
+#else
         if (_rpc_thread)
         {
             pthread_join(_rpc_thread, nullptr);
             _rpc_thread = (pthread_t)nullptr;
-        }
-#else
-        if (_rpc_thread.joinable())
-        {
-            _rpc_thread.join();
         }
 #endif
 
@@ -281,11 +279,11 @@ protected:
     std::unique_ptr<grpc::Service> _service;
     std::string _server_address;
     std::atomic<bool> _running{false};
-#ifdef USE_THREAD_PTHREAD
-    pthread_t _rpc_thread;
-#else
+#if defined(_WIN32) || defined(__CYGWIN__)
     std::thread _rpc_thread;
-#endif
+#else
+    pthread_t _rpc_thread;
+#endif  
     std::mutex _session_list_mtx;
     std::unordered_map<uint64_t, std::shared_ptr<Session>> _sessions;
 };
