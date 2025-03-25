@@ -11,14 +11,17 @@
  *
  */
 
-#define SPDLOG_COMPILED_LIB 1
+//#define SPDLOG_COMPILED_LIB 1
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/details/os.h>
 #include <sstream>
 #include <string>
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
 #include <unistd.h>
+#endif
 
 #define DT_LOG_MT
 
@@ -101,8 +104,11 @@ public:
                 std::tie(dname, fname) = split_by_directory(filename);
                 rtn = remove(file_basename.c_str());
                 // if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
                 rtn = symlink(fname.c_str(), file_basename.c_str());
                 if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+#endif
             }
         }
         logger->set_pattern("%^[%L][%H:%M:%S.%f]%$%v");
@@ -127,8 +133,11 @@ public:
             std::tie(dname, fname) = split_by_directory(filename);
             rtn = remove(file_basename.c_str());
             // if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot remove previous symlink.", rtn);
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
             rtn = symlink(fname.c_str(), file_basename.c_str());
             if (0 > rtn) logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+#endif
         }
         logger->set_pattern("%^[%L][%H:%M:%S.%f]%$%v");
     }

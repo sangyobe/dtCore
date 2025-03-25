@@ -1,3 +1,10 @@
+#### [v1.8.0]
+(2025/3/24)
+##### 
+- dtproto.dtService.StreamJoy() service prototype has been changed to support bi-directional data communication including timestamp.
+- dtproto.dtService.StreamJoy() service returns dtproto.sensor_msgs.Joy instead of dtproto.std_msgs.Response.
+- dtCore header files are added to MSVC project.
+
 #### [v1.7.2]
 (2025/2/5)
 ##### 

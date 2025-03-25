@@ -19,20 +19,21 @@ service dtService
     // server publishes information
     rpc PublishState(std_msgs.Request) returns (stream std_msgs.State);
 
-    // clients request information
+    // request information
     rpc RequestVersion(google.protobuf.Empty) returns (google.protobuf.StringValue);
     rpc RequestRobotInfo(google.protobuf.Empty) returns (robot_msgs.RobotInfo);
 
-    // clients send command
+    // send command
     rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
     rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
     rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
 
-    // bi-directional communication
-    rpc StreamJoy(stream sensor_msgs.Joy) returns (stream std_msgs.Response);
+    // start bi-directional data streaming
+    rpc StreamJoy(stream sensor_msgs.Joy) returns (stream sensor_msgs.Joy);
 }
 
 service perception
 {
-    rpc SubscribePerceivedObjects (stream perception_msgs.ObjectArrayTimeStamped) returns (std_msgs.Response);
+    // server subscribes information
+    rpc SubscribePerceivedObjects(stream perception_msgs.ObjectArrayTimeStamped) returns (std_msgs.Response);
 }

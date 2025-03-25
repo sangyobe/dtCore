@@ -3,7 +3,11 @@ set(CORE_HDRS "")
 
 if(BUILD_dtCore)
     file(GLOB_RECURSE CORE_SRCS "./thread/*.cpp" "./utils/*.cpp")
-    # message(STATUS "CORE_SRCS: ${CORE_SRCS}")
+    file(GLOB_RECURSE CORE_HDRS 
+        "${CMAKE_SOURCE_DIR}/include/dtCore/*.h" 
+        "${CMAKE_SOURCE_DIR}/include/dtCore/*.ipp"
+        "${CMAKE_SOURCE_DIR}/include/dtCore/*.hpp"
+    )
 
     if(CORE_SRCS)
         add_library(dtcore STATIC

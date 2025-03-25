@@ -153,7 +153,7 @@ StatePublisherGrpc<StateType>::Session::Session(StatePublisherGrpc<StateType> *s
 
     _service->RequestPublishState(&_ctx, &_request, &_responder, _cq, _cq, this);
     _call_state = CallState::WAIT_CONNECT;
-    // LOG(INFO) << "Wait for new SubscribeState() service call...";
+    // LOG(INFO) << "Wait for new PublishState() service call...";
 }
 
 template <typename StateType>
@@ -166,7 +166,7 @@ template <typename StateType>
 void StatePublisherGrpc<StateType>::Session::OnCompletionEvent()
 {
     if (_call_state == CallState::WAIT_CONNECT) {
-        // LOG(INFO) << "NEW SubscribeState() service call.";
+        // LOG(INFO) << "NEW PublishState() service call.";
         _server->AddSession();
         {
             std::lock_guard<std::mutex> lock(_proc_mtx);
@@ -186,7 +186,7 @@ void StatePublisherGrpc<StateType>::Session::OnCompletionEvent()
         }
     }
     else if (_call_state == CallState::WAIT_FINISH) {
-        // LOG(INFO) << "Finalize SubscribeState() service.";
+        // LOG(INFO) << "Finalize PublishState() service.";
         //_call_state = CallState::FINISHED;
         _server->RemoveSession(_id);
     }

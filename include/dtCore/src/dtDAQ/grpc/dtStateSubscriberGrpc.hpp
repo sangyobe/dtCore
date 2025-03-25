@@ -214,11 +214,11 @@ bool StateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
     if (_call_state == RpcCallState::WAIT_START) {
 
         if (!_status.ok()) {
-            // LOG(INFO) << "SubscribeState rpc call failed.";
+            // LOG(INFO) << "PublishState rpc call failed.";
             return false;
         }
 
-        // LOG(INFO) << "SubscribeState rpc call started.";
+        // LOG(INFO) << "PublishState rpc call started.";
 
         _stream_reader->Read(&_msg, (void*)this);
         _call_state = RpcCallState::WAIT_READ_DONE;
@@ -227,7 +227,7 @@ bool StateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
     else if (_call_state == RpcCallState::WAIT_READ_DONE) {
 
         if (!_status.ok()) {
-            std::cout << "SubscribeState rpc stream broken." << std::endl;
+            std::cout << "PublishState rpc stream broken." << std::endl;
             return false;
         }
 
@@ -243,7 +243,7 @@ bool StateSubscriberGrpc<StateType>::Session::OnCompletionEvent()
 
     }
     else if (_call_state == RpcCallState::WAIT_FINISH) {
-        // LOG(INFO) << "Finalize SubscribeState() service call.";
+        // LOG(INFO) << "Finalize PublishState() service call.";
         _call_state = RpcCallState::FINISHED;
         // Once we're complete, deallocate the call object.
         //delete this;
