@@ -1,3 +1,8 @@
+#### [v1.8.1]
+(2025/3/24)
+##### 
+- The dtConf outputs an error message for non-existing nodes when a YAML::InvalidNode exception is issued.
+
 #### [v1.8.0]
 (2025/3/24)
 ##### 

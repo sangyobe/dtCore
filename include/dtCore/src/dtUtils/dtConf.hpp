@@ -126,13 +126,31 @@ private:
 template <typename Key>
 const Conf Conf::operator[](const Key &key) const
 {
-    return Conf(_rootNode[key]);
+    try
+    {
+        return Conf(_rootNode[key]);
+    }
+    catch (const YAML::InvalidNode &e)
+    {
+        std::stringstream msg;
+        msg << "invalid config node; invalid key: \"" << YAML::key_to_string(key) << "\"";
+        throw std::runtime_error(msg.str());
+    }
 }
 
 template <typename Key>
 Conf Conf::operator[](const Key &key)
 {
-    return Conf(_rootNode[key]);
+    try
+    {
+        return Conf(_rootNode[key]);
+    }
+    catch (const YAML::InvalidNode &e)
+    {
+        std::stringstream msg;
+        msg << "invalid config node; invalid key: \"" << YAML::key_to_string(key) << "\"";
+        throw std::runtime_error(msg.str());
+    }
 }
 
 // value accessor
