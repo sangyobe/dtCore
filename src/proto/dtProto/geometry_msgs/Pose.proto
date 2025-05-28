@@ -14,3 +14,13 @@ message Pose3d {
   Point3d position = 1;
   Quaternion orientation = 2;
 }
+
+message SE2Pose {
+  Point2d position = 1;
+  double heading = 2;
+}
+
+message SE3Pose {
+  Point3d position = 1;
+  Quaternion orientation = 2;
+}

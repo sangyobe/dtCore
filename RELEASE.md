@@ -1,3 +1,12 @@
+#### [v1.9.0]
+(2025/5/27)
+##### 
+- dtproto.robot_msgs.RobotCommand is added.
+- dtproto.geometry_msgs.SE2Trajectory/SE3Trajectory are added.
+- dtproto.geometry_msgs.SE2Velocity/SE3Velocity are added.
+- dtproto.geometry_msgs.SE2Pose/SE3Pose are added for usability.
+- dtproto.geometry_msgs.Vec2x/Vec3x are added for usability.
+
 #### [v1.8.1]
 (2025/3/24)
 ##### 
