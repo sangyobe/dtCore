@@ -110,7 +110,7 @@ public:
 #endif
 
     // get array size
-    size_t size()
+    const size_t size() const
     {
         //assert(_rootNode.IsSequence());
         if (_rootNode.IsSequence())
