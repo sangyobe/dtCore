@@ -1,3 +1,11 @@
+#### [v1.9.1]
+(2025/7/1)
+##### 
+- dtproto.dtService.RobotCommand 서비스 추가(unary rpc)
+- dtproto.dtService.SubscribeRobotCommand 서비스 추가(client-side streaming rpc)
+- dtproto.robot_msgs.RobotCommand 구조체 정의 변경(ControlCmd, JointControl, MoveControl 옵션 추가)
+- dtConf 의 size() 멥머 리턴 타입을 const로 변경
+
 #### [v1.9.0]
 (2025/5/27)
 ##### 
