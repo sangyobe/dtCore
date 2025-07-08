@@ -34,6 +34,28 @@
 * gRPC 1.54 버전에서 테스트되었습니다.
 * gRPC 빌드 과정에서 sub-modules를 빌드 및 설치합니다.
 
+다음은 터미널에서 grpc 1.54.0 소스 빌드 및 설치과정을 수행합니다. 
+빌드된 헤더 파일 및 라이브러리는 $HOME/.local/ART_Framework 폴더 아래 설치됩니다.
+```
+$ export ARTF_INSTALL_DIR=$HOME/.local/ART_Framework
+$ git clone -b v1.54.0 https://github.com/grpc/grpc ./grpc_1.54.0
+$ cd grpc_1.54.0
+$ git submodule update --init
+$ mkdir -p build
+$ cd build
+$ cmake .. -DgRPC_INSTALL=ON                \
+           -DCMAKE_INSTALL_PREFIX=$ARTF_INSTALL_DIR \
+           -DCMAKE_BUILD_TYPE=Release       \
+           -DgRPC_ABSL_PROVIDER=module     \
+           -DgRPC_CARES_PROVIDER=module    \
+           -DgRPC_PROTOBUF_PROVIDER=module \
+           -DgRPC_RE2_PROVIDER=module      \
+           -DgRPC_SSL_PROVIDER=module      \
+           -DgRPC_ZLIB_PROVIDER=module
+$ make
+$ make install
+```
+
 #### Protocol buffer
 * Protocol buffer SDK 및 컴파일러(protoc)가 설치되어 있어야 합니다. Protocol buffer 설치시 cmake 연동을 위한 module config 파일들도 설치되어야 합니다.
 * 개발시 Protocol buffer 3.21.12 버전에서 개발 및 테스트되었습니다.
@@ -41,19 +63,22 @@
 
 #### spdlog
 * dt::Log 모듈이 프로그램 실행 중 발생하는 로그를 파일 혹은 터미널에 출력하기 위해 사용합니다.
+* dtCore 설치시 함께 설치됩니다.
 
 #### yaml-cpp
 * dt::Utils::Conf 클래스가 yaml 파일 파싱을 위해 사용합니다. yaml에는 프로그램 실행에 필요한 파라미터 등 프로그램 설정이 저장되며, 프로그램은 Conf 클래스를 이용하여 프로그램 시작시 파라미터를 읽어 적용합니다.
+* dtCore 설치시 함께 설치됩니다.
 
 #### mcap
-* 메시지를 mcap파일에 저장하거나, 저장된 mcap 파일을 읽기 위해 사용합니다.
+* 메시지를 mcap파일에 저장하거나, 저장된 mcap 파일을 읽기 위해 사용하는 optional 라이브러리입니다.
+* header-only 라이브러리로 mcap 헤더파일을 $ARTF_INSTALL_DIR/include/mcap/ 폴더 아래 복사합니다.
 
 ### dtCore & dtProto
 * cmake 빌드 시스템을 이용하여 빌드합니다.
 * 소스코드 빌드 후 설치되는 default 디렉토리는, 
-  * dtCore 헤더 : /usr/local/include/dtCore
-  * dtProto 헤더 : /usr/local/include/dtProto
-  * dtProto 라이브러리 : /usr/local/lib
+  * dtCore 헤더 : $ARTF_INSTALL_DIR/include/dtCore
+  * dtProto 헤더 : $ARTF_INSTALL_DIR/include/dtProto
+  * dtProto 라이브러리 : $ARTF_INSTALL_DIR/lib
 * 설치 디렉토리를 변경하기 위해서는 CMake 옵션 CMAKE_INSTALL_PREFIX 를 변경하세요.
 * Build options:
 
@@ -73,7 +98,7 @@
 
 ```
 > cd /to/dtCore/source/repository
-> cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTAL_PREFIX=/usr/local
+> cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTAL_PREFIX=$ARTF_INSTALL_DIR
 > cmake --build build -j8
 > cmake --build build --target doc
 > sudo cmake --build build --target install
