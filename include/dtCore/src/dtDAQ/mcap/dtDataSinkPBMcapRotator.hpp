@@ -18,7 +18,7 @@ template <typename T>
 class DataSinkPBMcapRotator : public DataSinkPB<T>
 {
 public:
-    DataSinkPBMcapRotator(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true, bool truncate = true, std::size_t max_file_size = 1048567, uint32_t max_file_count = 10)
+    DataSinkPBMcapRotator(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true, bool truncate = true, std::size_t max_file_size = 1048576, uint32_t max_file_count = 10)
         : _topic_name(topic_name), _max_file_size(max_file_size), _max_file_count(max_file_count), _current_file_size(0)
     {
         if (annot_datetime)
