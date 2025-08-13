@@ -10,8 +10,9 @@ message Path {
     string frame_id = 2;   // reference frame(body) id
     uint32 nop = 3;        // number of points in this path
     repeated Point3d points = 4;
-    Vector4f color = 5;     // rgba
-    string text = 6;
-    uint32 properties = 7;  // LSB for visiblility flag (0:hidden, 1:visible)
-                            // Other bits can be used for any user-defined information.
+    Vector4f color = 5;    // rgba
+    float width = 6;       // line width in pixels
+    string text = 7;
+    uint32 properties = 8; // LSB for visiblility flag (0:hidden, 1:visible)
+                           // Other bits can be used for any user-defined information.
 }
