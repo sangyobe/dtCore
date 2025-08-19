@@ -1,3 +1,10 @@
+#### [v1.11.0]
+(2025/8/19)
+##### 
+- add width parameter to dtproto.geometry_msgs.Path
+- add robot_msgs.RobotCommandResponse message definition
+- RobotCommand service returns with robot_msgs.RobotCommandResponse instead of std_msgs.Response
+  
 #### [v1.10.0]
 (2025/7/18)
 ##### 

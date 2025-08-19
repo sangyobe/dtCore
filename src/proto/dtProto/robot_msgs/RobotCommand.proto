@@ -19,9 +19,16 @@ message RobotCommand {
     robot_msgs.JointControl joint_target = 3;
     robot_msgs.MoveControl move_target = 4;
   }
+  string ucid = 11; // unique command id
 }
 
 message RobotCommandTimeStamped {
   std_msgs.Header header = 1;
   RobotCommand command = 2;
+}
+
+message RobotCommandResponse {
+  string ucid = 1;
+  int32 rtn = 2;
+  string msg = 3;
 }

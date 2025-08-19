@@ -28,7 +28,7 @@ service dtService
     rpc Move(robot_msgs.MoveControl) returns (std_msgs.Response);
     rpc MoveJoint(robot_msgs.JointControl) returns (std_msgs.Response);
     rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
-    rpc RobotCommand(robot_msgs.RobotCommandTimeStamped) returns (std_msgs.Response);
+    rpc RobotCommand(robot_msgs.RobotCommandTimeStamped) returns (robot_msgs.RobotCommandResponse);
 
     // request server to subscribe client-side streaming information (client-side streaming)
     rpc SubscribeRobotCommand (stream robot_msgs.RobotCommandTimeStamped) returns (std_msgs.Response);
