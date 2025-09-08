@@ -1,30 +1,11 @@
-// This file is part of dtCore, a C++ library for robotics software
-// development.
-//
-// This library is commercial and cannot be redistributed, and/or modified
-// WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
-
-/*!
- \file      dtFileHelper.hpp
- \brief     File name manipulation helper functions.
- \author    Sangyup Yi, sean.yi@hyundai.com
- \date      2024. 04. 23
- \version   1.0.0
- \copyright RoboticsLab ART All rights reserved.
-*/
-
-#ifndef __DT_UTILS_FILEHELPER_H__
-#define __DT_UTILS_FILEHELPER_H__
-
-/** \defgroup dtUtils
- *
- */
+//* Related Headers ----------------------------------------------------------*/
+#include "dtCore/src/dtUtils/dtFileHelper.h"
+#include "dtCore/src/dtUtils/dtStringHelper.h"
 
 #include <string>
 #include <tuple>
 #include <chrono>
 #include <sys/stat.h>
-#include "dtStringHelper.hpp"
 
 #if !defined(DTCORE_FOLDER_SEPS)
     #ifdef _WIN32
@@ -113,8 +94,6 @@ std::tuple<std::string, std::string> split_by_extension(const std::string &fname
     // finally - return a valid base and extension tuple
     return std::make_tuple(fname.substr(0, ext_index), fname.substr(ext_index));
 }
-
-std::tuple<std::string, std::string> split_by_extension(const std::string &fname);
 
 /**
  * append datetime to given filename
@@ -255,5 +234,3 @@ std::size_t filesize(FILE *f)
 
 } // namespace Utils
 } // namespace dt
-
-#endif // __DT_UTILS_FILEHELPER_H__

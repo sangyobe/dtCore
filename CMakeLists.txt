@@ -4,13 +4,13 @@ project(dtCore
     LANGUAGES C CXX
     HOMEPAGE_URL https://github.hmc.co.kr/art_framework
     DESCRIPTION "HMC's Art Framework Library"
-    VERSION 1.11.0
+    VERSION 1.12.0
 )
 
 cmake_policy(VERSION 3.13)
 cmake_policy(SET CMP0077 NEW) # option() honors normal variables
 
-# generate version.h
+# generate version.h 
 set(version_h_in ${CMAKE_CURRENT_SOURCE_DIR}/include/dtCore/version.h.in)
 set(version_h ${CMAKE_CURRENT_SOURCE_DIR}/include/dtCore/version.h)
 configure_file(${version_h_in} ${version_h} @ONLY)

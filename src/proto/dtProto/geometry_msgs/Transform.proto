@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package dtproto.geometry_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/geometry_msgs/Vector.proto";
+import "dtProto/geometry_msgs/Orientation.proto";
+
+message Transform {
+  Vec3d translation = 1;
+  Quaternion rotation = 2;
+}
+
+message Transforms {
+  repeated Transform transforms = 1;
+}
+
+message TransformTimeStamped {
+  std_msgs.Header header = 1;
+  string child_frame_id = 2;
+  Transform transform = 3;
+}
+
+message TransformsTimeStamped {
+  repeated TransformTimeStamped transforms = 1;
+}

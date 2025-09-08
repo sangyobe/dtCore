@@ -5,7 +5,7 @@
 // WITHOUT ANY ALLOWANCE OR PERMISSION OF Hyundai Motor Company.
 
 /*!
- \file      dtStringHelper.hpp
+ \file      dtStringHelper.h
  \brief     String manipulation helper functions.
  \author    Sangyup Yi, sean.yi@hyundai.com
  \date      2024. 04. 23

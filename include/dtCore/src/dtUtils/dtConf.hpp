@@ -12,6 +12,8 @@
  */
 
 #include <string>
+#include <vector>
+#include <memory>
 //#include <cassert>
 #include "yaml-cpp/yaml.h"
 #include <fstream>
@@ -30,9 +32,19 @@ public:
     {
         _rootNode = YAML::LoadFile(yaml_file);
     }
+    Conf(const std::vector<std::string> &yaml_file)
+    {
+        for (auto it = yaml_file.begin(); it != yaml_file.end(); ++it)
+            Append(*it, true);
+    }
     Conf(const std::istream &yaml_str)
     {
         _rootNode = YAML::Load(const_cast<std::istream &>(yaml_str));
+    }
+    Conf(const std::vector<std::shared_ptr<std::istream>> &yaml_str)
+    {
+        for (auto it = yaml_str.begin(); it != yaml_str.end(); ++it)
+            Append(**it, true);
     }
     Conf(const YAML::Node &node)
     {
@@ -56,6 +68,34 @@ public:
     bool Load(const std::istream &yaml_str)
     {
         _rootNode = YAML::Load(const_cast<std::istream &>(yaml_str));
+        return true;
+    }
+
+    // append from a file
+    bool Append(const std::string &yaml_file, bool override = true)
+    {
+        if (!_rootNode.IsDefined())
+            return Load(yaml_file);
+
+        YAML::Node overrideNode = YAML::LoadFile(yaml_file);
+        if (!overrideNode.IsDefined())
+            return false;
+
+        _rootNode = mergeNodes(_rootNode, overrideNode, !override);
+        return true;
+    }
+
+    // append from memory
+    bool Append(const std::istream &yaml_str, bool override = true)
+    {
+        if (!_rootNode.IsDefined())
+            return Load(yaml_str);
+
+        YAML::Node overrideNode = YAML::Load(const_cast<std::istream &>(yaml_str));
+        if (!overrideNode.IsDefined())
+            return false;
+
+        _rootNode = mergeNodes(_rootNode, overrideNode, !override);
         return true;
     }
 
@@ -121,6 +161,36 @@ public:
 
 private:
     YAML::Node _rootNode;
+
+private:
+    YAML::Node mergeNodes(const YAML::Node& baseNode, const YAML::Node& overrideNode, bool concatSequences = false) 
+    {
+        if (!overrideNode.IsDefined() || overrideNode.IsNull()) {
+            return baseNode;
+        }
+        if (!baseNode.IsDefined() || baseNode.IsNull()) {
+            return overrideNode;
+        }
+
+        if (overrideNode.IsMap() && baseNode.IsMap()) {
+            YAML::Node merged = baseNode; // Start with the base node
+            for (auto it = overrideNode.begin(); it != overrideNode.end(); ++it) {
+                const std::string& key = it->first.as<std::string>();
+                merged[key] = mergeNodes(baseNode[key], it->second, concatSequences);
+            }
+            return merged;
+        } else if (concatSequences && overrideNode.IsSequence() && baseNode.IsSequence()) {
+            // Concatenate sequences
+            YAML::Node merged = baseNode;
+            for (const auto& item : overrideNode) {
+                merged.push_back(item);
+            }
+            return merged;
+        } else {
+            // For scalar or mixed types, override with the overrideNode's value
+            return overrideNode;
+        }
+    }
 };
 
 template <typename Key>

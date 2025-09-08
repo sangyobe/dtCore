@@ -8,7 +8,7 @@
 #define __DT_DAQ_DATASINKPBMCAP_H__
 
 #include <dtCore/src/dtDAQ/dtDataSinkPB.hpp>
-#include <dtCore/src/dtUtils/dtFileHelper.hpp>
+#include <dtCore/src/dtUtils/dtFileHelper.h>
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>

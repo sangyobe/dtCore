@@ -1,3 +1,13 @@
+#### [v1.12.0]
+(2025/9/8)
+##### 
+- dt::Utils::Conf accepts list of files or istream objects and merge them to construct a new Conf instance.
+
+#### [v1.11.1]
+(2025/8/25)
+##### 
+- add dtproto.geometry_msgs.Transform message definition
+
 #### [v1.11.0]
 (2025/8/19)
 ##### 
