@@ -4,19 +4,24 @@ package dtproto.perception_msgs;
 
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Pose.proto";
+import "dtProto/geometry_msgs/Size.proto";
 
 message Object {
-  uint32 id = 1;
-  geometry_msgs.Pose3d pose = 2;
-}
-
-message ObjectArray {
-  repeated Object objects = 1;
+  uint32 id = 1;                  // object id
+  geometry_msgs.Pose3d pose = 2;  // center position and orientation
+  uint32 type = 3;                // object type
+  string name = 4;                // object name
+  geometry_msgs.Size3f size = 5;  // size (width, height, and depth)
+  float confidence = 6;           // recognition confidence/accuracy ([0.0, 1.0])
 }
 
 message ObjectTimeStamped {
   std_msgs.Header header = 1;
   Object object = 2;
+}
+
+message ObjectArray {
+  repeated Object objects = 1;
 }
 
 message ObjectArrayTimeStamped {

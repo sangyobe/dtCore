@@ -1,3 +1,9 @@
+#### [v1.13.0]
+(2025/9/25)
+##### 
+- extend dtproto::perception_msgs::Object to include the size and type of the object.
+- add dtproto::geometry_msgs::Size.
+
 #### [v1.12.0]
 (2025/9/8)
 ##### 
