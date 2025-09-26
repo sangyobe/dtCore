@@ -10,7 +10,7 @@ message Object {
   uint32 id = 1;                  // object id
   geometry_msgs.Pose3d pose = 2;  // center position and orientation
   uint32 type = 3;                // object type
-  string name = 4;                // object name
+  string text = 4;                // text information
   geometry_msgs.Size3f size = 5;  // size (width, height, and depth)
   float confidence = 6;           // recognition confidence/accuracy ([0.0, 1.0])
 }
