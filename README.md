@@ -115,4 +115,4 @@ $ make install
 
 
 ## Contacts
-For more information go to [ART Framework dtCore git repository](https://gitlabee.hmg-corp.io/rlab/art/ctrlpart/project/arch/03-art-framework/dtcore).
+For more information, please refer to [ART Framework dtCore git repository](https://[gitlab.hmc.co.kr/rlab/art/ctrlpart/project/arch/03-art-framework/dtcore/dtcore).

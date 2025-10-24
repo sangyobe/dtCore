@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_DATASINKPB_H__
 #define __DT_DAQ_DATASINKPB_H__
 
-/** \defgroup dtDAQ
+/** \addtogroup dtDAQ
  *
  */
 #include "dtDataSink.h"

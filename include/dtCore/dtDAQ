@@ -1,3 +1,14 @@
 #include "src/dtDAQ/dtDataSourcePB.hpp"
 #include "src/dtDAQ/dtDataSinkPB.hpp"
 #include "src/dtDAQ/dtDAQManager.h"
+
+/** 
+ * \defgroup dtDAQ ART Framework data acqusition library.
+ * \brief Data aqusition to local files or send and receive data through network.
+ * 
+ * This module provides ...
+ *
+ * \code
+ * #include <dtCore/dtDAQ>
+ * \endcode
+ */

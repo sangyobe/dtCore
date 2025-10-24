@@ -1,1 +1,12 @@
 #include "src/dtLog/dtLog.h"
+
+/** 
+ * \defgroup dtLog ART Framework data logging library.
+ * \brief Real-time data logging to a local file or printing to terminal.
+ * 
+ * This module provides ...
+ *
+ * \code
+ * #include <dtCore/dtLog>
+ * \endcode
+ */

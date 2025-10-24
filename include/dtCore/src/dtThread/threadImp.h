@@ -11,6 +11,10 @@
 #ifndef __DT_THREAD_THREADIMP_H__
 #define __DT_THREAD_THREADIMP_H__
 
+/** \addtogroup dtThread
+ *
+ */
+
 //* C/C++ System Headers -----------------------------------------------------*/
 extern "C"
 {

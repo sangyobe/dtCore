@@ -2,13 +2,18 @@ syntax = "proto3";
 
 package dtproto.robot_msgs;
 
+/**
+ * @brief 로봇 및 로봇 제작 정보
+ *
+ * @see dtproto.system.GetRobotInfo()
+ */
 message RobotInfo {
-  string name = 1;
-  string author = 2;
-  string version = 3;
-  string description = 4;
-  string serial = 5;
-  uint32 type = 6;
-  uint32 id = 7;
-  uint32 dof = 8;
+  string name = 1;        // 이름
+  string author = 2;      // 제작사
+  string version = 3;     // 버전 (control, firmware, protocol, etc)
+  string description = 4; // 설명
+  string serial = 5;      // 시리얼 넘버
+  uint32 type = 6;        // 로봇 타입
+  uint32 id = 7;          // 로봇 ID
+  uint32 dof = 8;         // 로봇 자유도
 }

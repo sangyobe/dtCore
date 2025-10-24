@@ -11,6 +11,10 @@
 #ifndef __DT_UTILS_DIR_H__
 #define __DT_UTILS_DIR_H__
 
+/** \addtogroup dtUtils
+ *
+ */
+
 //* C/C++ System Headers -----------------------------------------------------*/
 #include <string>
 

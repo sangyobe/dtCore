@@ -7,7 +7,7 @@
 #ifndef __DT_UTILS_WATCHDOG_H__
 #define __DT_UTILS_WATCHDOG_H__
 
-/** \defgroup dtUtils
+/** \addtogroup dtUtils
  *
  */
 namespace dt

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package dtproto.sensor_msgs;
+
+/**
+ * @brief 헤더가 포함된 모터 
+ *
+ * 주기적으로 업데이트되는 모터 최신 상태
+ *
+ * @see dtproto.device.GetMotorStateStrm()
+ */
+message EcMasterState {
+  double position = 1;        // rad (or) m
+}
+
+/**
+ * @brief 헤더가 포함된 모터 
+ *
+ * 주기적으로 업데이트되는 모터 최신 상태
+ *
+ * @see dtproto.device.GetMotorStateStrm()
+ */
+message EcSlaveState {
+  double position = 1;        // rad (or) m
+  double velocity = 2;        // rad/sec (or) m/s
+  double acceleration = 3;    // rad/sec^2 (or) m/s^2
+  double torque = 4;          // Nm
+}
+
+/**
+ * @brief 헤더가 포함된 모터 
+ *
+ * 주기적으로 업데이트되는 모터 최신 상태
+ *
+ * @see dtproto.device.GetMotorStateStrm()
+ */
+message EcStateTimeStamped {
+  std_msgs.Header header = 1;
+  repeated sensor_msgs.EcMasterState master = 2;
+  repeated sensor_msgs.EcSlaveState slave = 3;
+}

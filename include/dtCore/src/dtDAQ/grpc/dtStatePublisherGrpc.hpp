@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_STATEPUBLISHERGRPC_H__
 #define __DT_DAQ_STATEPUBLISHERGRPC_H__
 
-/** \defgroup dtDAQ
+/** ]addtogroup dtDAQ
  *
  */
 #include <grpc/grpc.h>

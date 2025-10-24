@@ -16,7 +16,7 @@
 #ifndef __DT_UTILS_STRINGHELPER_H__
 #define __DT_UTILS_STRINGHELPER_H__
 
-/** \defgroup dtUtils
+/** \addtogroup dtUtils
  *
  */
 

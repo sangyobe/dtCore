@@ -7,6 +7,12 @@ import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Velocity.proto";
 import "dtProto/geometry_msgs/Trajectory.proto";
 
+/*!
+ * \brief The current operational (execution) state of the navigation stack.
+ *
+ * Includes the robot's current position, moving speed, and input velocity commands.
+ * \see dtproto.navigation.GetNavStateStrm()
+ */
 message NavState {
     oneof pose {
         dtproto.geometry_msgs.SE2Pose se2_pose = 1;

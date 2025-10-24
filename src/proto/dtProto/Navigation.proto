@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package dtproto;
+
+import "dtProto/std_msgs/Request.proto";
+import "dtProto/nav_msgs/NavCommand.proto";
+import "dtProto/nav_msgs/NavState.proto";
+
+service navigation {
+    /** 
+     * Request a robot to move to the given position, track the given velocity, or track the given trajectory in the command.
+     *
+     * The target position can be one of
+     *     a SE2 2-dimensional pose of (x, y, theta),
+     *     a SE3 3-dimensional pose of (x, y, z, quaternion),
+     *     a POI (named position of interest).
+     * 
+     * The target velocity can be one of
+     *     a SE2 2-dimensional velocity of (vx, vy, vw,
+     *     a SE3 3-dimensional velocity of (vx, vy, vz, wx, wy, wz).
+     *
+     * The target trajectory can be one of
+     *     a list of SE2 2-dimensional poses of (x, y, theta),
+     *     a list of SE3 3-dimensional poses of (x, y, z, quaternion),
+     *     a POIs (named position of interest).
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.nav_msgs.NavCommand The navigation command.
+     * @return dtproto.std_msgs.Response The RPC call's response.
+     
+     * @see MoveToStrm()
+     */
+    rpc MoveTo(dtproto.nav_msgs.NavCommandTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * Request a robot to move to track the target velocity given in the command.
+     *
+     * The target position can be one of
+     *     a SE2 2-dimensional pose of (x, y, theta),
+     *     a SE3 3-dimensional pose of (x, y, z, quaternion),
+     *     a POI (named position of interest).
+     * 
+     * The target velocity can be one of
+     *     a SE2 2-dimensional velocity of (vx, vy, vw,
+     *     a SE3 3-dimensional velocity of (vx, vy, vz, wx, wy, wz).
+     *
+     * The target trajectory can be one of
+     *     a list of SE2 2-dimensional poses of (x, y, theta),
+     *     a list of SE3 3-dimensional poses of (x, y, z, quaternion),
+     *     a POIs (named position of interest).
+     *
+     * It is a client-side streamingRPC.
+     *
+     * @param stream dtproto.nav_msgs.NavCommand The navigation command.
+     * @return dtproto.std_msgs.Response The RPC call's response.
+     
+     * @see MoveTo()
+     */
+    rpc MoveToStrm(stream dtproto.nav_msgs.NavCommandTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /**
+     * Request a robot to stop moving.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request 
+     * @return dtproto.std_msgs.Response The RPC call's response.
+     */
+    rpc StopMove(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
+
+    /** 
+     * Get the current navigation state.
+     * The navigation state includes
+     *    the current robot pose and velocity,
+     *    the current target pose,
+     *    remaining time to the target,
+     *    etc.
+     *
+     * It is a server-side streaming RPC.
+     *
+     * @param dtproto.std_msgs.Request 
+     * @return stream dtproto.nav_msgs.NavStateTimeStamped The navigation state.
+     */
+    rpc GetNavStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.nav_msgs.NavStateTimeStamped);
+}

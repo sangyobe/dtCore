@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package dtproto.sensor_msgs;
+
+message MotorState {
+  uint32 statusWord = 1;
+  uint32 controlWord = 2;
+  int32 incPosOfs_cnt = 3;
+  int32 absPosOfs_cnt = 4;
+  int32 incPos_cnt = 5;
+  int32 absPos_cnt = 6;
+  int32 incVel_cps = 7;
+  float mcuTemp_C = 8;
+  float invTemp_C = 9;
+  float inputVolt_V = 10;
+}

@@ -11,6 +11,10 @@
 #ifndef __DT_UTILS_GNUPLOT_H__
 #define __DT_UTILS_GNUPLOT_H__
 
+/** \addtogroup dtUtils
+ *
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>

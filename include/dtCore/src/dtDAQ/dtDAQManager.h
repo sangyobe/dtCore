@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_DAQMANAGER_H__
 #define __DT_DAQ_DAQMANAGER_H__
 
-/** \defgroup dtDAQ
+/** \addtogroup dtDAQ
  *
  */
 

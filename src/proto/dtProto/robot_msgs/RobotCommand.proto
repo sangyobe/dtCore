@@ -14,12 +14,12 @@ import "dtProto/robot_msgs/MoveControl.proto";
 
 message RobotCommand {
   oneof command {
-    nav_msgs.NavCommand nav = 1;
-    robot_msgs.ControlCmd cmd = 2;
-    robot_msgs.JointControl joint_target = 3;
-    robot_msgs.MoveControl move_target = 4;
+    nav_msgs.NavCommand nav = 1;                // set target pose, velocity, or trjectory.
+    robot_msgs.ControlCmd cmd = 2;              // set pre-define motion or command.
+    robot_msgs.JointControl joint_target = 3;   // 
+    robot_msgs.MoveControl move_target = 4;     // make the robot to track the instant target and velocity.
   }
-  string ucid = 11; // unique command id
+  string ucid = 11;                             // unique command id
 }
 
 message RobotCommandTimeStamped {

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+
+message DockRequest {
+  enum DockMode {
+    UNDOCK = 0;
+    DOCK = 1;
+  }
+  DockMode mode = 1;
+}
+
+message DockResponse {
+  int32 rtn = 1;
+  string msg = 2;
+}
+
+message DockRequestTimeStamped {
+  std_msgs.Header header = 1;
+  DockRequest req = 2;
+}
+
+message DockResponseTimeStamped {
+  std_msgs.Header header = 1;
+  DockResponse res = 2;
+}

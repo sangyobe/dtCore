@@ -1,5 +1,5 @@
 /*!
-\file       dtTerm.cpp
+\file       dtTerminal.cpp
 \brief      Configure Terminal(Console) Attribute
 \author     Dong-hyun Lee, phenom8305@gamil.com
 \date       2021. 02. 05

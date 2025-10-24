@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package dtproto.std_msgs;
 
+import "dtProto/std_msgs/Header.proto";
+
 message Request {
   enum ReqType {
     ON = 0;
@@ -11,7 +13,17 @@ message Request {
   ReqType type = 2;
 }
 
+message RequestTimeStamped {
+  std_msgs.Header header = 1;
+  Request request = 2;
+}
+
 message Response {
   int32 rtn = 1;
   string msg = 2;
+}
+
+message ResponseTimeStamped {
+  std_msgs.Header header = 1;
+  Response response = 2;
 }

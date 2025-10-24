@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package dtproto;
+
+import "dtProto/std_msgs/Request.proto";
+import "dtProto/robot_msgs/JointControl.proto";
+
+service motion {
+    /** 
+     * Joint space control.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetJoint(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * Joint space control.
+     *
+     * It is a client-side streaming RPC.
+     *
+     * @param stream dtproto.robot_msgs.JointControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetJointStrm(stream dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * Cartesian space control.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetEEPose(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * Cartesian space control.
+     *
+     * It is a client-side streaming RPC.
+     *
+     * @param stream dtproto.robot_msgs.JointControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetEEPoseStrm(stream dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * Set pre-define motion as the control target.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetMotion(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    
+    /** 
+     * Get the current control state.
+     * The control state includes
+     *    ...
+     *    etc.
+     *
+     * It is a server-side streaming RPC.
+     *
+     * @param dtproto.std_msgs.Request 
+     * @return stream dtproto.robot_msgs.ControlStateTimeStamped The control state.
+     */
+    // rpc GetControlStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.robot_msgs.ControlStateTimeStamped);
+}

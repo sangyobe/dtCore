@@ -1,0 +1,6 @@
+/** 
+ * \defgroup dtUtils ART Framework utility functions.
+ * \brief Utility functions to manipulate directory, file, string and other.
+ * 
+ * This module provides ...
+ */

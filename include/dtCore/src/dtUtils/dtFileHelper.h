@@ -16,7 +16,7 @@
 #ifndef __DT_UTILS_FILEHELPER_H__
 #define __DT_UTILS_FILEHELPER_H__
 
-/** \defgroup dtUtils
+/** \addtogroup dtUtils
  *
  */
 

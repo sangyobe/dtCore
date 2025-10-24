@@ -5,15 +5,36 @@ package dtproto.robot_msgs;
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/sensor_msgs/JointState.proto";
 
+
+message JointCommandParam {
+  double q = 1;
+  double qdot = 2;
+  double tau = 3;
+  double kp = 4;
+  double kd = 5;
+  double ki = 6;
+  double duration = 7;
+}
+
 message JointControl {
   enum ControlMode {
     SET_POSITION = 0;
     SET_VELOCITY = 1;
     SET_TORQUE = 2;
   }
-  ControlMode mode = 1;
-  repeated sensor_msgs.JointState joint_state = 2;
-  float duration = 3;
+  
+  message JointPoseCommand {
+    ControlMode mode = 1;
+    repeated sensor_msgs.JointState joint_state = 2;
+    float duration = 3;
+  }
+  message JointTrajCommand {
+
+  }
+  oneof target {
+    JointPoseCommand pose = 1;
+    JointTrajCommand traj = 2;
+  }
 }
 
 message JointControlTimeStamped {

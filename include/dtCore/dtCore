@@ -7,8 +7,10 @@
 #ifndef __DT_CORE__
 #define __DT_CORE__
 
-/** \defgroup dtCore
- *
+/** 
+ * \defgroup dtCore ART Framework core library.
+ * \brief Data structure definitions and core functions of ART Framework.
+ * 
  * This module provides ...
  *
  * \code

@@ -14,6 +14,7 @@ PROJECT_NUMBER         = @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJEC
 STRIP_FROM_PATH        = @CMAKE_CURRENT_SOURCE_DIR_LINUX@ \ 
                          @PROJECT_SOURCE_DIR_LINUX@
 INPUT                  = @CMAKE_CURRENT_SOURCE_DIR_LINUX@/include \
+                         @CMAKE_CURRENT_SOURCE_DIR_LINUX@/src \
                          @CMAKE_CURRENT_SOURCE_DIR_LINUX@/README.md
 
 FILE_PATTERNS          = *.h \
@@ -24,8 +25,11 @@ FILE_PATTERNS          = *.h \
                          *.cc \
                          *.cpp.in \
                          *.cpp \
+                         *.proto \
                          *.md
 # EXCLUDE_PATTERNS       = json.hpp
+EXTENSION_MAPPING      = proto=C++
+FILTER_PATTERNS        = *.proto=./doc/proto2cpp.py
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = "@CMAKE_CURRENT_SOURCE_DIR_LINUX@/README.md"
 #USE_MDFILE_AS_MAINPAGE = "@PROJECT_SOURCE_DIR_LINUX@/README.md"

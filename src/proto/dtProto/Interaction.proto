@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package dtproto;
+
+import "dtProto/std_msgs/Request.proto";
+
+service interaction {
+}

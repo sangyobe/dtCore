@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_DATASINKPBHDF5_H__
 #define __DT_DAQ_DATASINKPBHDF5_H__
 
-/** \defgroup dtDAQ
+/** \addtogroup dtDAQ
  *
  */
 

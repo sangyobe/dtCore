@@ -1,1 +1,12 @@
 #include "src/dtThread/threadImp.h"
+
+/** 
+ * \defgroup dtThread ART Framework threading library.
+ * \brief Data structure definitions for threading and utility functions to manipulate thread.
+ * 
+ * This module provides ...
+ * 
+ * \code
+ * #include <dtCore/dtThread>
+ * \endcode
+ */

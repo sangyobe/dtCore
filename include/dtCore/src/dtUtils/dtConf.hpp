@@ -7,7 +7,7 @@
 #ifndef __DT_UTILS_CONF_H__
 #define __DT_UTILS_CONF_H__
 
-/** \defgroup dtUtils
+/** \addtogroup dtUtils
  *
  */
 

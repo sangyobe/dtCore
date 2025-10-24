@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_SERVICECALLERGRPC_H__
 #define __DT_DAQ_SERVICECALLERGRPC_H__
 
-/** \defgroup dtDAQ
+/** ]addtogroup dtDAQ
  *
  */
 #include <grpcpp/grpcpp.h>

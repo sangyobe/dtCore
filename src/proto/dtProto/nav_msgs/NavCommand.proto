@@ -7,42 +7,74 @@ import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Velocity.proto";
 import "dtProto/geometry_msgs/Trajectory.proto";
+import "dtProto/nav_msgs/NavConfig.proto";
 
+/**
+ * @brief Navigation 명령
+ */
 message NavCommand {
   message SE2TrajCommand {
-    dtproto.geometry_msgs.SE2Trajectory trajectory = 1;
-    google.protobuf.Timestamp end_time = 2; // The timestamp (in robot time) that the command is valid until.
+    dtproto.geometry_msgs.SE2Trajectory trajectory = 1; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
   message SE3TrajCommand {
-    dtproto.geometry_msgs.SE3Trajectory trajectory = 1;
-    google.protobuf.Timestamp end_time = 2;
+    dtproto.geometry_msgs.SE3Trajectory trajectory = 1; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message POITrajCommand {
+    dtproto.geometry_msgs.POITrajectory trajectory = 1; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
   message SE2PoseCommand {
-    dtproto.geometry_msgs.SE2Pose pose = 1;
-    google.protobuf.Timestamp end_time = 2;
+    dtproto.geometry_msgs.SE2Pose pose = 1; // 타겟 위치 및 방향(2-dimensional).
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
   message SE3PoseCommand {
-    dtproto.geometry_msgs.SE3Pose pose = 1;
-    google.protobuf.Timestamp end_time = 2;
+    dtproto.geometry_msgs.SE3Pose pose = 1;// 타겟 위치 및 방향(3-dimensional).
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message POIPoseCommand {
+    string poi_name = 1; // POI(Point Of Interest) 이름.
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
   message SE2VelCommand {
-    dtproto.geometry_msgs.SE2Velocity vel = 1;
-    google.protobuf.Timestamp end_time = 2;
+    dtproto.geometry_msgs.SE2Velocity vel = 1; // 타겟 속도
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
   message SE3VelCommand {
-    dtproto.geometry_msgs.SE3Velocity vel = 1;
-    google.protobuf.Timestamp end_time = 2;
+    dtproto.geometry_msgs.SE3Velocity vel = 1; // 타겟 속도
+    google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
   }
-  oneof command {
-    SE2TrajCommand se2_target_traj = 1;
-    SE2PoseCommand se2_target_pose = 2;
-    SE2VelCommand se2_target_vel = 3;
-    SE3TrajCommand se3_target_traj = 11;
-    SE3PoseCommand se3_target_pose = 12;
-    SE3VelCommand se3_target_vel = 13;
+  oneof target_pose {
+    SE2PoseCommand se2_target_pose = 1;
+    SE3PoseCommand se3_target_pose = 2;
+    POIPoseCommand poi_target_pose = 3;
   }
+  oneof target_vel {
+      dtproto.geometry_msgs.SE2Velocity se2_cmd_vel = 11;
+      dtproto.geometry_msgs.SE3Velocity se3_cmd_vel = 12;
+  }
+  oneof target_traj {
+    SE2TrajCommand se2_target_traj = 21;
+    SE2TrajCommand se3_target_traj = 22;
+    POITrajCommand poi_target_traj = 23;
+  }
+    
+  /**
+   * @brief 명령을 수행하는 기준 좌표계
+   *
+   * 'world', 'robot', 또는 사용자가 정의한 좌표계 이름을 입력 <br>
+   * 'world' 인 경우 로봇의 전역 좌표계에서 위치 및 속도 해석 <br>
+   * 'robot' 인 경우 로봇의 로컬 좌표계(로봇 베이스 중심에서 전진방향이 x축, 좌측이 y축)에서 위치 및 속도 해석 <br>
+   */
+  string ref_frame = 51;
+
+  NavConfig config = 52;
 }
 
+/**
+ * @brief Header가 있는 Navigation 명령
+ */
 message NavCommandTimeStamped {
   std_msgs.Header header = 1;
   NavCommand cmd = 2;

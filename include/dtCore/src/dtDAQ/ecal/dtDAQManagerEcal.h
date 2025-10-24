@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ__DAQMANAGERECAL_H__
 #define __DT_DAQ__DAQMANAGERECAL_H__
 
-/** \defgroup dtDAQ
+/** ]addtogroup dtDAQ
  *
  */
 

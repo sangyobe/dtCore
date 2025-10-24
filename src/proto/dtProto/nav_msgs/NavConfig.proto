@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package dtproto.nav_msgs;
+
+
+// An enumeration indicating the mode of collision avoidance.
+enum CollisionAvoidanceMode {
+    /**
+     * No collision avoidance is enabled.
+     */
+    NONE = 0;
+
+    /**
+     * Stop if an obstacle is detected on the path to follow, and start moving when the obstacle is removed from the path.
+     * Timeout can be specified.
+     */
+    STOP_AND_GO = 1;
+
+    /**
+     * Avoid obstacles on the path by generating a new path around it.
+     */
+    AVOID_OBSTACLE = 2;
+}
+
+/*!
+ * \brief Navigation 명령 설정
+ *
+ * MoveTo 등의 locomotion 명령 수행을 위한 설정. 예를들어 로봇이 출발점에서 출발할 때 또는 도착할 때 로봇 동작을 정의한다.
+ *
+ * \see dtproto.nav_msgs.NavCommand
+ * \see dtproto.nav_msgs.NavState
+ */
+message NavConfig {
+    CollisionAvoidanceMode collision_avoidance_mode = 1;
+
+    // STOP_AND_GO 모드 등에서 경로 주행 불가능을 판단하기 위한 타임아웃(seconds). 
+    // 장애물이 감지되어 주행을 잠시 멈춘 경우 해당 타임아웃 시간까지 장애물이 치워지지 않으면 주행을 종료하고 주행 실패(목적지 도달 실패)를 리턴.
+    // 0 이하의  timeout은 timeout이 없는 것으로 간주하고 장애물이 치워질 때까지 영원히 기다림.
+    double collision_avoidance_timeout = 2; 
+}

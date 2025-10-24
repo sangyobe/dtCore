@@ -10,16 +10,32 @@ import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Twist.proto";
 import "dtProto/geometry_msgs/Orientation.proto";
 import "dtProto/sensor_msgs/JointState.proto";
+import "dtProto/sensor_msgs/MotorState.proto";
 import "dtProto/sensor_msgs/BatteryState.proto";
 
+/**
+ * @brief 로봇 동작 상태
+ *
+ * 주기적으로 업데이트되는 로봇의 최신 상태
+ */
 message RobotState {
-  geometry_msgs.Pose3d base_pose = 1;
-  geometry_msgs.Twist base_velocity = 2;
-  repeated sensor_msgs.JointState joint_state = 3;
-  sensor_msgs.BatteryState battery_state = 4;
-  uint32 status = 5; // system fault/error status
+  geometry_msgs.Pose3d base_pose = 1;               // 로봇 위치('world' 좌표계에서 본 'robot' 좌표계의 위치 및 방향)
+  geometry_msgs.Twist base_velocity = 2;            // 로봇 이동 속도('robot' 좌표계에서 측정한 로봇의 속도를 'world' 좌표계에서 바라본 것)
+  repeated sensor_msgs.JointState joint_state = 3;  // 각 관절의 위치/속도/토크 등
+  sensor_msgs.BatteryState battery_state = 4;       // 배터리 상태
+  repeated sensor_msgs.MotorState motor_state = 5;  // 모터 상태 및 엔코더 값 등
+  uint32 servo_state = 6;                           // 모터 서보 온 상태(동작에 필요한 모든 모터가 servo on 된 경우 servo on)
+  uint32 status = 9;                                // system fault/error status
 }
 
+/**
+ * @brief 헤더가 포함된 로봇 동작 상태
+ *
+ * 주기적으로 업데이트되는 로봇의 최신 상태
+ *
+ * @see dtproto.system.GetRobotState()
+ * @see dtproto.system.GetRobotStateStrm()
+ */
 message RobotStateTimeStamped {
   std_msgs.Header header = 1;
   RobotState state = 2;

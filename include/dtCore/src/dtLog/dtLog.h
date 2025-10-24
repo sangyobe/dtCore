@@ -7,7 +7,7 @@
 #ifndef __DT_LOG_H__
 #define __DT_LOG_H__
 
-/** \defgroup dtLog
+/** \addtogroup dtLog
  *
  */
 

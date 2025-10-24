@@ -9,6 +9,10 @@
 #ifndef __DT_UTILS_TERMINAL_H__
 #define __DT_UTILS_TERMINAL_H__
 
+/** \addtogroup dtUtils
+ *
+ */
+
 #include <cstdint>
 #include <stdarg.h>
 #include <stdio.h>

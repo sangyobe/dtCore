@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package dtproto;
+
+import "dtProto/std_msgs/Request.proto";
+import "dtProto/perception_msgs/Object.proto";
+
+service perception {
+    
+    
+    // [deprecate] server subscribes information
+    rpc SubscribePerceivedObjects(stream perception_msgs.ObjectArrayTimeStamped) returns (std_msgs.Response);
+}

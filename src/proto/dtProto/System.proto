@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package dtproto;
+
+import "dtProto/std_msgs/Request.proto";
+import "dtProto/robot_msgs/RobotInfo.proto";
+import "dtProto/robot_msgs/RobotState.proto";
+import "dtProto/robot_msgs/Dock.proto";
+import "dtProto/sensor_msgs/EcState.proto";
+import "dtProto/sensor_msgs/Imu.proto";
+
+service system {
+
+    /**
+     * @brief Servo on or off motors.
+     *
+     * dtproto.std_msgs.Request.type 값에 따라 모터 on or off.
+     * 명령이 로봇에 전달되면 Success를 리턴하며 실제 servo on/off state는 별도의 RPC(dtproto.system.GetRobotState)로 확인해야 함.
+     * 즉, 본 명령이 Success를 반환하였어도 실제 on/off 상태가 명령대로 변경되었다는 것을 보장하지 않음.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return dtproto.std_msgs.Response
+     */
+    rpc MotorOn(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
+
+    /**
+     * @brief
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return dtproto.robot_msgs.RobotInfo
+     */
+    rpc GetRobotInfo(dtproto.std_msgs.Request) returns (dtproto.robot_msgs.RobotInfo);
+
+    /**
+     * @brief
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return dtproto.robot_msgs.RobotStateTimeStamped
+     */
+    rpc GetRobotState(dtproto.std_msgs.Request) returns (dtproto.robot_msgs.RobotStateTimeStamped);
+
+    /**
+     * @brief
+     *
+     * It is a server-side streaming RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return stream dtproto.robot_msgs.RobotStateTimeStamped
+     */
+    rpc GetRobotStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.robot_msgs.RobotStateTimeStamped);
+
+    /**
+     * @brief
+     *
+     * It is a server-side streaming RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return stream dtproto.sensor_msgs.EcStateTimeStamped
+     */
+    rpc GetEcStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.sensor_msgs.EcStateTimeStamped);
+
+    /**
+     * @brief
+     *
+     * It is a server-side streaming RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return stream dtproto.sensor_msgs.ImuTimeStamped
+     */
+    rpc GetImuStrm(dtproto.std_msgs.Request) returns (stream dtproto.sensor_msgs.ImuTimeStamped);
+
+    /** 
+     * Request a robot to dock to the charging station.
+     *
+     * It is a server-side streaming RPC.unary RPC.
+     *
+     * @param dtproto.robot_msgs.DockRequestTimeStamped
+     * @return stream dtproto.robot_msgs.DockResponseTimeStamped
+     */
+    rpc Dock(dtproto.robot_msgs.DockRequestTimeStamped) returns (stream dtproto.robot_msgs.DockResponseTimeStamped); 
+
+}

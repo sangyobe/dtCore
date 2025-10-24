@@ -7,7 +7,7 @@
 #ifndef __DT_DAQ_SERVICELISTENERGRPC_H__
 #define __DT_DAQ_SERVICELISTENERGRPC_H__
 
-/** \defgroup dtDAQ
+/** ]addtogroup dtDAQ
  *
  */
 #include <grpc/grpc.h>

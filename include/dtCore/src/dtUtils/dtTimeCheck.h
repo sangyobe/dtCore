@@ -12,6 +12,10 @@
 #ifndef __DT_UTILS_TIMECHECK_H__
 #define __DT_UTILS_TIMECHECK_H__
 
+/** \addtogroup dtUtils
+ *
+ */
+
 #if defined(_WIN32)
 #if defined(_WIN64)
 // define something for Windows (64-bit only)
