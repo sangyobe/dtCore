@@ -2,24 +2,24 @@
 #include <dtCore/src/dtLog/dtLog.h>
 
 /////////////////////////////////////////////////////////////////////////
-// OnControlCmd (Rpc service call handler)
+// OnMotionControl (Rpc service call handler)
 //
-//     rpc Command(robot_msgs.ControlCmd) returns (std_msgs.Response);
+//     rpc Command(robot_msgs.MotionControl) returns (std_msgs.Response);
 //
-class OnControlCmd : public dt::DAQ::ServiceListenerGrpc::Session
+class OnMotionControl : public dt::DAQ::ServiceListenerGrpc::Session
 {
     using CallState = typename dt::DAQ::ServiceListenerGrpc::Session::CallState;
     using ServiceType = dtproto::dtService::AsyncService;
 public:
-    OnControlCmd(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
+    OnMotionControl(dt::DAQ::ServiceListenerGrpc *server, grpc::Service *service, grpc::ServerCompletionQueue *cq, void *udata = nullptr)
         : dt::DAQ::ServiceListenerGrpc::Session(server, service, cq, udata), _responder(&_ctx)
     {
         _call_state = CallState::WAIT_CONNECT;
         (static_cast<ServiceType*>(_service))->RequestCommand(&(_ctx), &_request, &_responder, _cq, _cq, this);
         LOG(info) << "Command[" << _id << "] Wait for new service call...";
     }
-    ~OnControlCmd() {
-        // LOG(info) << "OnControlCmd session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
+    ~OnMotionControl() {
+        // LOG(info) << "OnMotionControl session deleted."; // Do not output log here. It might be after LOG system has been destroyed.
     }
     bool OnCompletionEvent(bool ok) override {
         if (_call_state == CallState::FINISHED)
@@ -37,7 +37,7 @@ public:
             if (_call_state == CallState::WAIT_CONNECT) {
                 LOG(info) << "Command[" << _id << "] NEW service call.";
 
-                _server->template AddSession<OnControlCmd >();
+                _server->template AddSession<OnMotionControl >();
                 {
                     std::lock_guard<std::mutex> lock(_proc_mtx);
 
@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    ::dtproto::robot_msgs::ControlCmd _request;
+    ::dtproto::robot_msgs::MotionControl _request;
     ::dtproto::std_msgs::Response _response;
     ::grpc::ServerAsyncResponseWriter<::dtproto::std_msgs::Response> _responder;
 };
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
         std::make_unique<dtproto::dtService::AsyncService>(),
         "0.0.0.0:50052");
 
-    listener.template AddSession<OnControlCmd>(nullptr);
+    listener.template AddSession<OnMotionControl>(nullptr);
     listener.template AddSession<OnQueryRobotInfo>(nullptr);
 
     std::atomic<bool> bRun{true};

@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+
+/**
+ * @brief A gripper control command.
+ */
+message GripperControl {
+  message GripperJointTarget {
+    double q = 1;
+    double qdot = 2;
+    double qddot = 3;
+    double tau = 4;
+    double kp = 5;
+    double kd = 6;
+    double ki = 7;
+  }
+
+  message GripperJointTargetCommand {
+    int32 noj = 1; // Number of joints.
+    repeated GripperJointTarget joints = 2;
+    double duration = 3;
+    uint64 mask = 4;// Joint enabled mask.
+  }
+
+  message GripperJointTargetPos {
+    double pos = 1;
+    double vel_max = 2;     // Maximum velocity. m/sec for linear joint and rad/sec for angular joint.
+    double acc_max = 3;     // Maximum acceleration. m/sec^2 for linear joint and rad/sec^2 for angular joint.
+    double acc_dt = 4;      // Acceleration and decceleration duration in seconds. If this is greater than zero, acc_max will be ignored.
+  }
+
+  message GripperJointTargetPosCommand {
+    int32 noj = 1;          // Number of joints.
+    repeated GripperJointTargetPos joints = 2;
+    double duration = 3;    // Duration(seconds) to reach the target position.
+    uint64 mask = 4;        // Joint enabled mask
+  }
+
+  message GripperJointTargetVel {
+    double vel = 1;
+    double acc_max = 2;     // Maximum acceleration. m/sec^2 for linear joint and rad/sec^2 for angular joint.
+    double acc_dt = 3;      // Acceleration and decceleration duration in seconds. If this is greater than zero, acc_max will be ignored.
+  }
+
+  message GripperJointTargetVelCommand {
+    int32 noj = 1;          // Number of joints.
+    repeated GripperJointTargetVel joints = 2;
+    double duration = 3;    // Duration(seconds) to reach the target position.
+    uint64 mask = 4;        // Joint enabled mask
+  }
+
+  message GripperMotion {
+    double finger_pose_pos = 1;
+    double finger_pose_vel = 2;
+    double finger_pos = 3;
+    double finger_vel = 4;
+    double grip_force = 5;
+    uint32 mask = 9;
+  }
+
+  message GripperMotionCommand {
+    GripperMotion motion = 1;
+    double duration = 2;
+  }
+
+  oneof target {
+    GripperJointTargetCommand joint_target = 11;
+    GripperJointTargetPosCommand target_pos = 12;
+    GripperJointTargetVelCommand target_vel = 13;
+    GripperMotionCommand target_motion = 16;
+  }
+}
+
+/**
+ * @brief A girpper control command with timestamp.
+ */
+
+message GripperControlTimeStamped {
+  std_msgs.Header header = 1;
+  GripperControl control = 2;
+}

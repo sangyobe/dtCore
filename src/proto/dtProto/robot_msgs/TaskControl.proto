@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "google/protobuf/timestamp.proto";
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/geometry_msgs/Pose.proto";
+import "dtProto/geometry_msgs/Velocity.proto";
+import "dtProto/geometry_msgs/Trajectory.proto";
+
+/**
+ * @brief A task/cartesian space control command.
+ */
+message TaskControl {
+  message TrajCommand {
+    int32 noee = 1; // Number of end-effectors.
+    repeated dtproto.geometry_msgs.SE3Trajectory trajectory = 2; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
+    uint32 mask = 3; // End-effector enabled mask.
+    google.protobuf.Timestamp end_time = 4; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message POITrajCommand {
+    int32 noee = 1; // Number of end-effectors.
+    dtproto.geometry_msgs.POITrajectory trajectory = 2; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
+    uint32 mask = 3; // End-effector enabled mask.
+    google.protobuf.Timestamp end_time = 4; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message PoseCommand {
+    int32 noee = 1; // Number of end-effectors.
+    repeated dtproto.geometry_msgs.SE3Pose pose = 2;// 타겟 위치 및 방향(3-dimensional).
+    uint32 mask = 3; // End-effector enabled mask.
+    google.protobuf.Timestamp end_time = 4; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message POIPoseCommand {
+    int32 noee = 1; // Number of end-effectors.
+    repeated string poi = 2; // POI(Point Of Interest) 이름.
+    uint32 mask = 3; // End-effector enabled mask.
+    google.protobuf.Timestamp end_time = 4; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+  message VelCommand {
+    int32 noee = 1; // Number of end-effectors.
+    repeated dtproto.geometry_msgs.SE3Velocity vel = 2; // 타겟 속도
+    uint32 mask = 3; // End-effector enabled mask.
+    google.protobuf.Timestamp end_time = 4; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
+  }
+
+  oneof target {
+    PoseCommand target_pose = 1;
+    POIPoseCommand target_poi = 2;
+    dtproto.geometry_msgs.SE3Velocity target_vel = 12;
+    TrajCommand target_traj = 21;
+    POITrajCommand target_poi_traj = 22;
+  }
+
+  /**
+   * @brief 명령을 수행하는 기준 좌표계
+   *
+   * 'world', 'robot', 또는 사용자가 정의한 좌표계 이름을 입력 <br>
+   * 'world' 인 경우 로봇의 전역 좌표계에서 위치 및 속도 해석 <br>
+   * 'robot' 인 경우 로봇의 로컬 좌표계(로봇 베이스 중심에서 전진방향이 x축, 좌측이 y축)에서 위치 및 속도 해석 <br>
+   */
+  string ref_frame = 51;
+}
+
+/**
+ * @brief A task/cartesian space control command with timestamp.
+ */
+
+message TaskControlTimeStamped {
+  std_msgs.Header header = 1;
+  TaskControl control = 2;
+}

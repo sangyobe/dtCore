@@ -3,31 +3,88 @@ syntax = "proto3";
 package dtproto.nav_msgs;
 
 
+// An enumeration indicating the property how to pass each way-point.
+enum WayPointPassingProp {
+    // No prop. Robot will do the default behavior.
+    WP_PASSING_PROP_NONE = 0;
+
+    // Try to pass through the exact point. The robot can ignore heading direction.
+    WP_PASSING_PROP_PASS_EXACT_POS = 1;
+
+    // Try to pass the exact point with direction.
+    WP_PASSING_PROP_PASS_EXACT_POS_WITH_ORI = 2;
+
+    // Stop at the exact point and go. The robot can ignore heading direction.
+    WP_PASSING_PROP_STOP_EXACT_POS = 3;
+
+    // Stop at the exact point with direction and go.
+    WP_PASSING_PROP_STOP_EXACT_POS_WITH_ORI = 4;
+
+    // Force a robot pass the via point in a user defined optimized way.
+    // The robot does not required to pass the exact via-points.
+    // The robot can ignore heading direction.
+    WP_PASSING_PROP_OPTIMIZED = 5;
+
+    // Force a robot pass the via point in a user defined optimized way.
+    // The robot does not required to pass the exact via-points.
+    WP_PASSING_PROP_OPTIMIZED_WITH_ORI = 6;
+}
+
+/**
+ * How to leave the way-point.
+ * Normally it is usefule to describe how to depart from the beginning point of a trajectory.
+ */
+enum WayPointDepartureProp {
+    // No prop. Robot will do the default behavior.
+    WP_DEPART_PROP_NONE = 0;
+
+    // Align orientation first and leave.
+    WP_DEPART_PROP_ALIGN_ORI_BEFORE = 1;
+
+    // Leave and align orientation after.
+    WP_DEPART_PROP_LEAVE_AND_ALIGN_ORI = 2;
+}
+
+/**
+* How to arrive at the way-point
+* Normally it is usefule to describe how to arrive the final destination point.
+*/
+enum WayPointArrivalProp {
+    // No prop. Robot will do the default behavior.
+    WP_ARR_PROP_NONE = 0;
+
+    // Locate the robot at the right position and align orientation after.
+    WP_ARR_PROP_ALIGN_ORI_AFTER = 1;
+
+    // Arrive at the destination point with aligned orientation.
+    WP_ARR_PROP_ARRIVE_WITH_ORI = 2;
+}
+
 // An enumeration indicating the mode of collision avoidance.
 enum CollisionAvoidanceMode {
     /**
-     * No collision avoidance is enabled.
-     */
-    NONE = 0;
+    * No collision avoidance is enabled.
+    */
+    COL_AVOID_NONE = 0;
 
     /**
-     * Stop if an obstacle is detected on the path to follow, and start moving when the obstacle is removed from the path.
-     * Timeout can be specified.
-     */
-    STOP_AND_GO = 1;
+    * Stop if an obstacle is detected on the path to follow, and start moving when the obstacle is removed from the path.
+    * Timeout can be specified.
+    */
+    COL_AVOID_STOP_AND_GO = 1;
 
     /**
-     * Avoid obstacles on the path by generating a new path around it.
-     */
-    AVOID_OBSTACLE = 2;
+    * Avoid obstacles on the path by generating a new path around it.
+    */
+    COL_AVOID_AUTO = 2;
 }
 
 /*!
  * \brief Navigation 명령 설정
  *
- * MoveTo 등의 locomotion 명령 수행을 위한 설정. 예를들어 로봇이 출발점에서 출발할 때 또는 도착할 때 로봇 동작을 정의한다.
+ * MoveTo 등의 locomotion 명령 수행을 위한 설정. 예를들어 로봇이 출발점에서 출발할 때 또는 도착점 도착할 때 로봇 동작을 정의한다.
  *
- * \see dtproto.nav_msgs.NavCommand
+ * \see dtproto.nav_msgs.NavCotrol
  * \see dtproto.nav_msgs.NavState
  */
 message NavConfig {
@@ -36,5 +93,20 @@ message NavConfig {
     // STOP_AND_GO 모드 등에서 경로 주행 불가능을 판단하기 위한 타임아웃(seconds). 
     // 장애물이 감지되어 주행을 잠시 멈춘 경우 해당 타임아웃 시간까지 장애물이 치워지지 않으면 주행을 종료하고 주행 실패(목적지 도달 실패)를 리턴.
     // 0 이하의  timeout은 timeout이 없는 것으로 간주하고 장애물이 치워질 때까지 영원히 기다림.
-    double collision_avoidance_timeout = 2; 
+    double collision_avoidance_timeout = 2;
+
+    // Strategy how to leave at the beginning point of the given path.
+    WayPointDepartureProp leaving_prop = 3;
+
+    // Strategy how to arrive at the destination.
+    WayPointArrivalProp arriving_prop = 4;
+
+    // How to pass each via point in the trajectory.
+    WayPointPassingProp passing_prop = 5;
+
+    // 도착점의 위치 threshold (meter)
+    double thre_pos = 6;
+
+    // 도착점의 방향 threshold (radian)
+    double thre_ori = 7;
 }

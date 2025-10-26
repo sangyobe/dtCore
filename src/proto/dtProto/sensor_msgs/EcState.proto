@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package dtproto.sensor_msgs;
 
+import "dtProto/std_msgs/Header.proto";
+
 /**
  * @brief 헤더가 포함된 모터 
  *

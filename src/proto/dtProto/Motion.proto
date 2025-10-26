@@ -4,10 +4,16 @@ package dtproto;
 
 import "dtProto/std_msgs/Request.proto";
 import "dtProto/robot_msgs/JointControl.proto";
+import "dtProto/robot_msgs/PIDGain.proto";
+import "dtProto/robot_msgs/FrictionCoeff.proto";
+import "dtProto/robot_msgs/TaskControl.proto";
+import "dtProto/robot_msgs/GripperControl.proto";
+import "dtProto/robot_msgs/MotionControl.proto";
+import "dtProto/robot_msgs/ControlState.proto";
 
 service motion {
     /** 
-     * Joint space control.
+     * @brief Joint space control.
      *
      * It is a unary RPC.
      *
@@ -17,7 +23,7 @@ service motion {
     rpc SetJoint(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /** 
-     * Joint space control.
+     * @brief Joint space control.
      *
      * It is a client-side streaming RPC.
      *
@@ -27,38 +33,122 @@ service motion {
     rpc SetJointStrm(stream dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /** 
-     * Cartesian space control.
+     * @brief Set joint space PID control gains.
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @param dtproto.robot_msgs.JointPIDGainTimeStamped
      * @return dtproto.std_msgs.Response
      */
-    rpc SetEEPose(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+    rpc SetJointPIDGain(dtproto.robot_msgs.JointPIDGainTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /** 
-     * Cartesian space control.
+     * @brief Set joint friction coefficient.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.JointFrictionCoeffTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetJointFrictionCoeff(dtproto.robot_msgs.JointFrictionCoeffTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * @brief Cartesian space control.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.TaskControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetTask(dtproto.robot_msgs.TaskControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * @brief Cartesian space control.
      *
      * It is a client-side streaming RPC.
      *
-     * @param stream dtproto.robot_msgs.JointControlTimeStamped
+     * @param stream dtproto.robot_msgs.TaskControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
-    rpc SetEEPoseStrm(stream dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+    rpc SetTaskStrm(stream dtproto.robot_msgs.TaskControlTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /** 
-     * Set pre-define motion as the control target.
+     * @brief Set cartesian space PID control gains.
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @param dtproto.robot_msgs.TaskPIDGainTimeStamped
      * @return dtproto.std_msgs.Response
      */
-    rpc SetMotion(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
+    rpc SetTaskPIDGain(dtproto.robot_msgs.TaskPIDGainTimeStamped) returns (dtproto.std_msgs.Response); 
 
+    /** 
+     * @brief Gripper control.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.GripperControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetGripper(dtproto.robot_msgs.GripperControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * @brief Gripper control.
+     *
+     * It is a client-side streaming RPC.
+     *
+     * @param stream dtproto.robot_msgs.GripperControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetGripperStrm(stream dtproto.robot_msgs.GripperControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /** 
+     * @brief Set pre-define motion as the control target.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.robot_msgs.MotionControlTimeStamped
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetMotion(dtproto.robot_msgs.MotionControlTimeStamped) returns (dtproto.std_msgs.Response); 
+
+    /**
+     * @brief Request a robot to stop moving generously within given duration.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request 
+     * @return dtproto.std_msgs.Response The RPC call's response.
+     */
+    rpc StopMotion(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
+
+    /**
+     * @brief Request a robot to stop moving immediately.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request 
+     * @return dtproto.std_msgs.Response The RPC call's response.
+     */
+    rpc KillMotion(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
+
+    /**
+     * @brief Enable Gravity compenation on or off.
+     *
+     * dtproto.std_msgs.Request.type 값에 따라 gravity compensation on or off.
+     * 명령이 로봇에 전달되면 Success를 리턴하며 실제 gravity compensation enabled state는 별도의 RPC(dtproto.motion.GetControlState)로 확인해야 함.
+     * 즉, 본 명령이 Success를 반환하였어도 실제 on/off 상태가 명령대로 변경되었다는 것을 보장하지 않음.
+     *
+     * It is a unary RPC.
+     *
+     * @param dtproto.std_msgs.Request
+     * @return dtproto.std_msgs.Response
+     */
+    rpc SetGravityCompensationEnabled(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
     
     /** 
-     * Get the current control state.
+     * @brief Get the current control state.
+     *
      * The control state includes
      *    ...
      *    etc.
@@ -68,5 +158,5 @@ service motion {
      * @param dtproto.std_msgs.Request 
      * @return stream dtproto.robot_msgs.ControlStateTimeStamped The control state.
      */
-    // rpc GetControlStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.robot_msgs.ControlStateTimeStamped);
+    rpc GetControlStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.robot_msgs.ControlStateTimeStamped);
 }

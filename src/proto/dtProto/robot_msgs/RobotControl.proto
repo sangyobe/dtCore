@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+import "dtProto/nav_msgs/NavControl.proto";
+import "dtProto/robot_msgs/MotionControl.proto";
+import "dtProto/robot_msgs/JointControl.proto";
+import "dtProto/robot_msgs/MoveControl.proto";
+
+message RobotControl {
+  oneof control {
+    nav_msgs.NavControl nav = 1;          // set target pose, velocity, or trjectory.
+    robot_msgs.MotionControl motion = 2;  // set pre-define motion or command.
+    robot_msgs.JointControl joint = 3;    // 
+    robot_msgs.MoveControl move = 4;      // make the robot to track the instant target and velocity.
+  }
+  string ucid = 11;                       // unique command id
+}
+
+message RobotControlTimeStamped {
+  std_msgs.Header header = 1;
+  RobotControl control = 2;
+}
+
+message RobotControlResponse {
+  string ucid = 1;
+  int32 feedback = 2;
+  int32 result = 3;
+  string msg = 4;
+}

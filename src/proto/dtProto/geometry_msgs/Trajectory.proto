@@ -5,39 +5,9 @@ package dtproto.geometry_msgs;
 import "google/protobuf/timestamp.proto";
 import "dtProto/geometry_msgs/Pose.proto";
 
-// An enumeration indicating the property how to pass each trajectory point.
-enum TrajectoryPointPassingProp {
-    // No prop. Robot will do the default behavior.
-    NONE = 0;
-
-    // Try to pass through the exact point. The robot can ignore heading direction.
-    PASS_EXACT_POS = 1;
-
-    // Try to pass the exact point with direction.
-    PASS_EXACT_POS_WITH_ORI = 2;
-
-    // Stop at the exact point and go. The robot can ignore heading direction.
-    STOP_EXACT_POS = 3;
-
-    // Stop at the exact point with direction and go.
-    STOP_EXACT_POS_WITH_ORI = 4;
-
-    // Stop at the exact point and align the heading and go.
-    STOP_EXACT_POS_AND_ALIGN_ORI = 5;
-
-    // Pass the via point as fast as possible. The robot can ignore heading direction.
-    PASS_FASTEST = 6;
-
-    // Pass the via point with direction as fast as possible.
-    PASS_FASTEST_WITH_ORI = 7;
-}
-
 message SE2TrajectoryPoint {
     dtproto.geometry_msgs.SE2Pose pose = 1;
     double duration = 2; // 명령 수행 시간(초)
-    double thre_pos = 3; // 위치 threshold (meter)
-    double thre_ori = 4; // 방향 threshold (radian)
-    TrajectoryPointPassingProp pass_prop = 5;
 }
 
 /**
@@ -51,9 +21,6 @@ message SE2Trajectory {
 message SE3TrajectoryPoint {
     dtproto.geometry_msgs.SE3Pose pose = 1;
     double duration = 2; // 명령 수행 시간(초)
-    double thre_pos = 3; // 위치 threshold (meter)
-    double thre_ori = 4; // 방향 threshold (radian)
-    TrajectoryPointPassingProp pass_prop = 5;
 }
 
 /**
@@ -67,9 +34,6 @@ message SE3Trajectory {
 message POITrajectoryPoint {
     string name = 1;
     double duration = 2; // 명령 수행 시간(초)
-    double thre_pos = 3; // 위치 threshold (meter)
-    double thre_ori = 4; // 방향 threshold (radian)
-    TrajectoryPointPassingProp pass_prop = 5;
 }
 
 /**

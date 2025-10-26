@@ -2,42 +2,108 @@ syntax = "proto3";
 
 package dtproto.robot_msgs;
 
+import "google/protobuf/timestamp.proto";
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/sensor_msgs/JointState.proto";
 
-
-message JointCommandParam {
-  double q = 1;
-  double qdot = 2;
-  double tau = 3;
-  double kp = 4;
-  double kd = 5;
-  double ki = 6;
-  double duration = 7;
-}
-
+/**
+ * @brief A joint space control command.
+ */
 message JointControl {
   enum ControlMode {
-    SET_POSITION = 0;
-    SET_VELOCITY = 1;
-    SET_TORQUE = 2;
+    SET_TARGET = 0;      // Set instant target position, velocity, and toreque with PID gains.
+    SET_POS_INTP = 1;    // Set target position with duration. The taret position will be interpolated during the duration for appling to a joint.
+    SET_VEL_INTP = 2;    // Set target velocity with duration. The taret velocity will be interpolated during the duration for appling to a joint. The target position is ignored.
+    // SET_TORQUE_INTP = 3; // Set target torque with duration. The taret torque will be interpolated during the duration for appling to a joint. The target position and velocity are ignored.
+    SET_TRAJECTORY = 4;  // Set target trajectory with duration.
+  }
+  ControlMode mode = 1;
+
+  message JointTarget {
+    double q = 1;
+    double qdot = 2;
+    double qddot = 3;
+    double tau = 4;
+    double kp = 5;
+    double kd = 6;
+    double ki = 7;
+  }
+
+  message JointTargetCommand {
+    int32 noj = 1; // Number of joints.
+    repeated JointTarget joints = 2;
+    double duration = 3;
+    uint64 mask = 4;// Joint enabled mask.
+  }
+
+  message JointTargetPos {
+    double pos = 1;
+    double vel_max = 2;     // Maximum velocity. m/sec for linear joint and rad/sec for angular joint.
+    double acc_max = 3;     // Maximum acceleration. m/sec^2 for linear joint and rad/sec^2 for angular joint.
+    double acc_dt = 4;      // Acceleration and decceleration duration in seconds. If this is greater than zero, acc_max will be ignored.
+  }
+
+  message JointTargetPosCommand {
+    int32 noj = 1;          // Number of joints.
+    repeated JointTargetPos joints = 2;
+    double duration = 3;    // Duration(seconds) to reach the target position.
+    uint64 mask = 4;        // Joint enabled mask
+  }
+
+  message JointTargetVel {
+    double vel = 1;
+    double acc_max = 2;     // Maximum acceleration. m/sec^2 for linear joint and rad/sec^2 for angular joint.
+    double acc_dt = 3;      // Acceleration and decceleration duration in seconds. If this is greater than zero, acc_max will be ignored.
+  }
+
+  message JointTargetVelCommand {
+    int32 noj = 1;          // Number of joints.
+    repeated JointTargetVel joints = 2;
+    double duration = 3;    // Duration(seconds) to reach the target position.
+    uint64 mask = 4;        // Joint enabled mask
+  }
+
+  message JointTrajectoryPoint {
+    repeated JointTarget target = 1;
+    double duration = 2; // 명령 수행 시간(초)
+
+  }
+  message JointTrajectory {
+    repeated JointTrajectoryPoint points = 1;
+    google.protobuf.Timestamp reference_time = 2; // Trjectory 기준(시작) 시간.
   }
   
-  message JointPoseCommand {
-    ControlMode mode = 1;
-    repeated sensor_msgs.JointState joint_state = 2;
-    float duration = 3;
+  message JointTargetTrajCommand {
+    JointTrajectory trajectory = 1;
   }
-  message JointTrajCommand {
 
-  }
   oneof target {
-    JointPoseCommand pose = 1;
-    JointTrajCommand traj = 2;
+    JointTargetCommand joint_target = 11;
+    JointTargetPosCommand target_pos = 12;
+    JointTargetVelCommand target_vel = 13;
+    JointTargetTrajCommand target_traj = 15;
   }
+
+  enum JointTrajectoryPassingProp {
+    // No prop. Robot will do the default behavior.
+    NONE = 0;
+
+    // Stop at the via point and go.
+    STOP_AND_GO = 1;
+
+    // Keep continuous velocity while passing the point.
+    CONTINUOUS_VEL = 2;
+
+    // Keep continuous velocity and acceleration while passing the point.
+    CONTINUOUS_ACC = 3;
+  }
+  JointTrajectoryPassingProp passing_prop = 9;
 }
 
+/**
+ * @brief A joint space control command with timestamp.
+ */
 message JointControlTimeStamped {
   std_msgs.Header header = 1;
-  JointControl cmd = 2;
+  JointControl control = 2;
 }

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+
+/**
+ * @brief A joint friction coefficient.
+ */
+message FrictionCoeff {
+  double coulomb_friction = 1;
+  double viscous_friction = 2;
+  double stribeck_friction = 3;
+}
+
+/**
+ * @brief Joint friction coefficient for multiple joints.
+ */
+message JointFrictionCoeff {
+  int32 noj = 1; // Number of joints.
+  repeated FrictionCoeff joints = 2;
+}
+
+/**
+ * @brief Joint friction coefficient with timestamp for multiple joints.
+ */
+message JointFrictionCoeffTimeStamped {
+  std_msgs.Header header = 1;
+  JointFrictionCoeff friction_coeff = 2;
+}

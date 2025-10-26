@@ -12,7 +12,7 @@ import "dtProto/nav_msgs/NavConfig.proto";
 /**
  * @brief Navigation 명령
  */
-message NavCommand {
+message NavControl {
   message SE2TrajCommand {
     dtproto.geometry_msgs.SE2Trajectory trajectory = 1; // 하나 이상의 경로점을 포함하는 로봇이 추종해야 할 경로. 마지막 경로점이 최종 도착지.
     google.protobuf.Timestamp end_time = 2; // 해당 명령이 유효한 시각. 이후 해당 명령은 로봇에서 무시(실행 종료)된다.
@@ -51,8 +51,8 @@ message NavCommand {
     POIPoseCommand poi_target_pose = 3;
   }
   oneof target_vel {
-      dtproto.geometry_msgs.SE2Velocity se2_cmd_vel = 11;
-      dtproto.geometry_msgs.SE3Velocity se3_cmd_vel = 12;
+    dtproto.geometry_msgs.SE2Velocity se2_target_vel = 11;
+    dtproto.geometry_msgs.SE3Velocity se3_target_vel = 12;
   }
   oneof target_traj {
     SE2TrajCommand se2_target_traj = 21;
@@ -69,13 +69,13 @@ message NavCommand {
    */
   string ref_frame = 51;
 
-  NavConfig config = 52;
+  NavConfig config = 52; // Navigation 명령 수행을 위한 context
 }
 
 /**
  * @brief Header가 있는 Navigation 명령
  */
-message NavCommandTimeStamped {
+message NavControlTimeStamped {
   std_msgs.Header header = 1;
-  NavCommand cmd = 2;
+  NavControl control = 2;
 }

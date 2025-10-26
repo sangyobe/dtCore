@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package dtproto.robot_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+
+/**
+ * @brief A joint PID gain.
+ */
+message PIDGain {
+  double kp = 1;
+  double kd = 2;
+  double ki = 3;
+}
+
+/**
+ * @brief Joint PID gains for multiple joints.
+ */
+message JointPIDGain {
+  int32 noj = 1; // Number of joints.
+  repeated PIDGain joints = 2;
+}
+
+/**
+ * @brief Joint PID gains with timestamp for multiple joints.
+ */
+message JointPIDGainTimeStamped {
+  std_msgs.Header header = 1;
+  JointPIDGain gain = 2;
+}
+
+/**
+ * @brief Task/cartesian space PID gains for multiple tasks.
+ */
+message TaskPIDGain {
+  int32 noee = 1; // Number of end-effectos.
+  repeated PIDGain tasks = 2;
+}
+
+/**
+ * @brief Task/cartesian space PID gains with timestamp for multiple tasks.
+ */
+message TaskPIDGainTimeStamped {
+  std_msgs.Header header = 1;
+  TaskPIDGain gain = 2;
+}

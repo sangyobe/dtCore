@@ -6,6 +6,11 @@ import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Pose.proto";
 import "dtProto/geometry_msgs/Twist.proto";
 
+/**
+ * @brief A control command to make a robot move.
+ * Set instantaneous target pose or velocity for a robot to track. 
+ * This command is used frequently for remote control.
+ */ 
 message MoveControl {
   enum ControlMode {
     POSE_ABSOLUTE = 0;
@@ -19,7 +24,10 @@ message MoveControl {
   float duration = 4;
 }
 
+/**
+ * @brief A command to make a robot move with timestamp.
+ */ 
 message MoveControlTimeStamped {
   std_msgs.Header header = 1;
-  MoveControl cmd = 2;
+  MoveControl control = 2;
 }

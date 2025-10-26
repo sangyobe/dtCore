@@ -3,7 +3,7 @@ syntax = "proto3";
 package dtproto;
 
 import "dtProto/std_msgs/Request.proto";
-import "dtProto/nav_msgs/NavCommand.proto";
+import "dtProto/nav_msgs/NavControl.proto";
 import "dtProto/nav_msgs/NavState.proto";
 
 service navigation {
@@ -26,12 +26,12 @@ service navigation {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.nav_msgs.NavCommand The navigation command.
+     * @param dtproto.nav_msgs.NavControlTimeStamped The navigation command.
      * @return dtproto.std_msgs.Response The RPC call's response.
      
      * @see MoveToStrm()
      */
-    rpc MoveTo(dtproto.nav_msgs.NavCommandTimeStamped) returns (dtproto.std_msgs.Response); 
+    rpc MoveTo(dtproto.nav_msgs.NavControlTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /** 
      * Request a robot to move to track the target velocity given in the command.
@@ -52,12 +52,12 @@ service navigation {
      *
      * It is a client-side streamingRPC.
      *
-     * @param stream dtproto.nav_msgs.NavCommand The navigation command.
+     * @param stream dtproto.nav_msgs.NavControlTimeStamped The navigation command.
      * @return dtproto.std_msgs.Response The RPC call's response.
      
      * @see MoveTo()
      */
-    rpc MoveToStrm(stream dtproto.nav_msgs.NavCommandTimeStamped) returns (dtproto.std_msgs.Response); 
+    rpc MoveToStrm(stream dtproto.nav_msgs.NavControlTimeStamped) returns (dtproto.std_msgs.Response); 
 
     /**
      * Request a robot to stop moving.

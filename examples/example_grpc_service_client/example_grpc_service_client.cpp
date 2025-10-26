@@ -17,7 +17,7 @@ public:
 
     bool RequestRobotInfo();
     bool RequestVersion();
-    bool ControlCmd(int cmd_mode, const char* fmt, ...);
+    bool MotionControl(int cmd_mode, const char* fmt, ...);
 
 private:
     std::shared_ptr<grpc::Channel> channel_;
@@ -71,10 +71,10 @@ bool RpcClient::RequestVersion()
     }
 }
 
-bool RpcClient::ControlCmd(int cmd_mode, const char* fmt, ...) 
+bool RpcClient::MotionControl(int cmd_mode, const char* fmt, ...) 
 {
     grpc::ClientContext context;
-    dtproto::robot_msgs::ControlCmd req;
+    dtproto::robot_msgs::MotionControl req;
     dtproto::std_msgs::Response res;
     
     req.set_cmd_mode(cmd_mode);
@@ -98,8 +98,8 @@ bool RpcClient::ControlCmd(int cmd_mode, const char* fmt, ...)
 // {
 //     // initialize RPC client
 //     std::unique_ptr<RpcClient> rpcClient = std::make_unique<RpcClient>("localhost:50052");
-//     // std::cout << "> ControlCmd() call through the 1st channel...\n";
-//     // rpcClient->ControlCmd(1, "");
+//     // std::cout << "> MotionControl() call through the 1st channel...\n";
+//     // rpcClient->MotionControl(1, "");
 //     std::cout << "> RequestRobotInfo() call through the 1st channel...\n";
 //     rpcClient->RequestRobotInfo();
 //     std::cout << "> RequestVersion() call through the 1st channel...\n";
