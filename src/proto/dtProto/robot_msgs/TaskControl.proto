@@ -46,7 +46,7 @@ message TaskControl {
   oneof target {
     PoseCommand target_pose = 1;
     POIPoseCommand target_poi = 2;
-    dtproto.geometry_msgs.SE3Velocity target_vel = 12;
+    VelCommand target_vel = 12;
     TrajCommand target_traj = 21;
     POITrajCommand target_poi_traj = 22;
   }

@@ -26,7 +26,7 @@ service navigation {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.nav_msgs.NavControlTimeStamped The navigation command.
+     * @param msg dtproto.nav_msgs.NavControlTimeStamped The navigation command.
      * @return dtproto.std_msgs.Response The RPC call's response.
      
      * @see MoveToStrm()
@@ -52,7 +52,7 @@ service navigation {
      *
      * It is a client-side streamingRPC.
      *
-     * @param stream dtproto.nav_msgs.NavControlTimeStamped The navigation command.
+     * @param msg stream dtproto.nav_msgs.NavControlTimeStamped The navigation command.
      * @return dtproto.std_msgs.Response The RPC call's response.
      
      * @see MoveTo()
@@ -64,7 +64,7 @@ service navigation {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.std_msgs.Request 
+     * @param msg dtproto.std_msgs.Request 
      * @return dtproto.std_msgs.Response The RPC call's response.
      */
     rpc StopMove(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
@@ -79,7 +79,7 @@ service navigation {
      *
      * It is a server-side streaming RPC.
      *
-     * @param dtproto.std_msgs.Request 
+     * @param msg dtproto.std_msgs.Request 
      * @return stream dtproto.nav_msgs.NavStateTimeStamped The navigation state.
      */
     rpc GetNavStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.nav_msgs.NavStateTimeStamped);

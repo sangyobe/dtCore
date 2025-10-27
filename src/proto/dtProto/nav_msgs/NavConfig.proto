@@ -105,8 +105,8 @@ message NavConfig {
     WayPointPassingProp passing_prop = 5;
 
     // 도착점의 위치 threshold (meter)
-    double thre_pos = 6;
+    double pos_threshold = 6;
 
     // 도착점의 방향 threshold (radian)
-    double thre_ori = 7;
+    double ori_threshold = 7;
 }

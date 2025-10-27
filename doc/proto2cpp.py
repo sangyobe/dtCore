@@ -160,10 +160,12 @@ class proto2cpp:
         isPackage = False
         isMultilineComment = False
         isOneOf = False
+        oneOfName = ""
         # This variable is here as a workaround for not getting extra line breaks (each line
         # ends with a line separator and print() method will add another one).
         # We will be adding lines into this var and then print the var out at the end.
         theOutput = ""
+        theInclude = ""
         for line in inputFile:
             # Search for comment ("//") and add one more slash character ("/") to the comment
             # block to make Doxygen detect it.
@@ -198,10 +200,28 @@ class proto2cpp:
                 theOutput += " */\n"
                 isMultilineComment = False
 
+            # Sean : import -> include
+            matchImport = re.search(r"\bimport\b", line)
+            if matchImport is not None:
+                line = (
+                    "#include"
+                    + line[: matchImport.start()]
+                    + line[matchImport.end() :].replace(";", "")
+                )
+                theInclude += line
+                continue
+
             # line = line.replace(".", "::") but not in quoted strings (Necessary for import statement)
             # Not working
             # if not isMultilineComment:
-            #  line = re.sub(r'\.(?=(?:[^"]*"[^"]*")*[^"]*$)',r'::',line)
+                # line = re.sub(r'\.(?=(?:[^"]*"[^"]*")*[^"]*$)',r'::',line)
+            
+            # Sean : dtproto.system -> dtproto::system
+            if not isMultilineComment:
+                line = re.sub(r'(\w)\.(\w)', r'\1::\2', line)
+
+            # Sean : Search for " syntax ...;", remove it
+            line = re.sub(r"\bsyntax\b[^;]+;", r"", line)
 
             # Search for " option ...;", remove it
             line = re.sub(r"\boption\b[^;]+;", r"", line)
@@ -232,10 +252,16 @@ class proto2cpp:
             if isEnum is True and matchSemicolon is not None:
                 line = line.replace(";", ",")
 
-            # Search for "oneof".
+            # Sean : Search for "oneof".
             matchOneOf = re.search(r"\boneof\b", line)
             if matchOneOf is not None:
-                line = line[: matchOneOf.start()] + "namespace" + line[matchOneOf.end() :]
+                matchOneOfName = re.search(r"\b[a-zA-Z0-9_]+\b", line[matchOneOf.end() :])
+                if matchOneOfName is not None:
+                    oneOfName = matchOneOfName.group(0)
+                    line = line[: matchOneOf.start()] + "union" + line[matchOneOf.end() + matchOneOfName.end() :]
+                else:
+                    oneOfName = ""
+                    line = line[: matchOneOf.start()] + "union" + line[matchOneOf.end() :]
                 isOneOf = True
 
             # Search for a closing brace.
@@ -248,6 +274,15 @@ class proto2cpp:
                         + line[matchClosingBrace.end() :]
                     )
                     isEnum = False
+                elif isOneOf is True:
+                    line = (
+                        line[: matchClosingBrace.start()]
+                        + "} "
+                        + oneOfName
+                        + ";"
+                        + line[matchClosingBrace.end() :]
+                    )
+                    isOneOf = False
                 elif isEnum is False:
                     # Message (to be struct) ends => add semicolon so that it'll
                     # be a proper C(++) struct and Doxygen will handle it correctly.
@@ -315,6 +350,13 @@ class proto2cpp:
         # Now that we've got all lines in the string let's split the lines and print out
         # one by one.
         # This is a workaround to get rid of extra empty line at the end which print() method adds.
+        # Sean : Add include files
+        lines = theInclude.splitlines()
+        for line in lines:
+            if len(line) > 0:
+                print(line)
+                self.log(line + "\n")
+
         lines = theOutput.splitlines()
         for line in lines:
             if len(line) > 0:

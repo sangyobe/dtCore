@@ -17,7 +17,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.JointControlTimeStamped
+     * @param msg dtproto.robot_msgs.JointControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetJoint(dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -27,7 +27,7 @@ service motion {
      *
      * It is a client-side streaming RPC.
      *
-     * @param stream dtproto.robot_msgs.JointControlTimeStamped
+     * @param msg stream dtproto.robot_msgs.JointControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetJointStrm(stream dtproto.robot_msgs.JointControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -37,7 +37,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.JointPIDGainTimeStamped
+     * @param msg dtproto.robot_msgs.JointPIDGainTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetJointPIDGain(dtproto.robot_msgs.JointPIDGainTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -47,7 +47,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.JointFrictionCoeffTimeStamped
+     * @param msg dtproto.robot_msgs.JointFrictionCoeffTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetJointFrictionCoeff(dtproto.robot_msgs.JointFrictionCoeffTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -57,7 +57,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.TaskControlTimeStamped
+     * @param msg dtproto.robot_msgs.TaskControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetTask(dtproto.robot_msgs.TaskControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -67,7 +67,7 @@ service motion {
      *
      * It is a client-side streaming RPC.
      *
-     * @param stream dtproto.robot_msgs.TaskControlTimeStamped
+     * @param msg stream dtproto.robot_msgs.TaskControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetTaskStrm(stream dtproto.robot_msgs.TaskControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -77,7 +77,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.TaskPIDGainTimeStamped
+     * @param msg dtproto.robot_msgs.TaskPIDGainTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetTaskPIDGain(dtproto.robot_msgs.TaskPIDGainTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -87,7 +87,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.GripperControlTimeStamped
+     * @param msg dtproto.robot_msgs.GripperControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetGripper(dtproto.robot_msgs.GripperControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -97,7 +97,7 @@ service motion {
      *
      * It is a client-side streaming RPC.
      *
-     * @param stream dtproto.robot_msgs.GripperControlTimeStamped
+     * @param msg stream dtproto.robot_msgs.GripperControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetGripperStrm(stream dtproto.robot_msgs.GripperControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -107,7 +107,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.robot_msgs.MotionControlTimeStamped
+     * @param msg dtproto.robot_msgs.MotionControlTimeStamped
      * @return dtproto.std_msgs.Response
      */
     rpc SetMotion(dtproto.robot_msgs.MotionControlTimeStamped) returns (dtproto.std_msgs.Response); 
@@ -117,7 +117,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.std_msgs.Request 
+     * @param msg dtproto.std_msgs.Request 
      * @return dtproto.std_msgs.Response The RPC call's response.
      */
     rpc StopMotion(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
@@ -127,7 +127,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.std_msgs.Request 
+     * @param msg dtproto.std_msgs.Request 
      * @return dtproto.std_msgs.Response The RPC call's response.
      */
     rpc KillMotion(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
@@ -141,7 +141,7 @@ service motion {
      *
      * It is a unary RPC.
      *
-     * @param dtproto.std_msgs.Request
+     * @param msg dtproto.std_msgs.Request
      * @return dtproto.std_msgs.Response
      */
     rpc SetGravityCompensationEnabled(dtproto.std_msgs.Request) returns (dtproto.std_msgs.Response);
@@ -155,7 +155,7 @@ service motion {
      *
      * It is a server-side streaming RPC.
      *
-     * @param dtproto.std_msgs.Request 
+     * @param msg dtproto.std_msgs.Request 
      * @return stream dtproto.robot_msgs.ControlStateTimeStamped The control state.
      */
     rpc GetControlStateStrm(dtproto.std_msgs.Request) returns (stream dtproto.robot_msgs.ControlStateTimeStamped);
