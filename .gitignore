@@ -5,6 +5,10 @@ build
 lib
 data
 logs
+conf_1.yaml
+conf_2.yaml
+conf_3.yaml
+conf_4.yaml
 
 # Prerequisites
 ###################
