@@ -28,6 +28,10 @@ class Conf
 public:
     // constructors
     Conf() = delete;
+    Conf(const Conf &rhs)
+    {
+        _rootNode = rhs._rootNode;
+    }
     Conf(const std::string &yaml_file)
     {
         _rootNode = YAML::LoadFile(yaml_file);
@@ -100,7 +104,7 @@ public:
     }
 
     // save content as a file
-    bool Dump(const std::string &out_file)
+    bool Dump(const std::string &out_file) const
     {
         std::ofstream fout(out_file);
         if (fout.is_open())
@@ -110,6 +114,13 @@ public:
         }
         else
             return false;
+    }
+
+    // dump content to a output stream
+    bool Dump(std::ostream &out) const
+    {
+        out << _rootNode;
+        return true;
     }
 
     // indexer
@@ -149,6 +160,20 @@ public:
     }
 #endif
 
+    // assignment
+    template <typename ValueType> const Conf &operator=(const ValueType &value)
+    {
+        _rootNode = value;
+        return *this;
+    }
+
+    // assignment to a sequence node
+    template <typename ValueType> Conf &operator<<(const ValueType &value)
+    {
+        _rootNode.push_back(value);
+        return *this;
+    }
+
     // get array size
     const size_t size() const
     {
@@ -161,6 +186,7 @@ public:
 
 private:
     YAML::Node _rootNode;
+    friend std::ostream& operator<<(std::ostream& out, const Conf& conf);
 
 private:
     YAML::Node mergeNodes(const YAML::Node& baseNode, const YAML::Node& overrideNode, bool concatSequences = false) 
@@ -229,6 +255,12 @@ const ValueType Conf::to() const
 {
     return _rootNode.as<ValueType>();
 }
+
+std::ostream& operator<<(std::ostream& out, const Conf& conf) {
+    out << conf._rootNode;
+    return out;
+}
+
 
 } // namespace Utils
 } // namespace dt
