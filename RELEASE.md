@@ -1,3 +1,11 @@
+#### [v1.13.1]
+(2025/9/25)
+##### 
+- The dt::Utils::Conf module allows you to add new configuration items or change their values. 
+  Additionally, the ability to save configuration contents to a file has been added.
+- The example to test The dt::Utils::Conf module has been updated.
+- add dtproto::sensor_msgs::Ft, dtproto::sensor_msgs::FtTimeStamped.
+
 #### [v1.13.0]
 (2025/9/25)
 ##### 
