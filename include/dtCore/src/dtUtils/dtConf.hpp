@@ -191,28 +191,37 @@ private:
 private:
     YAML::Node mergeNodes(const YAML::Node& baseNode, const YAML::Node& overrideNode, bool concatSequences = false) 
     {
-        if (!overrideNode.IsDefined() || overrideNode.IsNull()) {
+        if (!overrideNode.IsDefined() || overrideNode.IsNull()) 
+        {
             return baseNode;
         }
-        if (!baseNode.IsDefined() || baseNode.IsNull()) {
+        if (!baseNode.IsDefined() || baseNode.IsNull()) 
+        {
             return overrideNode;
         }
 
-        if (overrideNode.IsMap() && baseNode.IsMap()) {
+        if (overrideNode.IsMap() && baseNode.IsMap()) 
+        {
             YAML::Node merged = baseNode; // Start with the base node
-            for (auto it = overrideNode.begin(); it != overrideNode.end(); ++it) {
+            for (auto it = overrideNode.begin(); it != overrideNode.end(); ++it) 
+            {
                 const std::string& key = it->first.as<std::string>();
                 merged[key] = mergeNodes(baseNode[key], it->second, concatSequences);
             }
             return merged;
-        } else if (concatSequences && overrideNode.IsSequence() && baseNode.IsSequence()) {
+        } 
+        else if (concatSequences && overrideNode.IsSequence() && baseNode.IsSequence()) 
+        {
             // Concatenate sequences
             YAML::Node merged = baseNode;
-            for (const auto& item : overrideNode) {
+            for (const auto& item : overrideNode) 
+            {
                 merged.push_back(item);
             }
             return merged;
-        } else {
+        } 
+        else 
+        {
             // For scalar or mixed types, override with the overrideNode's value
             return overrideNode;
         }
@@ -256,7 +265,8 @@ const ValueType Conf::to() const
     return _rootNode.as<ValueType>();
 }
 
-std::ostream& operator<<(std::ostream& out, const Conf& conf) {
+inline std::ostream& operator<<(std::ostream& out, const Conf& conf) 
+{
     out << conf._rootNode;
     return out;
 }
