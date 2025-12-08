@@ -1,5 +1,11 @@
+#### [v1.13.2]
+(2025/12/8)
+##### 
+- [Bug fix] Make 'std::ostream& dt::Utils::operator<<(std::ostream& out, const Conf& conf);' function inline.
+- Add a new data field, raw, for holding sensor raw data in dtproto.sensor_msgs.Ft message.
+
 #### [v1.13.1]
-(2025/9/25)
+(2025/12/2)
 ##### 
 - The dt::Utils::Conf module allows you to add new configuration items or change their values. 
   Additionally, the ability to save configuration contents to a file has been added.

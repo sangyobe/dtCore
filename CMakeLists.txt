@@ -4,7 +4,7 @@ project(dtCore
     LANGUAGES C CXX
     HOMEPAGE_URL https://github.hmc.co.kr/art_framework
     DESCRIPTION "HMC's Art Framework Library"
-    VERSION 1.13.1
+    VERSION 1.13.2
 )
 
 cmake_policy(VERSION 3.13)
@@ -218,6 +218,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/artfConfig.cmake"
 # --------------------------------------------------------
 # Finalize configuration and print options
 # --------------------------------------------------------
+message(STATUS "---------------------------------------------------------------------------")
+message(STATUS "ART Framework v${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH} / ${CMAKE_BUILD_TYPE} Build")
+message(STATUS "---------------------------------------------------------------------------")
 message(STATUS "BUILD_DOCS                                     : ${BUILD_DOCS}")
 message(STATUS "BUILD_UNIT_TESTS                               : ${BUILD_UNIT_TESTS}")
 message(STATUS "BUILD_EXAMPLES                                 : ${BUILD_EXAMPLES}")
@@ -228,3 +231,4 @@ message(STATUS "BUILD_dtCore                                   : ${BUILD_dtCore}
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")
 message(STATUS "BUILD_dtProto_gRPC                             : ${BUILD_dtProto_gRPC}")
 message(STATUS "BUILD_dtCore_gRPC                              : ${BUILD_dtCore_gRPC}")
+message(STATUS "---------------------------------------------------------------------------")
