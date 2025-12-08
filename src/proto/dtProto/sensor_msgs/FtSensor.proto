@@ -4,10 +4,12 @@ package dtproto.sensor_msgs;
 
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Point.proto";
+import "dtProto/geometry_msgs/Vector.proto";
 
 message Ft {
   geometry_msgs.Point3d force = 1;
   geometry_msgs.Point3d torque = 2;
+  geometry_msgs.Vector6d raw = 3;
 }
 
 message FtTimeStamped {
