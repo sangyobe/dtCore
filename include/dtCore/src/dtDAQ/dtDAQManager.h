@@ -11,7 +11,10 @@
  *
  */
 
+#include <thread>
+#include <mutex>
 #include "dtDataSource.h"
+
 namespace dt
 {
 namespace DAQ
@@ -26,10 +29,17 @@ public:
     virtual void Terminate() = 0;
     virtual void AppendDataSource(std::shared_ptr<DataSource> src)
     {
+        std::lock_guard<std::mutex> lock(_src_mtx);
         _data_srcs.push_back(src);
+    }
+    virtual void RemoveDataSource(std::shared_ptr<DataSource> src)
+    {
+        std::lock_guard<std::mutex> lock(_src_mtx);
+        _data_srcs.remove(src);
     }
     virtual void Update(void* context = nullptr)
     {
+        std::lock_guard<std::mutex> lock(_src_mtx);
         for (const std::shared_ptr<DataSource> &src : _data_srcs)
         {
             src->Update(context);
@@ -38,6 +48,7 @@ public:
 
 protected:
     std::list<std::shared_ptr<DataSource>> _data_srcs;
+    std::mutex _src_mtx;
 };
 
 } // namespace DAQ

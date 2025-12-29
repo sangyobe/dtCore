@@ -11,9 +11,11 @@
  *
  */
 
-#include "dtDataSink.h"
+#include <thread>
+#include <mutex>
 #include <list>
 #include <memory>
+#include "dtDataSink.h"
 
 namespace dt
 {
@@ -24,13 +26,23 @@ class DataSource
 {
 public:
     virtual ~DataSource() {}
-    void Update(void* context = nullptr) {
+    void Update(void* context = nullptr) 
+    {
         if (UpdateData(context))
+        {
+            std::lock_guard<std::mutex> lock(_sink_mtx);
             UpdateSink(context);
+        }
     }
     void AppendDataSink(std::shared_ptr<DataSink> sink)
     {
+        std::lock_guard<std::mutex> lock(_sink_mtx);
         _data_sinks.push_back(sink);
+    }
+    void RemoveDataSink(std::shared_ptr<DataSink> sink)
+    {
+        std::lock_guard<std::mutex> lock(_sink_mtx);
+        _data_sinks.remove(sink);
     }
 
 protected:
@@ -38,6 +50,7 @@ protected:
     virtual void UpdateSink(void* context) = 0;
 protected:
     std::list<std::shared_ptr<DataSink>> _data_sinks;
+    std::mutex _sink_mtx;
 };
 
 } // namespace DAQ
