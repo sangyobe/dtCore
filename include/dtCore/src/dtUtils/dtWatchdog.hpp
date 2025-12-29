@@ -62,18 +62,44 @@ public:
      * Reset counter with value
      * @param counter value to reset counter as.
      */
-    void Reset(int counter)
+    void Reset(int counter = COUNTER_MAX)
     {
         _counter = counter;
     }
 
     /**
      * 모니터링하는 데이터의 유효성 여부를 리턴한다.
-     * @return true if it is up-to-date.
+     * @return true if it is valid.
      */
     bool IsValid()
     {
         return (_counter > 0);
+    }
+
+    /**
+     * counter를 1 감소시키고 데이터 유효성 여부를 리턴한다.
+     * @return true if it is still valid after decreasing counter.
+     */
+    bool DecAndCheckValid()
+    {
+        _counter--;
+        return (_counter > 0);
+    }
+
+    /**
+     * counter를 1 감소시키고 데이터 유효성 여부를 리턴한다. 만약 counter 감소 후 
+     * invalid한 경우는 counter를 리셋한다. 리셋 여부를 리턴한다.
+     * @return true if it is reset after decreasing the internal counter.
+     */
+    bool DecAndReset(int counter = COUNTER_MAX)
+    {
+        if (DecAndCheckValid())
+            return false;
+        else
+        {
+            _counter = counter;
+            return true;
+        }
     }
 
 private:
