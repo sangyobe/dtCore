@@ -4,7 +4,7 @@ project(dtCore
     LANGUAGES C CXX
     HOMEPAGE_URL https://github.hmc.co.kr/art_framework
     DESCRIPTION "HMC's Art Framework Library"
-    VERSION 1.13.2
+    VERSION 1.13.3
 )
 
 cmake_policy(VERSION 3.13)
