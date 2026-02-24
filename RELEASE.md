@@ -1,3 +1,17 @@
+#### [v1.13.4]
+(2026/2/24)
+##### 
+- dt::Log에 syslog 기능 추가(linux, macOS 등)
+- dt::Log::FlushEvery() 함수 추가: 주기적인 flush 기능 설정
+- dt::Log::SetLogOffAll() 함수 추가
+- dt::Log::FlushOnAll() 함수 추가
+- dt::Log::SetLogLevelAll() 함수 추가
+- dt::Log::SetLogPatternAll() 함수 추가
+- dt::Log::SetLogPatternXXX() 함수가 spdlog log pattern string을 직접 입력 받을 수 있도록 함수 overload
+- examples에 log 관련 기능 테스트를 위한 샘플 코드/프로젝트 추가
+- dt::DAQ::DataSinkPBMcap 생성자에 mcap_no_chunking:bool, mcap_chunk_size:std::size_t 아규먼트 추가하여 mcap 저장시 chunking 옵션 및 chunk size 설정 가능하도록 변경
+- dt::Utils::Conf 에 toFloat64/toInt8/toUInt8/toInt16/toUInt16/toInt64/toUInt64 함수 추가
+  
 #### [v1.13.3]
 (2026/1/30)
 ##### 

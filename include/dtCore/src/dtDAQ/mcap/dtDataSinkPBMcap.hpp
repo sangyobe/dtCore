@@ -33,7 +33,13 @@ template <typename T>
 class DataSinkPBMcap : public DataSinkPB<T>
 {
 public:
-    DataSinkPBMcap(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true, bool truncate = true)
+    DataSinkPBMcap(
+        const std::string &topic_name, 
+        const std::string &file_basename = "", 
+        bool annot_datetime = true, 
+        bool truncate = true, 
+        bool mcap_no_chunking = false, 
+        std::size_t mcap_chunk_size = 1024 * 768)
         : _topic_name(topic_name)
     {
         if (annot_datetime)
@@ -49,6 +55,8 @@ public:
         }
 
         auto options = mcap::McapWriterOptions("");
+        options.chunkSize = mcap_chunk_size;
+        options.noChunking = mcap_no_chunking;
         const auto res = _writer.open(_file_name, options);
         if (!res.ok()) {
             std::cerr << "Failed to open " << _file_name << " for writing: " << res.message << std::endl;

@@ -137,9 +137,29 @@ public:
     {
         return _rootNode.as<double>();
     }
+    const double toFloat64() const
+    {
+        return _rootNode.as<double>();
+    }
     const float toFloat() const
     {
         return _rootNode.as<float>();
+    }
+    const int32_t toInt8() const
+    {
+        return _rootNode.as<int8_t>();
+    }
+    const uint32_t toUInt8() const
+    {
+        return _rootNode.as<uint8_t>();
+    }
+    const int32_t toInt16() const
+    {
+        return _rootNode.as<int16_t>();
+    }
+    const uint32_t toUInt16() const
+    {
+        return _rootNode.as<uint16_t>();
     }
     const int32_t toInt32() const
     {
@@ -148,6 +168,14 @@ public:
     const uint32_t toUInt32() const
     {
         return _rootNode.as<uint32_t>();
+    }
+    const int32_t toInt64() const
+    {
+        return _rootNode.as<int64_t>();
+    }
+    const uint32_t toUInt64() const
+    {
+        return _rootNode.as<uint64_t>();
     }
     const bool toBoolean() const
     {

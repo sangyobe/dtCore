@@ -175,11 +175,11 @@ int main(int argc, const char **argv)
     LOG(info).format("{:n}", std::vector{'h', 'e', 'l', 'l', 'o'});
     // Output: 'h', 'e', 'l', 'l', 'o'
 
-    LOG(info).format("{:s}", std::vector{'h', 'e', 'l', 'l', 'o'});
-    // Output: "hello"
+    // LOG(info).format("{:s}", std::vector{'h', 'e', 'l', 'l', 'o'});
+    // // Output: "hello"
 
-    LOG(info).format("{:?s}", std::vector{'h', 'e', 'l', 'l', 'o', '\n'});
-    // Output: "hello\n"
+    // LOG(info).format("{:?s}", std::vector{'h', 'e', 'l', 'l', 'o', '\n'});
+    // // Output: "hello\n"
 
     LOG(info).format("{::}", std::vector{'h', 'e', 'l', 'l', 'o'});
     // Output: [h, e, l, l, o]

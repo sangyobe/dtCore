@@ -18,8 +18,16 @@ template <typename T>
 class DataSinkPBMcapRotator : public DataSinkPB<T>
 {
 public:
-    DataSinkPBMcapRotator(const std::string &topic_name, const std::string &file_basename = "", bool annot_datetime = true, bool truncate = true, std::size_t max_file_size = 1048576, uint32_t max_file_count = 10)
-        : _topic_name(topic_name), _max_file_size(max_file_size), _max_file_count(max_file_count), _current_file_size(0)
+    DataSinkPBMcapRotator(
+        const std::string &topic_name, 
+        const std::string &file_basename = "", 
+        bool annot_datetime = true, 
+        bool truncate = true, 
+        std::size_t max_file_size = 1048576, 
+        uint32_t max_file_count = 10, 
+        bool mcap_no_chunking = false, 
+        std::size_t mcap_chunk_size = 1024 * 768)
+        : _topic_name(topic_name), _max_file_size(max_file_size), _max_file_count(max_file_count), _current_file_size(0), _mcap_no_chunking(mcap_no_chunking), _mcap_chunk_size(mcap_chunk_size)
     {
         if (annot_datetime)
             _file_name = dt::Utils::annotate_filename_datetime(file_basename);
@@ -35,7 +43,7 @@ public:
         }
 
         // create the 1st mcap file
-        _current_mcap = std::make_unique<DataSinkPBMcap<T>>(topic_name, _file_name, false);
+        _current_mcap = std::make_unique<DataSinkPBMcap<T>>(topic_name, _file_name, false, true, _mcap_no_chunking, _mcap_chunk_size);
     }
 
     void Publish(T &msg)
@@ -97,13 +105,13 @@ protected:
             if (!dt::Utils::rename_file(source_filename, target_filename))
             {
                 // truncate the old mcap file and create a new one
-                _current_mcap = std::make_unique<DataSinkPBMcap<T>>(_topic_name, _file_name, false, true);
+                _current_mcap = std::make_unique<DataSinkPBMcap<T>>(_topic_name, _file_name, false, true, _mcap_no_chunking, _mcap_chunk_size);
                 throw("rotating_file_sink: failed renaming " + source_filename + " to " + target_filename, errno);
             }
         }
 
         // create a new mcap file
-        _current_mcap = std::make_unique<DataSinkPBMcap<T>>(_topic_name, _file_name, false, true);
+        _current_mcap = std::make_unique<DataSinkPBMcap<T>>(_topic_name, _file_name, false, true, _mcap_no_chunking, _mcap_chunk_size);
     }
 
 protected:
@@ -113,6 +121,8 @@ protected:
     std::size_t _max_file_size;
     uint32_t _max_file_count;
     std::size_t _current_file_size; // estimated file size
+    bool _mcap_no_chunking;
+    std::size_t _mcap_chunk_size;
 };
 
 } // namespace DAQ
