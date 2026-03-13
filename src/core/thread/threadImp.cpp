@@ -338,14 +338,13 @@ int DeleteAllThread()
 {
     int num = 0;
 
+    dtTerm::PrintTitle(" Delete All Thread ");
     for (int idx = threadNum - 1; idx >= 0; idx--)
     {
         if (threadList[idx] == nullptr) continue;
         if (pthread_join(*threadList[idx], NULL)) goto error;
         num++;
     }
-    dtTerm::Printf(43, 1, "--------------------------------");
-    dtTerm::PrintTitle(" Delete All Thread ");
     dtTerm::Printf("Delete %d thread ... ok\n", num);
     dtTerm::Print("Complete\n");
     dtTerm::PrintEndLine();
@@ -353,7 +352,6 @@ int DeleteAllThread()
     return 0;
 
 error:
-    dtTerm::PrintTitle(" Delete All Thread ");
     fprintf(stderr, "!Error! DeleteAllThread() : %s(%d)\n", strerror(errno), errno);
     dtTerm::PrintEndLine();
     return -1;
