@@ -76,9 +76,16 @@ bool create_dir(const std::string &path);
 
 /**
  * delete the target if exists, and rename the src file to target.
- * return true on success, false otherwise..
+ * @return true on success, false otherwise.
  */
 bool rename_file(const std::string &src_filename, const std::string &target_filename) noexcept;
+
+/**
+ * join path and file name.
+ * @return concatenated file path.
+ */
+std::string join_path(const std::string &pathname, const std::string &filename);
+
 
 /**
  * get file size.

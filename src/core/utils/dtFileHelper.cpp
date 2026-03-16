@@ -180,7 +180,36 @@ bool rename_file(const std::string &src_filename, const std::string &target_file
 }
 
 /**
- * Return file size according to open FILE* object
+ * join path and file name.
+ * return concatenated file path.
+ */
+std::string join_path(const std::string &pathname, const std::string &filename)
+{
+    if (pathname.empty())
+    {
+        return filename;
+    }
+    if (filename.empty())
+    {
+        return pathname;
+    }
+
+    if (pathname.back() == '/' || pathname.back() == '\\')
+    {
+        return pathname + filename;
+    }
+    else
+    {
+#if defined(_MSC_VER)
+        return pathname + "\\" + filename;
+#else
+        return pathname + "/" + filename;
+#endif
+    }
+}
+
+/**
+ * return file size according to open FILE* object.
  */
 std::size_t filesize(FILE *f)
 {
