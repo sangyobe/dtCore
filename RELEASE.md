@@ -1,3 +1,10 @@
+#### [v1.14.0]
+(2026/3/16)
+##### 
+- dt::Utils::join_path 함수 추가: path 와 file명 concatenation(join).
+  std::string join_path(const std::string &pathname, const std::string &filename);
+- MCAP_IMPLEMENTATION 정의를 dtDataSinkPBMcap.hpp에서 제외: 동시에 두개의 소스에서 해당 파일 include 시 link 에러 발생하는 현상 fix. dtDataSinkPBMcap.hpp 등을 이용해서 mcap 라이브러리 사용할 경우 어플리케이션 소스에서 반드시 dtCore/src/dtDAQ/mcapImp.hpp를 한번 그리고 오직 한번 인크루드 해줘야 함.
+
 #### [v1.13.4]
 (2026/2/24)
 ##### 

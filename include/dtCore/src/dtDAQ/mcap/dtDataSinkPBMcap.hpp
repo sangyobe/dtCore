@@ -21,7 +21,7 @@
 
 #define MCAP_COMPRESSION_NO_LZ4
 #define MCAP_COMPRESSION_NO_ZSTD
-#define MCAP_IMPLEMENTATION
+// #define MCAP_IMPLEMENTATION
 #include <mcap/mcap.hpp>
 
 namespace dt
