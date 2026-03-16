@@ -22,11 +22,17 @@ std::atomic<bool> bRun = false;
 
 void *procDisp(void *data)
 {
+    dt::Thread::SleepForMillis(1000);
     InitDisp();
 
     DispData *dispData = (DispData *)data;
     while (bRun.load())
     {
+        if (dispData->restartDisp.load())
+        {
+            InitDisp();
+            dispData->restartDisp.store(false);
+        }
         PrintTaskState(2, &(dispData->taskState));
         dispData->taskState.status++;
         dt::Thread::SleepForMillis(10);
