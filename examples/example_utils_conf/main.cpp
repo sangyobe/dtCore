@@ -8,6 +8,8 @@ version: v1.0                 \n\
 dynamics:                     \n\
   mass: -0.03                 \n\
   com: [0.1, 0.0, 0.5]        \n\
+ubound: [0.5]                 \n\
+lbound: [0.5]                 \n\
 ";
 
 static const char *yaml_2 = " \n\
@@ -26,6 +28,7 @@ int main(int argc, const char **argv)
     std::cout << "---- yaml_1 ----" << std::endl;
     std::cout << conf_1 << std::endl;
     conf_1.Dump("conf_1.yaml");
+    std::cout << std::endl;
 
     //
     // generate conf_2.yaml from stringstream
@@ -35,6 +38,7 @@ int main(int argc, const char **argv)
     std::cout << "---- yaml_2 ----" << std::endl;
     std::cout << conf_2 << std::endl;
     conf_2.Dump("conf_2.yaml");
+    std::cout << std::endl;
 
     //
     // generate conf_3.yaml from list of stringstreams
@@ -46,6 +50,7 @@ int main(int argc, const char **argv)
     std::cout << "---- yaml_1 + yaml_2 ----" << std::endl;
     std::cout << conf_3 << std::endl;
     conf_3.Dump("conf_3.yaml");
+    std::cout << std::endl;
 
     //
     // load conf_1.yaml
@@ -53,6 +58,7 @@ int main(int argc, const char **argv)
     dt::Utils::Conf conf_1_f("conf_1.yaml");
     std::cout << "---- yaml_1 (from conf_1.yaml) ----" << std::endl;
     std::cout << conf_1_f << std::endl;
+    std::cout << std::endl;
 
     //
     // load conf_2.yaml
@@ -60,6 +66,7 @@ int main(int argc, const char **argv)
     dt::Utils::Conf conf_2_f("conf_2.yaml");
     std::cout << "---- yaml_2 (from conf_2.yaml) ----" << std::endl;
     std::cout << conf_2_f << std::endl;
+    std::cout << std::endl;
 
     //
     // load list of yaml files, conf_1.yaml and conf_2.yaml
@@ -78,6 +85,7 @@ int main(int argc, const char **argv)
     //           << conf_3_f["dynamics"]["com"][1].toDouble() << ", "
     //           << conf_3_f["dynamics"]["com"][2].toDouble() << " ]" << std::endl;
     std::cout << conf_3_f << std::endl;
+    std::cout << std::endl;
 
     //
     // test accessors
@@ -92,6 +100,17 @@ int main(int argc, const char **argv)
               << conf_3_f["dynamics"]["com"][0].toDouble() << ", "
               << conf_3_f["dynamics"]["com"][1].toDouble() << ", "
               << conf_3_f["dynamics"]["com"][2].toDouble() << " ]" << std::endl;
+    std::cout << "ubound: " << conf_3_f["ubound"][0].toDouble() << std::endl;
+    std::cout << "lbound: " << conf_3_f["lbound"][0].toDouble() << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "---- size of sequence(array) ----" << std::endl;
+    std::cout << "dynamics.com.size(): " << conf_3_f["dynamics"]["com"].size() << std::endl;
+    std::cout << "ubound.size(): " << conf_3_f["ubound"].size() << std::endl;
+    std::cout << std::endl;
+    std::cout << "---- size of non-sequence(scalar) ----" << std::endl;
+    std::cout << "name.size(): " << conf_3_f["name"].size() << std::endl;
+    std::cout << std::endl;
 
     //
     // modify(assign) parameter values and add a new config parameter to conf_3 and save as conf_4.yaml
@@ -104,6 +123,7 @@ int main(int argc, const char **argv)
     std::cout << "gain:" << std::endl
               << "  Kp :" << std::endl
               << conf_4["gain"]["Kp"] << std::endl;
+    std::cout << std::endl;
 
     conf_4["gain"]["Kp"][0] = 1.5;
     conf_4["gain"]["Kp"][1] = 2.5;
@@ -112,16 +132,19 @@ int main(int argc, const char **argv)
     std::cout << "gain:" << std::endl
               << "  Kp :" << std::endl
               << conf_4["gain"]["Kp"] << std::endl;
+    std::cout << std::endl;
 
     conf_4["gain"]["Kp"] << 11.5 << 12.5 << 13.5;
     std::cout << "---- conf_4 (append values to gain.Kp) ----" << std::endl;
     std::cout << "gain:" << std::endl
               << "  Kp :" << std::endl
               << conf_4["gain"]["Kp"] << std::endl;
+    std::cout << std::endl;
 
     std::cout << "---- conf_4 (final) ----" << std::endl;
     std::cout << conf_4 << std::endl;
     conf_4.Dump("conf_4.yaml");
+    std::cout << std::endl;
 
     return 0;
 }

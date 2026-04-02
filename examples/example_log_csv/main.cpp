@@ -11,7 +11,7 @@ int main(int argc, const char **argv)
     dt::Log::Create("csv_file_1", "logs/example_log_csv.csv", false, true);
     dt::Log::SetLogLevel("csv_file_1", dt::Log::LogLevel::trace);
     // dt::Log::SetLogPattern("csv_file_1", dt::Log::LogPatternFlag::none, ""); // remove all log prefix (it is useful while logging as CSV-style)
-    dt::Log::SetLogPattern("csv_file_1", dt::Log::LogPatternFlag::datetime | dt::Log::LogPatternFlag::epoch, ","); // add comma seperated datetime and epoch
+    dt::Log::SetLogPattern("csv_file_1", dt::Log::LogPatternFlag::datetime, ","); // add comma seperated datetime
 
     // write CSV header
     LOG_U(csv_file_1, trace).format("val1,val2,val3");
