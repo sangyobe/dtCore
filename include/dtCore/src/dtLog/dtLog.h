@@ -385,7 +385,7 @@ public:
 
     /**
      * Default logger 로그 패턴 설정(spdlog string)
-     * @param patter 로그 패턴(spdlog string)
+     * @param pattern 로그 패턴(spdlog string)
      */
     static void SetLogPattern(const std::string pattern) {
         // spdlog::set_pattern(pattern);
@@ -395,7 +395,7 @@ public:
     /**
      * 해당 이름의 logger 로그 패턴 설정(spdlog string)
      * @param log_name logger 이름.
-     * @param patter 로그 패턴(spdlog string)
+     * @param pattern 로그 패턴(spdlog string)
      */
     static void SetLogPattern(const std::string log_name, const std::string pattern) {
         std::shared_ptr<spdlog::logger> logger = spdlog::get(log_name);
@@ -406,7 +406,7 @@ public:
 
     /**
      * 모든 logger 로그 패턴 설정(spdlog string)
-     * @param patter 로그 패턴(spdlog string)
+     * @param pattern 로그 패턴(spdlog string)
      */
     static void SetLogPatternAll(const std::string pattern) {
         spdlog::set_pattern(pattern);
