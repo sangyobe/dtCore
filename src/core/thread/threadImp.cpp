@@ -233,6 +233,7 @@ int CreateRtThread(ThreadInfo &thread)
 #if defined(__APPLE__)
     if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
 #endif
+    pthread_setname_np(thread.id, thread.name);
     dtTerm::Print("ok\n");
 
     /* Step 4. Check and Destroy the Attribute */
@@ -288,12 +289,13 @@ int CreateNonRtThread(ThreadInfo &thread)
 
     dtTerm::Print("ok\n");
 
-    /* Step 3. Ctrate Thread */
+    /* Step 3. Create Thread */
     dtTerm::Print("Create Non-RT Thread ... ");
     if (pthread_create(&thread.id, &taskAttr, thread.procFunc, thread.procFuncArg)) goto error;
 #if defined(__APPLE__)
     if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
 #endif
+    pthread_setname_np(thread.id, thread.name);
     dtTerm::Print("ok\n");
 
     /* Step 4. Check and Destroy the Attribute */
@@ -360,7 +362,7 @@ error:
 
 int CreateSemaphore(SemInfo &semInfo, unsigned int initValue)
 {
-    dtTerm::PrintTitle(" Ctreate Semaphore ");
+    dtTerm::PrintTitle(" Create Semaphore ");
     dtTerm::Print("Initialize Semaphore ... ");
 
 #if defined(__APPLE__)
@@ -447,7 +449,7 @@ error:
 
 int CreateMutex(MtxInfo &mtxInfo)
 {
-    dtTerm::PrintTitle(" Ctreate Mutex ");
+    dtTerm::PrintTitle(" Create Mutex ");
     dtTerm::Print("Initialize Mutex ... ");
     if (pthread_mutex_init(&mtxInfo.mutex, NULL)) goto error;
     dtTerm::Print("ok\n");
