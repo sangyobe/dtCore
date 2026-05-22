@@ -188,6 +188,15 @@ public:
     }
 
     /**
+     * get file name with date string
+     * @param file_basename base name of log file
+     */
+    static std::string get_file_name(const std::string file_basename)
+    {
+        return annotate_filename_datetime(file_basename);
+    }
+
+    /**
      * Logging 시스템 종료.
      */
     static void Terminate() 
