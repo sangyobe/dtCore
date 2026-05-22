@@ -16,9 +16,8 @@ if(BUILD_dtCore)
         target_include_directories(dtcore PUBLIC
             ${CMAKE_SOURCE_DIR}/include
         )
-        target_link_libraries(dtcore PUBLIC 
-            spdlog::spdlog
-        )
+        # target_link_libraries(dtcore PUBLIC 
+        # )
 
         # generate pkg-config.pc
         set(pc_target dtcore)
@@ -59,7 +58,6 @@ if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_dtCore_gRPC)
             ${_PROTOBUF_LIBPROTOBUF}
             ${_GRPC_GRPCPP}
             ${_GRPC_REFLECTION}
-            spdlog::spdlog
         )
 
         # generate pkg-config.pc
