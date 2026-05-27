@@ -34,6 +34,10 @@ namespace dt {
 //     class Vector;
 // }
 
+static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
+static constexpr size_t DEFAULT_MAX_FILES = 5;
+static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
+
 // Colored stdout sink using a single write() syscall per message.
 //
 // All LOG_RT() entries are produced by RT tasks into the MPSC queue and
@@ -44,7 +48,7 @@ namespace dt {
 // on a tty for message sizes well within PIPE_BUF (4096 bytes).
 //
 // Shared level → ANSI color mapping used by ColorStdoutSinkT and TuiSinkT
-static const char* _sink_color_for(spdlog::level::level_enum lvl) noexcept {
+inline const char* _sink_color_for(spdlog::level::level_enum lvl) noexcept {
     switch (lvl) {
         case spdlog::level::trace:    return "\033[37m";
         case spdlog::level::debug:    return "\033[36m";
@@ -73,8 +77,6 @@ static const char* _sink_color_for(spdlog::level::level_enum lvl) noexcept {
 template<typename Mutex>
 class ColorStdoutSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
-
-    static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
 
     std::array<char, OUT_BUF_SIZE> m_buf{};
     size_t m_pos{0};
@@ -223,11 +225,7 @@ template<typename Mutex>
 class BasicFileSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
 
-    static constexpr size_t BUFFER_SIZE = 64 * 1024;  // 64KB buffer
-    static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
-    static constexpr size_t DEFAULT_MAX_FILES = 5;
-
-public:
+    public:
     explicit BasicFileSinkT(const std::string& filename,
                            bool truncate = false,
                            size_t max_size = DEFAULT_MAX_SIZE,
@@ -272,7 +270,7 @@ protected:
         }
 
         // If message is larger than buffer, flush current buffer and write directly
-        if (buf.size() > BUFFER_SIZE) {
+        if (buf.size() > OUT_BUF_SIZE) {
             _flush_buffer();
             ssize_t written = ::write(m_fd, buf.data(), buf.size());
             if (written > 0) {
@@ -282,7 +280,7 @@ protected:
         }
 
         // If adding this message would overflow buffer, flush first
-        if (m_buf_pos + buf.size() > BUFFER_SIZE) {
+        if (m_buf_pos + buf.size() > OUT_BUF_SIZE) {
             _flush_buffer();
         }
 
@@ -377,7 +375,7 @@ private:
 private:
     int m_fd;
     std::string m_base_filename;
-    std::array<char, BUFFER_SIZE> m_buffer{};
+    std::array<char, OUT_BUF_SIZE> m_buffer{};
     size_t m_buf_pos;
     size_t m_current_size;
     size_t m_max_size;
@@ -568,7 +566,7 @@ public:
         buf[total++] = '\n';
 
         // Atomic write: messages ≤ PIPE_BUF (4096 B) are never interleaved on Linux
-        ssize_t _ = ::write(STDERR_FILENO, buf, total);
+        (void)::write(STDERR_FILENO, buf, total);
     }
 
     template<typename... Args>
@@ -855,7 +853,7 @@ private:
         return static_cast<int>(lvl) >= m_level.load(std::memory_order_relaxed);
     }
 
-    inline int64_t _mono_now_ns() noexcept {
+    inline int64_t _mono_now_ns() const noexcept {
         struct timespec ts;
         // CLOCK_MONOTONIC is intercepted by Xenomai POSIX skin and runs in primary
         // mode. CLOCK_MONOTONIC_RAW is a Linux-only clock that falls through to the

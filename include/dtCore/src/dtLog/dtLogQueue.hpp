@@ -153,5 +153,5 @@ private:
 
     alignas(64) std::atomic<uint32_t> head_{0};
     alignas(64) std::atomic<uint32_t> tail_{0};
-    std::array<Slot, CAPACITY>        slots_;
+    alignas(64) std::array<Slot, CAPACITY> slots_;
 };

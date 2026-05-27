@@ -17,6 +17,8 @@ static constexpr size_t TUI_DATA_COL_LEN       = 24;  // max column string lengt
 static constexpr int    TUI_MAX_COLS           = 8;   // max columns per row
 static constexpr size_t TUI_TEXT_ROW_LEN       = 200; // max text length for text-mode rows
 static constexpr int    AREA2_MIN_ROWS         = 5;   // minimum Area 2 height (rows)
+static constexpr size_t LOG_KEEP               = 2000; // minimum log history — circular buffer
+static constexpr size_t OUT_BUF_SIZE           = 262144; // 256 KB ensures a full frame fits even on very wide terminals (500+ cols) without mid-frame flush
 
 // TUI uses MpscLogQueue with 512 capacity and 256-byte messages
 using TuiLogQueue = LogQueue<512, 256>;
@@ -157,23 +159,33 @@ private:
     void buf_append_str(const char* s);
     void buf_append_hbar(int n);  // append n ─ (U+2500) characters (3 bytes each)
 
+    // safe snprintf
+    template<typename... Args>
+    inline void safe_snprintf(const char* fmt, Args... args) {
+        if (m_out_pos >= OUT_BUF_SIZE) 
+            return;
+
+        int n = snprintf(m_out_buf + m_out_pos, OUT_BUF_SIZE - m_out_pos, fmt, args...);
+        if (n > 0) 
+            m_out_pos += std::min((size_t)n, OUT_BUF_SIZE - m_out_pos - 1);
+    }
+
     // ── member variables ─────────────────────────────────
-    TuiLogQueue   m_log_queue;
+    TuiLogQueue       m_log_queue;
 
     // Area 1: group headers (set once at startup via set_group)
-    TuiGroupHeader m_group_headers[TUI_MAX_GROUPS]{};
+    TuiGroupHeader    m_group_headers[TUI_MAX_GROUPS]{};
 
     // Area 1: double buffer (write=RT, read=render)
-    TuiDataBuffer    m_data_buf[2]{};
-    std::atomic<int> m_data_write_idx{0};
+    TuiDataBuffer     m_data_buf[2]{};
+    std::atomic<int>  m_data_write_idx{0};
 
     // Area 2: log history (NRT only, no lock needed) — circular buffer
-    static constexpr size_t LOG_KEEP = 2000;
-    TuiLogEntry   m_log_history[LOG_KEEP]{};
-    size_t        m_log_count{0};
-    size_t        m_log_head{0};
-    size_t        m_scroll_offset{0};  // 0 = bottom
-    bool          m_auto_scroll{true};
+    TuiLogEntry       m_log_history[LOG_KEEP]{};
+    size_t            m_log_count{0};
+    size_t            m_log_head{0};
+    size_t            m_scroll_offset{0};  // 0 = bottom
+    bool              m_auto_scroll{true};
     std::atomic<char> m_last_key{0};  // TUI→main key relay (RT writes, main reads)
 
     std::atomic<bool> m_running{false};
@@ -187,8 +199,6 @@ private:
     int               m_prev_term_cols{0};
 
     // output double-buffer (minimizes write() syscalls)
-    // 256 KB ensures a full frame fits even on very wide terminals (500+ cols) without mid-frame flush
-    static constexpr size_t OUT_BUF_SIZE = 262144;
     char   m_out_buf[OUT_BUF_SIZE];
     size_t m_out_pos{0};
 };
@@ -287,7 +297,10 @@ void RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN], T
     if (col_idx >= TUI_MAX_COLS)
         return;
 
-    if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
+    if constexpr (std::is_same_v<T, bool>) {
+        snprintf(cols[col_idx], TUI_DATA_COL_LEN, "%s", value ? "true" : "false");
+    }
+    else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
         snprintf(cols[col_idx], TUI_DATA_COL_LEN, "%s", value);
     }
     else if constexpr (std::is_floating_point_v<T>) {
@@ -315,7 +328,10 @@ inline void RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_
 // Format single column helper
 template<typename T>
 void RtTui::_format_column(char* buf, size_t buf_size, const char* format, T value) {
-    if constexpr (std::is_floating_point_v<T>) {
+    if constexpr (std::is_same_v<T, bool>) {
+        snprintf(buf, buf_size, "%s", value ? "true" : "false");
+    }
+    else if constexpr (std::is_floating_point_v<T>) {
         snprintf(buf, buf_size, format, static_cast<double>(value));
     }
     else if constexpr (std::is_signed_v<T>) {

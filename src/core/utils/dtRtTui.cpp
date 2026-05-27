@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <atomic>
 #include <algorithm>
-#include <iostream>
 
 #include "dtCore/src/dtLog/dtRtTui.hpp"
 #include "dtCore/src/dtLog/dtRtLog.hpp"
@@ -379,8 +378,8 @@ void RtTui::render_area1(int start_row, int height, int width) {
     int ridx = 1 - widx;
 
     if (m_data_buf[widx].dirty.load(std::memory_order_acquire)) {
-        m_data_buf[widx].dirty.store(false, std::memory_order_release);
         m_data_write_idx.store(1 - widx, std::memory_order_release);
+        m_data_buf[widx].dirty.store(false, std::memory_order_release);
         ridx = widx;
     }
 
@@ -398,8 +397,7 @@ void RtTui::render_area1(int start_row, int height, int width) {
     const int bot = start_row + height - 1;  // reserved for bottom border
 
     // ── top border ──
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;1H%s%s┌", cur++, ansi::BOLD, ansi::FG_CYAN);
+    safe_snprintf("\x1b[%d;1H%s%s┌", cur++, ansi::BOLD, ansi::FG_CYAN);
     buf_append_hbar(width - 2);
     buf_append_str("┐");
     buf_append_str(ansi::RESET);
@@ -412,8 +410,7 @@ void RtTui::render_area1(int start_row, int height, int width) {
 
         // ── group separator (skipped for first group) ──
         if (!first_group && cur < bot) {
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
+            safe_snprintf("\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
             buf_append_hbar(width - 2);
             buf_append_str("┤");
             buf_append_str(ansi::RESET);
@@ -423,8 +420,7 @@ void RtTui::render_area1(int start_row, int height, int width) {
 
         // ── group header ──
         if (cur < bot) {
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;1H%s│%s %s%-20s%s",
+            safe_snprintf("\x1b[%d;1H%s│%s %s%-20s%s",
                 cur, ansi::FG_CYAN, ansi::BOLD, ansi::FG_YELLOW, gh.label, ansi::FG_YELLOW);
 
             for (int c = 0; c < max_cols_fit; ++c) {
@@ -438,21 +434,18 @@ void RtTui::render_area1(int start_row, int height, int width) {
                     snprintf(auto_hdr, sizeof(auto_hdr), ".");
                     hdr = auto_hdr;
                 }
-                m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                    " %11s", hdr);
+                safe_snprintf(" %11s", hdr);
             }
 
             buf_append_str(ansi::RESET);
             buf_append_str("\x1b[K");
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
+            safe_snprintf("\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
             cur++;
         }
 
         // ── header underline ──
         if (cur < bot) {
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
+            safe_snprintf("\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
             buf_append_hbar(width - 2);
             buf_append_str("┤");
             buf_append_str(ansi::RESET);
@@ -462,51 +455,43 @@ void RtTui::render_area1(int start_row, int height, int width) {
         const TuiGroupRowData& gdata = buf.groups[g];
         for (int r = 0; r < gdata.nrows && cur < bot; ++r) {
             const TuiDataRow& dr = gdata.rows[r];
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;1H%s│%s", cur, ansi::FG_CYAN, ansi::RESET);
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                " %s%-20s%s", ansi::FG_WHITE, dr.label, ansi::RESET);
+            safe_snprintf("\x1b[%d;1H%s│%s", cur, ansi::FG_CYAN, ansi::RESET);
+            safe_snprintf(" %s%-20s%s", ansi::FG_WHITE, dr.label, ansi::RESET);
 
             if (dr.text_mode) {
                 // Full-width text: 1(│)+1(sp)+20(label)+1(sp)+text+1(│) = 24 + text + 1
                 int text_avail = width - 24;
                 if (text_avail > 0) {
-                    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                        " %s%-*.*s%s", ansi::FG_WHITE, text_avail, text_avail, dr.text, ansi::RESET);
+                    safe_snprintf(" %s%-*.*s%s", ansi::FG_WHITE, text_avail, text_avail, dr.text, ansi::RESET);
                 }
             }
             else {
                 for (int ci = 0; ci < max_cols_fit; ++ci) {
                     if (ci < dr.ncols) {
-                        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                            " %s%11s%s", ansi::FG_WHITE, dr.col[ci], ansi::RESET);
+                        safe_snprintf(" %s%11s%s", ansi::FG_WHITE, dr.col[ci], ansi::RESET);
                     }
                     else {
-                        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                            "            ");
+                        safe_snprintf("            ");
                     }
                 }
             }
 
             buf_append_str("\x1b[K");
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                "\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
+            safe_snprintf("\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
             cur++;
         }
     }
 
     // ── clear empty rows between data and bottom border ──
     while (cur < bot) {
-        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-            "\x1b[%d;1H%s│%s\x1b[K\x1b[%d;%dH%s│%s",
+        safe_snprintf("\x1b[%d;1H%s│%s\x1b[K\x1b[%d;%dH%s│%s",
             cur, ansi::FG_CYAN, ansi::RESET,
             cur, width, ansi::FG_CYAN, ansi::RESET);
         cur++;
     }
 
     // ── bottom border ──
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;1H%s└", bot, ansi::FG_CYAN);
+    safe_snprintf("\x1b[%d;1H%s└", bot, ansi::FG_CYAN);
     buf_append_hbar(width - 2);
     buf_append_str("┘");
     buf_append_str(ansi::RESET);
@@ -542,8 +527,7 @@ void RtTui::render_area2(int start_row, int height, int width) {
         : "─[ LOG : PAUSED      ]─";
 
     // ┌ + title (title_color) + remaining ─ (FG_CYAN) + ┐
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;1H%s%s┌%s%s%s",
+    safe_snprintf("\x1b[%d;1H%s%s┌%s%s%s",
         start_row, ansi::BOLD, ansi::FG_CYAN,
         title_color, title_text, ansi::FG_CYAN);
     int remain = width - 2 - utf8_cols(title_text);
@@ -551,29 +535,25 @@ void RtTui::render_area2(int start_row, int height, int width) {
     buf_append_hbar(remain);
 
     // ┐ placed at absolute column
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;%dH┐%s", start_row, width, ansi::RESET);
+    safe_snprintf("\x1b[%d;%dH┐%s", start_row, width, ansi::RESET);
 
     // ── log lines ──
     int scrollbar_col = width;  // rightmost column
     for (size_t r = 0; r < visible_h; ++r) {
         int screen_row = start_row + 1 + (int)r;
-        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-            "\x1b[%d;1H%s│%s", screen_row, ansi::FG_CYAN, ansi::RESET);
+        safe_snprintf("\x1b[%d;1H%s│%s", screen_row, ansi::FG_CYAN, ansi::RESET);
 
         if (r < lines_to_show) {
             const TuiLogEntry& e = m_log_history[(m_log_head + start_idx + r) % LOG_KEEP];
             int max_msg = width - 4;
-            m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-                " %.*s", max_msg, e.msg);
+            safe_snprintf(" %.*s", max_msg, e.msg);
         }
 
         // RESET first: \x1b[K after a critical/background-color message would erase
         // with the background still active, corrupting the scrollbar area
         buf_append_str(ansi::RESET);
         buf_append_str("\x1b[K");
-        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-            "\x1b[%d;%dH%s│%s", screen_row, scrollbar_col, ansi::FG_CYAN, ansi::RESET);
+        safe_snprintf("\x1b[%d;%dH%s│%s", screen_row, scrollbar_col, ansi::FG_CYAN, ansi::RESET);
     }
 
     // ── scrollbar (overlaid on second-to-last column) ──
@@ -581,8 +561,7 @@ void RtTui::render_area2(int start_row, int height, int width) {
                      total, visible_h, offset);
 
     // ── bottom border ──
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;1H%s└", start_row + height - 1, ansi::FG_CYAN);
+    safe_snprintf("\x1b[%d;1H%s└", start_row + height - 1, ansi::FG_CYAN);
 
     buf_append_hbar(width - 2);
 
@@ -592,10 +571,8 @@ void RtTui::render_area2(int start_row, int height, int width) {
 
     // hint sits just left of ┘; ┘ is placed at absolute column width
     int hint_col = std::max(2, width - 1 - hint_cols);
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;%dH%s%s", start_row + height - 1, hint_col, ansi::FG_GRAY, hint);
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;%dH%s─┘%s", start_row + height - 1, width - 1, ansi::FG_CYAN, ansi::RESET);
+    safe_snprintf("\x1b[%d;%dH%s%s", start_row + height - 1, hint_col, ansi::FG_GRAY, hint);
+    safe_snprintf("\x1b[%d;%dH%s─┘%s", start_row + height - 1, width - 1, ansi::FG_CYAN, ansi::RESET);
 }
 
 // ───────────────────────────────────────────────
@@ -614,8 +591,7 @@ void RtTui::render_scrollbar(int start_row, int height, int col,
 
     for (int r = 0; r < height; ++r) {
         const char* sym = (r == thumb_row) ? "█" : " ";
-        m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-            "\x1b[%d;%dH%s%s%s",
+        safe_snprintf("\x1b[%d;%dH%s%s%s",
             start_row + r, col,
             ansi::FG_GRAY, sym, ansi::RESET);
     }
@@ -681,7 +657,6 @@ void RtTui::handle_key(const char* buf, ssize_t len) {
 
     // single-char key: relay to main loop for non-blocking handling
     m_last_key.store(c, std::memory_order_relaxed);
-    // static_cast<SysData*>(m_sysData)->tuiPendingKey.store(c, std::memory_order_relaxed);
 }
 
 // ───────────────────────────────────────────────
@@ -701,8 +676,7 @@ void RtTui::render_cmd_line(int row, int width) {
         snprintf(key_str, sizeof(key_str), "0x%02X", (unsigned char)_key);
     }
 
-    m_out_pos += snprintf(m_out_buf + m_out_pos, sizeof(m_out_buf) - m_out_pos,
-        "\x1b[%d;1H%s CMD: %s%-10s%s\x1b[K",
+    safe_snprintf("\x1b[%d;1H%s CMD: %s%-10s%s\x1b[K",
         row, ansi::FG_GRAY, ansi::FG_WHITE, key_str, ansi::RESET);
 }
 
@@ -710,11 +684,12 @@ void RtTui::render_cmd_line(int row, int width) {
 // Output buffer helpers
 // ───────────────────────────────────────────────
 void RtTui::buf_append(const char* s, size_t len) {
-    if (m_out_pos + len >= OUT_BUF_SIZE) 
+    if (m_out_pos + len >= OUT_BUF_SIZE)
         flush_output();
-    
-    memcpy(m_out_buf + m_out_pos, s, len);
-    m_out_pos += len;
+
+    size_t n = std::min(len, (OUT_BUF_SIZE - m_out_pos));
+    memcpy(m_out_buf + m_out_pos, s, n);
+    m_out_pos += n;
 }
 
 void RtTui::buf_append_str(const char* s) {
@@ -732,10 +707,6 @@ void RtTui::buf_append_hbar(int n) {
 void RtTui::flush_output() {
     if (m_out_pos == 0)
         return;
-
-    // snprintf "would-have-written" accumulation may push m_out_pos past OUT_BUF_SIZE
-    if (m_out_pos > OUT_BUF_SIZE)
-        m_out_pos = OUT_BUF_SIZE;
 
     // O_NONBLOCK: write() returns EAGAIN when pty buffer is full (e.g. terminal maximize/resize).
     // On EAGAIN, poll(POLLOUT) waits until the pty drains (event-driven, not a fixed sleep).
@@ -755,7 +726,7 @@ void RtTui::flush_output() {
                     continue;  // pty drained: retry write immediately
             }
 
-            LOG_RT_RAW(err, "[ERROR] poll timeout or error: retain remaining bytes(%d)", m_out_pos - written);
+            LOG_RT_RAW(err, "[ERROR] poll timeout or error: retain remaining bytes(%zu)", m_out_pos - written);
             break;  // poll timeout or error: retain remaining bytes
         }
 
