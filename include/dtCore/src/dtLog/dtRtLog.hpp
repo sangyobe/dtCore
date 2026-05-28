@@ -28,6 +28,23 @@
 #include "dtLogQueue.hpp"
 #include "dtRtTui.hpp"
 
+// Forward declaration for optional Eigen support (include dtRtLogEigen.hpp for the implementation)
+namespace Eigen {
+    template<typename Derived>
+    class MatrixBase;
+}
+
+// Forward declarations for optional dt::Math vector support (include dtRtLogDtMath.hpp for the implementation)
+namespace dt { 
+namespace Math {
+    template<uint16_t t_row, typename t_type> class Vector;
+    template<typename t_type, uint16_t t_row> class Vector3;
+    template<typename t_type, uint16_t t_row> class Vector4;
+    template<typename t_type, uint16_t t_row> class Vector6;
+    template<typename t_type>                 class VectorX;
+}
+}
+
 namespace dt {
 // namespace Math {
 //     template<uint16_t N, typename T>
@@ -653,8 +670,23 @@ public:
         template <typename T>
         LogRtStream& operator<<(const std::vector<T>& value) noexcept;
 
-        // template <typename T, uint16_t N>
-        // LogRtStream& operator<<(const dt::Math::Vector<N, T>& value) noexcept;
+        // Eigen dense vector/matrix support — implementation in dtRtLogEigen.hpp
+        // Include dtRtLogEigen.hpp (not this header) in files that use Eigen types.
+        template<typename Derived>
+        LogRtStream& operator<<(const Eigen::MatrixBase<Derived>& vec) noexcept;
+
+        // dt::Math vector support — implementation in dtRtLogDtMath.hpp
+        // Include dtRtLogDtMath.hpp (not this header) in files that use dt::Math vectors.
+        template<uint16_t N, typename T>
+        LogRtStream& operator<<(const dt::Math::Vector<N, T>& vec) noexcept;
+        template<typename T, uint16_t N>
+        LogRtStream& operator<<(const dt::Math::Vector3<T, N>& vec) noexcept;
+        template<typename T, uint16_t N>
+        LogRtStream& operator<<(const dt::Math::Vector4<T, N>& vec) noexcept;
+        template<typename T, uint16_t N>
+        LogRtStream& operator<<(const dt::Math::Vector6<T, N>& vec) noexcept;
+        template<typename T>
+        LogRtStream& operator<<(const dt::Math::VectorX<T>& vec) noexcept;
 
         LogRtStream& operator<<(const char* str) noexcept;
         LogRtStream& operator<<(const std::string& str) noexcept;
