@@ -7,9 +7,11 @@
  \copyright RoboticsLab ART All rights reserved.
 */
 #pragma once
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/base_sink.h>
+#include <spdlog/details/os.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <cerrno>
@@ -50,10 +52,6 @@ namespace dt {
 //     template<uint16_t N, typename T>
 //     class Vector;
 // }
-
-static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
-static constexpr size_t DEFAULT_MAX_FILES = 5;
-static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
 
 // Colored stdout sink using a single write() syscall per message.
 //
@@ -207,14 +205,14 @@ class TuiSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
 
 public:
-    explicit TuiSinkT(RtTui* tui) : m_tui(tui) {}
+    explicit TuiSinkT(std::shared_ptr<RtTui> tui) : m_tui(tui) {}
 
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override;
     void flush_() override {}
 
 private:
-    RtTui* m_tui;
+    std::shared_ptr<RtTui> m_tui;
 };
 
 using TuiSink   = TuiSinkT<spdlog::details::null_mutex>;
@@ -244,9 +242,9 @@ class BasicFileSinkT final : public spdlog::sinks::base_sink<Mutex> {
 
     public:
     explicit BasicFileSinkT(const std::string& filename,
-                           bool truncate = false,
-                           size_t max_size = DEFAULT_MAX_SIZE,
-                           size_t max_files = DEFAULT_MAX_FILES)
+                            size_t max_size,
+                            size_t max_files,
+                            bool truncate = false)
         : m_fd(-1),
           m_base_filename(filename),
           m_buf_pos(0),
@@ -404,15 +402,20 @@ using BasicFileSinkMt = BasicFileSinkT<std::mutex>;
 
 class RtLog {
 public:
+    static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
+    static constexpr size_t DEFAULT_MAX_FILES = 5;
+    static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
+    static constexpr size_t QUEUE_CAPACITY = 1024;
+    static constexpr size_t QUEUE_MSG_LEN = 1024;
+    // Maximum delay between log output bursts (nanoseconds)
+    static constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
+
     using log_level = spdlog::level::level_enum;
     // Increased capacity from 256 to 2048 to handle high-frequency burst logging
     // if system generates total message per ~3400 msg/sec
     // With 2048 capacity, can buffer ~600ms worth of messages during drain delays
-    using QueueType = LogQueue<2048, 256>;
+    using QueueType = LogQueue<QUEUE_CAPACITY, QUEUE_MSG_LEN>;
     using Entry = QueueType::Entry;
-
-    // Maximum delay between log output bursts (nanoseconds)
-    static constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
 
     struct TimeBase {
         int64_t wall_ns;      // CLOCK_REALTIME
@@ -441,20 +444,103 @@ public:
         return s_instance;
     }
 
-    void init(std::shared_ptr<spdlog::logger> logger, RtTui* tui = nullptr) noexcept {
-        if (!logger)
-            return;
+    enum class LogLevel {
+        trace = spdlog::level::trace,
+        debug = spdlog::level::debug, 
+        info = spdlog::level::info, 
+        warn = spdlog::level::warn, 
+        err = spdlog::level::err, 
+        critical = spdlog::level::critical, 
+        off = spdlog::level::off
+    };
 
-        m_tui = tui;
-        m_logger = logger;
-        m_timebase = TimeBase::capture();
-        // Synchronize RtLog level with spdlog logger level
-        m_level.store(static_cast<int>(logger->level()), std::memory_order_relaxed);
-        m_initialized.store(true, std::memory_order_release);
+    static void Initialize(const std::string log_name, const std::string file_basename = "", bool enable_tui = false, bool annot_datetime = true, bool truncate = false, 
+                        size_t max_file_size = DEFAULT_MAX_SIZE, size_t max_files = DEFAULT_MAX_FILES) {
+        // create spdlog logger with appropriate sinks
+        instance().m_logger = std::make_shared<spdlog::logger>(log_name);
+        if (instance().m_logger) {
+            instance().m_logger->sinks().clear();
+
+            // create tui instance if enabled
+            if (enable_tui) {
+                instance().m_tui = std::make_shared<RtTui>();
+                if (instance().m_tui->init()) {
+                    auto tui_sink = std::make_shared<TuiSink>(instance().m_tui);
+                    tui_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+                    instance().m_logger->sinks().push_back(tui_sink);
+                }
+                else {
+                    // FIXME: TUI init failed: fallback to colored stdout sink
+                }
+            }
+            // create default color stdout sink
+            else {
+                auto console_sink = std::make_shared<ColorStdoutSinkMt>();
+                console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+                instance().m_logger->sinks().push_back(console_sink);
+            }
+        }
+
+        if (!file_basename.empty() && (file_basename != "_STDOUT_")) {
+            spdlog::filename_t filename = file_basename;
+            if (annot_datetime) {
+                filename = instance()._annotate_filename_datetime(file_basename);
+                std::string dname, fname;
+                std::tie(dname, fname) = instance()._split_by_directory(filename);
+                auto rtn = remove(file_basename.c_str());
+                rtn = symlink(fname.c_str(), file_basename.c_str());
+                if (rtn < 0) {
+                    // Cannot create symlink to this log file. Log a warning to the console sink if available.
+                    if (instance().m_logger) {
+                        instance().m_logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+                    }
+                }
+            }
+
+            auto file_sink = std::make_shared<dt::BasicFileSinkMt>(filename, max_file_size, max_files, truncate);
+            // file_sink->set_pattern("[%L][%H:%M:%S.%f] %v");
+            file_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+            instance().m_logger->sinks().push_back(file_sink);
+        }
+
+        spdlog::set_default_logger(instance().m_logger);
+        instance().m_timebase = TimeBase::capture();
+        instance().m_initialized.store(true, std::memory_order_release);
+    }
+
+    /**
+     * Logging 시스템 종료.
+     */
+    static void Terminate() {
+        // Report any messages that were dropped during operation
+        uint64_t drops = instance().drop_count();
+        if (drops > 0)
+            instance().m_logger->log(spdlog::level::warn, "CloseLogger: RT log queue dropped %llu messages during operation", (unsigned long long)drops);
+
+        instance().drain_all();
+
+        // Stop TUI if enabled
+        if (instance().m_tui) {
+            instance().m_tui->stop();
+            instance().m_tui.reset();
+        }
+        
+        // flush all peding log message
+        spdlog::shutdown();
+    }
+
+    /**
+     * Default logger 의 log level 설정.
+     * @param log_name logger 이름.
+     * @param lvl log level.
+     */
+    static void SetLogLevel(LogLevel lvl) {
+        spdlog::default_logger()->set_level(static_cast<spdlog::level::level_enum>(lvl));
+        instance().m_level.store(static_cast<int>(lvl), std::memory_order_relaxed);
     }
 
     // Get TUI instance (for external use)
-    RtTui* get_tui() const noexcept {
+    std::shared_ptr<RtTui> get_tui() const noexcept {
         return m_tui;
     }
 
@@ -485,6 +571,13 @@ public:
     void tui_set_row_v(int group_idx, int row_idx, const char* label, Args... args) noexcept {
         if (m_tui) {
             m_tui->set_row_v(group_idx, row_idx, label, args...);
+        }
+    }
+
+    template<typename... Args>
+    void tui_set_group(int group_idx, const char* label, Args... args) noexcept {
+        if (m_tui) {
+            m_tui->set_group_v(group_idx, label, args...);
         }
     }
 
@@ -894,9 +987,43 @@ private:
         return static_cast<int64_t>(ts.tv_sec) * 1'000'000'000LL + static_cast<int64_t>(ts.tv_nsec);
     }
 
+    std::string _annotate_filename_datetime(const std::string file_basename)
+    {
+        spdlog::filename_t basename, ext, filename;
+
+        time_t tnow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        tm now_tm = spdlog::details::os::localtime(tnow);
+        
+        std::tie(basename, ext) = spdlog::details::file_helper::split_by_extension(file_basename);
+
+        filename = fmt::format(SPDLOG_FILENAME_T("{}_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}{}"), basename, now_tm.tm_year + 1900, now_tm.tm_mon + 1,
+            now_tm.tm_mday, now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, ext);
+
+        return filename;
+    }
+
+    std::tuple<std::string, std::string> _split_by_directory(const std::string &fname)
+    {
+        auto dir_index = fname.rfind('/');
+
+        // no valid directory found - return empty string as folder and whole path
+        if (dir_index == std::string::npos)
+        {
+            return std::make_tuple(std::string(), fname);
+        }
+        // ends up with '/' - return whole path as directory and empty string as filename
+        else if (dir_index == fname.size() - 1)
+        {
+            return std::make_tuple(fname, std::string());
+        }
+
+        // finally - return a valid directory and file path tuple
+        return std::make_tuple(fname.substr(0, dir_index+1), fname.substr(dir_index+1)); // '/' is included as directory name
+    }
+
 private:
     std::shared_ptr<spdlog::logger> m_logger;
-    RtTui*                m_tui{nullptr};  // TUI instance (if enabled)
+    std::shared_ptr<RtTui> m_tui;   // TUI instance (if enabled)
     int64_t               m_tui_last_render_ns{0};  // last TUI render timestamp (25 Hz rate-limiter)
     int64_t               m_last_flush_ns{0};        // last spdlog flush timestamp (100 ms rate-limiter)
     QueueType             m_queue;
@@ -949,7 +1076,12 @@ private:
 // Example: TUI_SET_TEXT_ROW(1, 1, "cmd", cmd_str.c_str())
 #define TUI_SET_TEXT_ROW(grp, row, label, text)  dt::RtLog::instance().tui_set_text_row(grp, row, label, text)
 
-#define TUI_IS_ENABLED()  dt::RtLog::instance().is_tui_mode()
+// Area 1 group header setup (once at startup)
+// Example: TUI_SET_ROW_V(0, "ABS_Enc", "j1", "j2", "j3", "j4", "j5", "j6")
+#define TUI_SET_GROUP(grp, label, ...)  dt::RtLog::instance().tui_set_group(grp, label, ##__VA_ARGS__)
+
+#define TUI_GET_PENDING_KEY()   dt::RtLog::instance().get_pending_key()
+#define TUI_IS_ENABLED()        dt::RtLog::instance().is_tui_mode()
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TuiSinkT Implementation
