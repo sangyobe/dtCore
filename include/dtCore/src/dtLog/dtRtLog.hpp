@@ -48,10 +48,15 @@ namespace Math {
 }
 
 namespace dt {
-// namespace Math {
-//     template<uint16_t N, typename T>
-//     class Vector;
-// }
+namespace rtlog_constant {
+    inline static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
+    inline static constexpr size_t DEFAULT_MAX_FILES = 5;
+    inline static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
+    inline static constexpr size_t QUEUE_CAPACITY = 1024;
+    inline static constexpr size_t QUEUE_MSG_LEN = 1024;
+    // Maximum delay between log output bursts (nanoseconds)
+    inline static constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
+} // namespace rtlog_constant
 
 // Colored stdout sink using a single write() syscall per message.
 //
@@ -93,7 +98,7 @@ template<typename Mutex>
 class ColorStdoutSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
 
-    std::array<char, OUT_BUF_SIZE> m_buf{};
+    std::array<char, rtlog_constant::OUT_BUF_SIZE> m_buf{};
     size_t m_pos{0};
 
 public:
@@ -149,18 +154,18 @@ private:
         if (len == 0)
             return;
 
-        if (m_pos + len > OUT_BUF_SIZE) {
+        if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
             // Buffer full: flush first, then append
             _flush_buffer();
-            if (m_pos + len > OUT_BUF_SIZE) {
+            if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
                 // Still no room after flush (EAGAIN retained data): discard oldest bytes
-                size_t discard = m_pos + len - OUT_BUF_SIZE;
+                size_t discard = m_pos + len - rtlog_constant::OUT_BUF_SIZE;
                 std::memmove(m_buf.data(), m_buf.data() + discard, m_pos - discard);
                 m_pos -= discard;
             }
         }
 
-        size_t actual = std::min(len, OUT_BUF_SIZE - m_pos);
+        size_t actual = std::min(len, rtlog_constant::OUT_BUF_SIZE - m_pos);
         std::memcpy(m_buf.data() + m_pos, data, actual);
         m_pos += actual;
     }
@@ -205,14 +210,14 @@ class TuiSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
 
 public:
-    explicit TuiSinkT(std::shared_ptr<RtTui> tui) : m_tui(tui) {}
+    explicit TuiSinkT(std::shared_ptr<Utils::RtTui> tui) : m_tui(tui) {}
 
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override;
     void flush_() override {}
 
 private:
-    std::shared_ptr<RtTui> m_tui;
+    std::shared_ptr<Utils::RtTui> m_tui;
 };
 
 using TuiSink   = TuiSinkT<spdlog::details::null_mutex>;
@@ -250,7 +255,7 @@ class BasicFileSinkT final : public spdlog::sinks::base_sink<Mutex> {
           m_buf_pos(0),
           m_current_size(0),
           m_max_size(max_size),
-          m_max_files(max_files) {
+          m_max_files(max_files == 0 ? 1 : max_files) {
 
         _open_file(truncate);
     }
@@ -285,7 +290,7 @@ protected:
         }
 
         // If message is larger than buffer, flush current buffer and write directly
-        if (buf.size() > OUT_BUF_SIZE) {
+        if (buf.size() > rtlog_constant::OUT_BUF_SIZE) {
             _flush_buffer();
             ssize_t written = ::write(m_fd, buf.data(), buf.size());
             if (written > 0) {
@@ -295,7 +300,7 @@ protected:
         }
 
         // If adding this message would overflow buffer, flush first
-        if (m_buf_pos + buf.size() > OUT_BUF_SIZE) {
+        if (m_buf_pos + buf.size() > rtlog_constant::OUT_BUF_SIZE) {
             _flush_buffer();
         }
 
@@ -390,7 +395,7 @@ private:
 private:
     int m_fd;
     std::string m_base_filename;
-    std::array<char, OUT_BUF_SIZE> m_buffer{};
+    std::array<char, rtlog_constant::OUT_BUF_SIZE> m_buffer{};
     size_t m_buf_pos;
     size_t m_current_size;
     size_t m_max_size;
@@ -402,19 +407,11 @@ using BasicFileSinkMt = BasicFileSinkT<std::mutex>;
 
 class RtLog {
 public:
-    static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
-    static constexpr size_t DEFAULT_MAX_FILES = 5;
-    static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
-    static constexpr size_t QUEUE_CAPACITY = 1024;
-    static constexpr size_t QUEUE_MSG_LEN = 1024;
-    // Maximum delay between log output bursts (nanoseconds)
-    static constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
-
     using log_level = spdlog::level::level_enum;
     // Increased capacity from 256 to 2048 to handle high-frequency burst logging
     // if system generates total message per ~3400 msg/sec
     // With 2048 capacity, can buffer ~600ms worth of messages during drain delays
-    using QueueType = LogQueue<QUEUE_CAPACITY, QUEUE_MSG_LEN>;
+    using QueueType = LogQueue<rtlog_constant::QUEUE_CAPACITY, rtlog_constant::QUEUE_MSG_LEN>;
     using Entry = QueueType::Entry;
 
     struct TimeBase {
@@ -455,7 +452,7 @@ public:
     };
 
     static void Initialize(const std::string log_name, const std::string file_basename = "", bool enable_tui = false, bool annot_datetime = true, bool truncate = false, 
-                        size_t max_file_size = DEFAULT_MAX_SIZE, size_t max_files = DEFAULT_MAX_FILES) {
+                        size_t max_file_size = rtlog_constant::DEFAULT_MAX_SIZE, size_t max_files = rtlog_constant::DEFAULT_MAX_FILES) {
         // create spdlog logger with appropriate sinks
         instance().m_logger = std::make_shared<spdlog::logger>(log_name);
         if (instance().m_logger) {
@@ -463,7 +460,7 @@ public:
 
             // create tui instance if enabled
             if (enable_tui) {
-                instance().m_tui = std::make_shared<RtTui>();
+                instance().m_tui = std::make_shared<Utils::RtTui>();
                 if (instance().m_tui->init()) {
                     auto tui_sink = std::make_shared<TuiSink>(instance().m_tui);
                     tui_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
@@ -487,8 +484,8 @@ public:
                 filename = instance()._annotate_filename_datetime(file_basename);
                 std::string dname, fname;
                 std::tie(dname, fname) = instance()._split_by_directory(filename);
-                auto rtn = remove(file_basename.c_str());
-                rtn = symlink(fname.c_str(), file_basename.c_str());
+                (void)remove(file_basename.c_str());
+                auto rtn = symlink(fname.c_str(), file_basename.c_str());
                 if (rtn < 0) {
                     // Cannot create symlink to this log file. Log a warning to the console sink if available.
                     if (instance().m_logger) {
@@ -497,7 +494,7 @@ public:
                 }
             }
 
-            auto file_sink = std::make_shared<dt::BasicFileSinkMt>(filename, max_file_size, max_files, truncate);
+            auto file_sink = std::make_shared<BasicFileSinkMt>(filename, max_file_size, max_files, truncate);
             // file_sink->set_pattern("[%L][%H:%M:%S.%f] %v");
             file_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
             instance().m_logger->sinks().push_back(file_sink);
@@ -540,7 +537,7 @@ public:
     }
 
     // Get TUI instance (for external use)
-    std::shared_ptr<RtTui> get_tui() const noexcept {
+    std::shared_ptr<Utils::RtTui> get_tui() const noexcept {
         return m_tui;
     }
 
@@ -771,15 +768,15 @@ public:
         // dt::Math vector support — implementation in dtRtLogDtMath.hpp
         // Include dtRtLogDtMath.hpp (not this header) in files that use dt::Math vectors.
         template<uint16_t N, typename T>
-        LogRtStream& operator<<(const dt::Math::Vector<N, T>& vec) noexcept;
+        LogRtStream& operator<<(const Math::Vector<N, T>& vec) noexcept;
         template<typename T, uint16_t N>
-        LogRtStream& operator<<(const dt::Math::Vector3<T, N>& vec) noexcept;
+        LogRtStream& operator<<(const Math::Vector3<T, N>& vec) noexcept;
         template<typename T, uint16_t N>
-        LogRtStream& operator<<(const dt::Math::Vector4<T, N>& vec) noexcept;
+        LogRtStream& operator<<(const Math::Vector4<T, N>& vec) noexcept;
         template<typename T, uint16_t N>
-        LogRtStream& operator<<(const dt::Math::Vector6<T, N>& vec) noexcept;
+        LogRtStream& operator<<(const Math::Vector6<T, N>& vec) noexcept;
         template<typename T>
-        LogRtStream& operator<<(const dt::Math::VectorX<T>& vec) noexcept;
+        LogRtStream& operator<<(const Math::VectorX<T>& vec) noexcept;
 
         LogRtStream& operator<<(const char* str) noexcept;
         LogRtStream& operator<<(const std::string& str) noexcept;
@@ -847,7 +844,7 @@ public:
 
         // Helper to close array with ']'
         void _close_array() noexcept {
-            if (m_pos < BUF_LEN) {
+            if (m_pos + 1 < BUF_LEN) {
                 m_buf[m_pos++] = ']';
                 m_buf[m_pos] = '\0';
             }
@@ -923,7 +920,7 @@ private:
             interval_ns = 500'000L;  // 500 μs: draining normally
         }
         else {
-            interval_ns = POLL_INTERVAL_NS;  // 1 ms: idle (avoids 0>=0 false-positive)
+            interval_ns = rtlog_constant::POLL_INTERVAL_NS;  // 1 ms: idle (avoids 0>=0 false-positive)
         }
 
         struct timespec ts{0, interval_ns};
@@ -987,8 +984,7 @@ private:
         return static_cast<int64_t>(ts.tv_sec) * 1'000'000'000LL + static_cast<int64_t>(ts.tv_nsec);
     }
 
-    std::string _annotate_filename_datetime(const std::string file_basename)
-    {
+    std::string _annotate_filename_datetime(const std::string& file_basename) {
         spdlog::filename_t basename, ext, filename;
 
         time_t tnow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -1002,18 +998,15 @@ private:
         return filename;
     }
 
-    std::tuple<std::string, std::string> _split_by_directory(const std::string &fname)
-    {
+    std::tuple<std::string, std::string> _split_by_directory(const std::string &fname) {
         auto dir_index = fname.rfind('/');
 
         // no valid directory found - return empty string as folder and whole path
-        if (dir_index == std::string::npos)
-        {
+        if (dir_index == std::string::npos) {
             return std::make_tuple(std::string(), fname);
         }
         // ends up with '/' - return whole path as directory and empty string as filename
-        else if (dir_index == fname.size() - 1)
-        {
+        else if (dir_index == fname.size() - 1) {
             return std::make_tuple(fname, std::string());
         }
 
@@ -1023,7 +1016,7 @@ private:
 
 private:
     std::shared_ptr<spdlog::logger> m_logger;
-    std::shared_ptr<RtTui> m_tui;   // TUI instance (if enabled)
+    std::shared_ptr<Utils::RtTui> m_tui;   // TUI instance (if enabled)
     int64_t               m_tui_last_render_ns{0};  // last TUI render timestamp (25 Hz rate-limiter)
     int64_t               m_last_flush_ns{0};        // last spdlog flush timestamp (100 ms rate-limiter)
     QueueType             m_queue;

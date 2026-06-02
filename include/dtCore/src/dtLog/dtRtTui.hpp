@@ -8,55 +8,61 @@
 
 #include "dtLogQueue.hpp"
 
-// ───────────────────────────────────────────────
-// Constants
-// ───────────────────────────────────────────────
-static constexpr size_t TUI_MAX_GROUPS         = 4;   // max groups in Area 1
-static constexpr size_t TUI_MAX_ROWS_PER_GROUP = 20;  // max data rows per group
-static constexpr size_t TUI_DATA_COL_LEN       = 24;  // max column string length
-static constexpr int    TUI_MAX_COLS           = 8;   // max columns per row
-static constexpr size_t TUI_TEXT_ROW_LEN       = 200; // max text length for text-mode rows
-static constexpr int    AREA2_MIN_ROWS         = 5;   // minimum Area 2 height (rows)
-static constexpr size_t LOG_KEEP               = 2000; // minimum log history — circular buffer
-static constexpr size_t OUT_BUF_SIZE           = 262144; // 256 KB ensures a full frame fits even on very wide terminals (500+ cols) without mid-frame flush
-
-// TUI uses MpscLogQueue with 512 capacity and 256-byte messages
-using TuiLogQueue = LogQueue<512, 256>;
-using TuiLogEntry = TuiLogQueue::Entry;
-
-// ───────────────────────────────────────────────
-// Area 1 data structures (double-buffered, RT-safe)
-// ───────────────────────────────────────────────
-struct TuiDataRow {
-    char label[TUI_DATA_COL_LEN]{};
-    char col[TUI_MAX_COLS][TUI_DATA_COL_LEN]{};
-    int  ncols{0};
-    bool text_mode{false};
-    char text[TUI_TEXT_ROW_LEN]{};
-};
-
-struct TuiGroupRowData {
-    TuiDataRow rows[TUI_MAX_ROWS_PER_GROUP]{};
-    int        nrows{0};
-};
-
-struct TuiDataBuffer {
-    TuiGroupRowData   groups[TUI_MAX_GROUPS]{};
-    std::atomic<bool> dirty{false};
-};
-
-// Group header (set once at startup via set_group, no RT safety required)
-struct TuiGroupHeader {
-    char label[TUI_DATA_COL_LEN]{};
-    char cols[TUI_MAX_COLS][TUI_DATA_COL_LEN]{};
-    int  ncols{0};
-    bool active{false};
-};
+namespace dt
+{
+namespace Utils
+{
 
 // ───────────────────────────────────────────────
 // RtTui : main class
 // ───────────────────────────────────────────────
 class RtTui {
+public:
+    // ───────────────────────────────────────────────
+    // Constants
+    // ───────────────────────────────────────────────
+    static constexpr size_t TUI_MAX_GROUPS         = 4;   // max groups in Area 1
+    static constexpr size_t TUI_MAX_ROWS_PER_GROUP = 20;  // max data rows per group
+    static constexpr size_t TUI_DATA_COL_LEN       = 24;  // max column string length
+    static constexpr int    TUI_MAX_COLS           = 8;   // max columns per row
+    static constexpr size_t TUI_TEXT_ROW_LEN       = 200; // max text length for text-mode rows
+    static constexpr int    AREA2_MIN_ROWS         = 5;   // minimum Area 2 height (rows)
+    static constexpr size_t LOG_KEEP               = 2000; // minimum log history — circular buffer
+    static constexpr size_t OUT_BUF_SIZE           = 262144; // 256 KB ensures a full frame fits even on very wide terminals (500+ cols) without mid-frame flush
+
+    // TUI uses MpscLogQueue with 512 capacity and 256-byte messages
+    using TuiLogQueue = LogQueue<512, 256>;
+    using TuiLogEntry = TuiLogQueue::Entry;
+
+    // ───────────────────────────────────────────────
+    // Area 1 data structures (double-buffered, RT-safe)
+    // ───────────────────────────────────────────────
+    struct TuiDataRow {
+        char label[TUI_DATA_COL_LEN]{};
+        char col[TUI_MAX_COLS][TUI_DATA_COL_LEN]{};
+        int  ncols{0};
+        bool text_mode{false};
+        char text[TUI_TEXT_ROW_LEN]{};
+    };
+
+    struct TuiGroupRowData {
+        TuiDataRow rows[TUI_MAX_ROWS_PER_GROUP]{};
+        int        nrows{0};
+    };
+
+    struct TuiDataBuffer {
+        TuiGroupRowData   groups[TUI_MAX_GROUPS]{};
+        std::atomic<bool> dirty{false};
+    };
+
+    // Group header (set once at startup via set_group, no RT safety required)
+    struct TuiGroupHeader {
+        char label[TUI_DATA_COL_LEN]{};
+        char cols[TUI_MAX_COLS][TUI_DATA_COL_LEN]{};
+        int  ncols{0};
+        bool active{false};
+    };
+
 public:
     RtTui();
     ~RtTui();
@@ -203,6 +209,9 @@ private:
     size_t m_out_pos{0};
 };
 
+};  // namespace Utils
+};  // namespace dt
+
 // ───────────────────────────────────────────────
 // Convenience macros (use spdlog level enum)
 // ───────────────────────────────────────────────
@@ -220,14 +229,14 @@ private:
 // set_group_v: variadic convenience (all args must be const char*)
 // Example: tui.set_group_v(0, "Joint", "J1","J2","J3")
 template<typename... Args>
-void RtTui::set_group_v(int group_idx, const char* label_hdr, Args... col_hdrs) {
+void dt::Utils::RtTui::set_group_v(int group_idx, const char* label_hdr, Args... col_hdrs) {
     const char* cols[] = { static_cast<const char*>(col_hdrs)... };
     set_group(group_idx, label_hdr, cols, (int)(sizeof...(col_hdrs)));
 }
 
 // Format-based set_row (single format applied to all columns)
 template<typename... Args>
-void RtTui::set_row_fmt(int group_idx, int row_idx, const char* label, const char* format, Args... args) {
+void dt::Utils::RtTui::set_row_fmt(int group_idx, int row_idx, const char* label, const char* format, Args... args) {
     if (group_idx < 0 || group_idx >= (int)TUI_MAX_GROUPS)
         return;
 
@@ -251,7 +260,7 @@ void RtTui::set_row_fmt(int group_idx, int row_idx, const char* label, const cha
 
 // Auto-format variadic set_row (detects types automatically)
 template<typename... Args>
-void RtTui::set_row_v(int group_idx, int row_idx, const char* label, Args... args) {
+void dt::Utils::RtTui::set_row_v(int group_idx, int row_idx, const char* label, Args... args) {
     if (group_idx < 0 || group_idx >= (int)TUI_MAX_GROUPS)
         return;
 
@@ -275,7 +284,7 @@ void RtTui::set_row_v(int group_idx, int row_idx, const char* label, Args... arg
 
 // Recursive helper for format-based columns
 template<typename T, typename... Args>
-void RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
+void dt::Utils::RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
                                      const char* format, T value, Args... rest) {
     if (col_idx >= TUI_MAX_COLS)
         return;
@@ -284,7 +293,7 @@ void RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN]
 }
 
 // Base case for format-based recursion
-inline void RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
+inline void dt::Utils::RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
                                             const char* format) {
     (void)col_idx;
     (void)cols;
@@ -293,7 +302,7 @@ inline void RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_C
 
 // Recursive helper for auto-format columns
 template<typename T, typename... Args>
-void RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN], T value, Args... rest) {
+void dt::Utils::RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN], T value, Args... rest) {
     if (col_idx >= TUI_MAX_COLS)
         return;
 
@@ -316,18 +325,18 @@ void RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN], T
         snprintf(cols[col_idx], TUI_DATA_COL_LEN, "?");
     }
 
-    _auto_format_recursive(col_idx + 1, cols, rest...);
+    dt::Utils::RtTui::_auto_format_recursive(col_idx + 1, cols, rest...);
 }
 
 // Base case for auto-format recursion
-inline void RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN]) {
+inline void dt::Utils::RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN]) {
     (void)col_idx;
     (void)cols;
 }
 
 // Format single column helper
 template<typename T>
-void RtTui::_format_column(char* buf, size_t buf_size, const char* format, T value) {
+void dt::Utils::RtTui::_format_column(char* buf, size_t buf_size, const char* format, T value) {
     if constexpr (std::is_same_v<T, bool>) {
         snprintf(buf, buf_size, "%s", value ? "true" : "false");
     }

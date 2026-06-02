@@ -11,6 +11,9 @@
 #include "dtCore/src/dtLog/dtRtTui.hpp"
 #include "dtCore/src/dtLog/dtRtLog.hpp"
 
+namespace dt {
+namespace Utils {
+
 // ═══════════════════════════════════════════════
 // ANSI escape helpers
 // ═══════════════════════════════════════════════
@@ -27,7 +30,6 @@ namespace ansi {
     static constexpr const char* HIDE_CURSOR  = "\x1b[?25l";
     static constexpr const char* SHOW_CURSOR  = "\x1b[?25h";
 }
-
 
 // ═══════════════════════════════════════════════
 // RtTui implementation (uses MpscLogQueue from rtLogQueue.hpp)
@@ -743,3 +745,6 @@ void RtTui::flush_output() {
 
     m_out_pos = remaining;
 }
+
+}  // namespace Utils
+}  // namespace dt
