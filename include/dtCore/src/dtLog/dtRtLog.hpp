@@ -171,7 +171,8 @@ private:
         }
 
         // Make room: flush, then slide out oldest retained bytes when EAGAIN kept data.
-        // After the slide, m_pos + len == OUT_BUF_SIZE is guaranteed, so no std::min needed.
+        // If EAGAIN left data: slide guarantees m_pos + len == OUT_BUF_SIZE.
+        // If flush succeeded: m_pos == 0, inner if is skipped.
         if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
             _flush_buffer();
             if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
@@ -213,7 +214,7 @@ private:
             return;
         }
 
-        // Slide unwritten bytes to buffer front (no-op when written == m_pos)
+        // Slide unwritten bytes to buffer front
         size_t remaining = m_pos - written;
         if (remaining > 0 && written > 0)
             std::memmove(m_buf.data(), m_buf.data() + written, remaining);
@@ -514,8 +515,7 @@ public:
             spdlog::filename_t filename = file_basename;
             if (annot_datetime) {
                 filename = s_instance._annotate_filename_datetime(file_basename);
-                std::string dname, fname;
-                std::tie(dname, fname) = s_instance._split_by_directory(filename);
+                auto [dname, fname] = s_instance._split_by_directory(filename);
                 (void)remove(file_basename.c_str());
                 auto rtn = symlink(fname.c_str(), file_basename.c_str());
                 if (rtn < 0) {
@@ -541,20 +541,22 @@ public:
      * Terminate logging system
      */
     static void Terminate() {
-        // Report any messages that were dropped during operation
-        uint64_t drops = instance().drop_count();
-        if (drops > 0)
-            instance().m_logger->log(spdlog::level::warn, "CloseLogger: RT log queue dropped %llu messages during operation", (unsigned long long)drops);
+        auto& s_instace = instance();
 
-        instance().drain_all();
+        // Report any messages that were dropped during operation
+        uint64_t drops = s_instace.drop_count();
+        if (drops > 0)
+            s_instace.m_logger->log(spdlog::level::warn, "CloseLogger: RT log queue dropped %llu messages during operation", (unsigned long long)drops);
+
+        s_instace.drain_all();
 
         // Stop TUI if enabled
-        if (instance().m_tui) {
-            instance().m_tui->stop();
-            instance().m_tui.reset();
+        if (s_instace.m_tui) {
+            s_instace.m_tui->stop();
+            s_instace.m_tui.reset();
         }
 
-        instance().m_initialized.store(false, std::memory_order_release);
+        s_instace.m_initialized.store(false, std::memory_order_release);
         
         // flush all pending log messages
         spdlog::shutdown();
@@ -768,7 +770,7 @@ public:
         };
     }
 
-    class LogRtStream {
+    class [[nodiscard]] LogRtStream {
     public:
         static constexpr size_t BUF_LEN = QueueType::msg_len();
                 
@@ -819,6 +821,32 @@ public:
         LogRtStream& operator<<(const std::string& str) noexcept;
         LogRtStream& operator<<(char c) noexcept;
 
+        // fmt-style format(), compatible with dtLog::LogStream::format().
+        // Uses fmt::format_to_n() which writes directly to the stack buffer —
+        // no heap allocation for primitive types (int, double, const char*, etc.).
+        // dt::Math::Vector / Eigen types have no fmt::formatter: use operator<< instead.
+        template<typename... Args>
+        LogRtStream& format(fmt::format_string<Args...> fmt_str, Args&&... args) noexcept {
+            if (!m_active) 
+                return *this;
+
+            size_t avail = BUF_LEN - 1 - m_pos;
+            if (avail == 0) { 
+                _add_truncation(); return *this; 
+            }
+
+            try {
+                auto result = fmt::format_to_n(m_buf + m_pos, avail, fmt_str, std::forward<Args>(args)...);
+                m_pos += result.size < avail ? result.size : avail;
+                m_buf[m_pos] = '\0';
+            }
+            catch (...) {
+                _add_truncation();
+            }
+
+            return *this;
+        }
+
     private:
         void _append(const char* src, size_t len) noexcept {
             size_t avail = BUF_LEN - 1 - m_pos;
@@ -866,6 +894,7 @@ public:
                 m_buf[m_pos++] = '.';
                 m_buf[m_pos++] = '.';
                 m_buf[m_pos++] = '.';
+                m_buf[m_pos] = '\0';
             }
         }
 
@@ -1012,12 +1041,12 @@ private:
     }
 
     std::string _annotate_filename_datetime(const std::string& file_basename) {
-        spdlog::filename_t basename, ext, filename;
+        spdlog::filename_t filename;
 
         time_t tnow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         tm now_tm = spdlog::details::os::localtime(tnow);
         
-        std::tie(basename, ext) = spdlog::details::file_helper::split_by_extension(file_basename);
+        auto [basename, ext] = spdlog::details::file_helper::split_by_extension(file_basename);
 
         filename = fmt::format(SPDLOG_FILENAME_T("{}_{:04d}-{:02d}-{:02d}_{:02d}-{:02d}-{:02d}{}"), basename, now_tm.tm_year + 1900, now_tm.tm_mon + 1,
             now_tm.tm_mday, now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, ext);
@@ -1053,11 +1082,12 @@ private:
 };  // class RtLog
 };  // namespace dt
 
-#define LOG_RT_STREAM(level) \
-    [[nodiscard]] dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
-
-#define LOG_RT(level, fmt, ...) \
-    dt::RtLog::instance().log_rt(dt::RtLog::log_level::level, fmt, ##__VA_ARGS__)
+// LOG_RT(level): returns a LogRtStream temporary — identical usage to dtLog's LOG(level).
+//   LOG_RT(info) << "msg: " << val;
+//   LOG_RT(info).format("x={:.3f} idx={}", x, idx);
+//   LOG_RT(warn) << "q=" << q;   // dt::Math::Vector / Eigen: use operator<<, not format()
+#define LOG_RT(level) \
+    dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
 
 // LOG_RT_RAW: immediate write to STDERR, bypassing drain thread and log queue.
 //

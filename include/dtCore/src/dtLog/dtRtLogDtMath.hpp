@@ -18,7 +18,7 @@
    #include <dtCore/src/dtLog/dtRtLogDtMath.hpp>
    ...
    dt::Math::Vector<6, float> q;
-   LOG_RT_STREAM(info) << "joint_pos=" << q;
+   LOG_RT(info) << "joint_pos=" << q;
    // → joint_pos=[0.100000, 0.200000, ...]
 */
 #pragma once

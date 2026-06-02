@@ -16,12 +16,12 @@
    #include <dtCore/src/dtLog/dtRtLogEigen.hpp>
    ...
    Eigen::VectorXf q(6);
-   LOG_RT_STREAM(info) << "joint_pos=" << q;
+   LOG_RT(info) << "joint_pos=" << q;
    // → joint_pos=[0.100000, 0.200000, ...]
 */
 #pragma once
 #include "dtRtLog.hpp"
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 namespace dt {
 
