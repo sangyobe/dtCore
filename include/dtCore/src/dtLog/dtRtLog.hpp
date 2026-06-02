@@ -23,9 +23,9 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
-#include <time.h>
+#include <ctime>
 #include <type_traits>
-#include <cassert>
+#include <vector>
 
 #include "dtLogQueue.hpp"
 #include "dtRtTui.hpp"
@@ -49,13 +49,13 @@ namespace Math {
 
 namespace dt {
 namespace rtlog_constant {
-    inline static constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
-    inline static constexpr size_t DEFAULT_MAX_FILES = 5;
-    inline static constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
-    inline static constexpr size_t QUEUE_CAPACITY = 1024;
-    inline static constexpr size_t QUEUE_MSG_LEN = 1024;
+    inline constexpr size_t DEFAULT_MAX_SIZE = 10 * 1024 * 1024;  // 10MB
+    inline constexpr size_t DEFAULT_MAX_FILES = 5;
+    inline constexpr size_t OUT_BUF_SIZE = 65536;  // 64 KB internal buffer
+    inline constexpr size_t QUEUE_CAPACITY = 1024;
+    inline constexpr size_t QUEUE_MSG_LEN = 1024;
     // Maximum delay between log output bursts (nanoseconds)
-    inline static constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
+    inline constexpr long POLL_INTERVAL_NS = 1'000'000L; // 1 ms
 } // namespace rtlog_constant
 
 // Colored stdout sink using a single write() syscall per message.
@@ -68,7 +68,7 @@ namespace rtlog_constant {
 // on a tty for message sizes well within PIPE_BUF (4096 bytes).
 //
 // Shared level → ANSI color mapping used by ColorStdoutSinkT and TuiSinkT
-inline const char* _sink_color_for(spdlog::level::level_enum lvl) noexcept {
+inline const char* sink_color_for(spdlog::level::level_enum lvl) noexcept {
     switch (lvl) {
         case spdlog::level::trace:    return "\033[37m";
         case spdlog::level::debug:    return "\033[36m";
@@ -100,22 +100,31 @@ class ColorStdoutSinkT final : public spdlog::sinks::base_sink<Mutex> {
 
     std::array<char, rtlog_constant::OUT_BUF_SIZE> m_buf{};
     size_t m_pos{0};
+    int m_stdout_fd{-1};
 
 public:
     ColorStdoutSinkT() {
-        // Set stdout to O_NONBLOCK so flush_() never blocks on the pty
-        int flags = ::fcntl(STDOUT_FILENO, F_GETFL, 0);
-        if (flags != -1)
-            ::fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
+        // Open a new open file description for stdout via /proc/self/fd/1.
+        // O_NONBLOCK is set only on this private fd — STDOUT_FILENO is unaffected,
+        // so printf/cout/other-sinks never see EAGAIN.
+        // O_APPEND ensures atomic-seek-to-EOF on each write(), preventing offset
+        // corruption when stdout is redirected to a regular file.
+        m_stdout_fd = ::open("/proc/self/fd/1", O_WRONLY | O_APPEND | O_NONBLOCK | O_CLOEXEC);
+        if (m_stdout_fd < 0)
+            m_stdout_fd = STDOUT_FILENO;  // /proc unavailable: fall back to blocking writes
     }
 
     ~ColorStdoutSinkT() override {
-        // Restore blocking mode before final flush to prevent log data loss on exit
-        int flags = ::fcntl(STDOUT_FILENO, F_GETFL, 0);
-        if (flags != -1)
-            ::fcntl(STDOUT_FILENO, F_SETFL, flags & ~O_NONBLOCK);
-
+        // Switch the private fd to blocking so the final flush always completes.
+        // This fcntl affects only m_stdout_fd; STDOUT_FILENO is untouched.
+        if (m_stdout_fd != STDOUT_FILENO) {
+            int flags = ::fcntl(m_stdout_fd, F_GETFL, 0);
+            if (flags != -1)
+                ::fcntl(m_stdout_fd, F_SETFL, flags & ~O_NONBLOCK);
+        }
         _flush_buffer();
+        if (m_stdout_fd != STDOUT_FILENO)
+            ::close(m_stdout_fd);
     }
 
     ColorStdoutSinkT(const ColorStdoutSinkT&)            = delete;
@@ -131,7 +140,7 @@ protected:
         spdlog::memory_buf_t buf;
         Base::formatter_->format(msg, buf);
 
-        const char* color = _sink_color_for(msg.level);
+        const char* color = sink_color_for(msg.level);
         if (*color && msg.color_range_end > msg.color_range_start) {
             _buf_append(buf.data(), msg.color_range_start);
             _buf_append(color, std::strlen(color));
@@ -150,35 +159,42 @@ protected:
     }
 
 private:
-    void _buf_append(const char* data, size_t len) {
+    void _buf_append(const char* data, size_t len) noexcept {
         if (len == 0)
             return;
 
+        // Establish invariant: len < OUT_BUF_SIZE.
+        // For messages larger than the buffer, keep only the tail (most recent bytes).
+        if (len >= rtlog_constant::OUT_BUF_SIZE) {
+            data += len - (rtlog_constant::OUT_BUF_SIZE - 1);
+            len   = rtlog_constant::OUT_BUF_SIZE - 1;
+        }
+
+        // Make room: flush, then slide out oldest retained bytes when EAGAIN kept data.
+        // After the slide, m_pos + len == OUT_BUF_SIZE is guaranteed, so no std::min needed.
         if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
-            // Buffer full: flush first, then append
             _flush_buffer();
             if (m_pos + len > rtlog_constant::OUT_BUF_SIZE) {
-                // Still no room after flush (EAGAIN retained data): discard oldest bytes
                 size_t discard = m_pos + len - rtlog_constant::OUT_BUF_SIZE;
                 std::memmove(m_buf.data(), m_buf.data() + discard, m_pos - discard);
                 m_pos -= discard;
             }
         }
 
-        size_t actual = std::min(len, rtlog_constant::OUT_BUF_SIZE - m_pos);
-        std::memcpy(m_buf.data() + m_pos, data, actual);
-        m_pos += actual;
+        std::memcpy(m_buf.data() + m_pos, data, len);
+        m_pos += len;
     }
 
-    void _flush_buffer() {
+    void _flush_buffer() noexcept {
         if (m_pos == 0)
             return;
 
-        // O_NONBLOCK: write() returns EAGAIN immediately when the pty buffer is full
-        // → no drain thread blocking; unwritten data slides to the front for next flush
+        // O_NONBLOCK on m_stdout_fd: write() returns EAGAIN immediately when the pty
+        // buffer is full → no drain thread blocking; unwritten data slides to the front
+        // for next flush. STDOUT_FILENO is unaffected (remains blocking).
         size_t written = 0;
         while (written < m_pos) {
-            ssize_t n = ::write(STDOUT_FILENO, m_buf.data() + written, m_pos - written);
+            ssize_t n = ::write(m_stdout_fd, m_buf.data() + written, m_pos - written);
             if (n < 0) {
                 if (errno == EINTR)
                     continue;
@@ -190,6 +206,13 @@ private:
 
             written += static_cast<size_t>(n);
         }
+
+        // fully written — fast path
+        if (written >= m_pos) {
+            m_pos = 0;
+            return;
+        }
+
         // Slide unwritten bytes to buffer front (no-op when written == m_pos)
         size_t remaining = m_pos - written;
         if (remaining > 0 && written > 0)
@@ -245,7 +268,7 @@ template<typename Mutex>
 class BasicFileSinkT final : public spdlog::sinks::base_sink<Mutex> {
     using Base = spdlog::sinks::base_sink<Mutex>;
 
-    public:
+public:
     explicit BasicFileSinkT(const std::string& filename,
                             size_t max_size,
                             size_t max_files,
@@ -319,18 +342,24 @@ private:
         if (truncate) {
             flags |= O_TRUNC;
             m_current_size = 0;
-        } else {
+        } 
+        else {
             flags |= O_APPEND;
             // Get current file size
             struct stat st;
             if (::stat(m_base_filename.c_str(), &st) == 0) {
                 m_current_size = st.st_size;
-            } else {
+            } 
+            else {
                 m_current_size = 0;
             }
         }
 
         m_fd = ::open(m_base_filename.c_str(), flags, 0644);
+        if (m_fd < 0) {
+            static const char kOpenErr[] = "[RtLog] failed to open log file\n";
+            (void)::write(STDERR_FILENO, kOpenErr, sizeof(kOpenErr) - 1);
+        }
     }
 
     void _flush_buffer() noexcept {
@@ -345,10 +374,16 @@ private:
                 if (errno == EINTR) {
                     continue;  // Interrupted by signal - retry
                 }
-                // Other error - discard remaining buffer to avoid blocking
+                // Other error: discard buffer to avoid blocking.
+                // Notify via stderr (safe from noexcept, no allocation).
+                static const char kWriteErr[] = "[RtLog] file write error, log data lost\n";
+                (void)::write(STDERR_FILENO, kWriteErr, sizeof(kWriteErr) - 1);
                 break;
-            } else if (written == 0) {
+            } 
+            else if (written == 0) {
                 // Disk full or quota exceeded - discard buffer
+                static const char kDiskFull[] = "[RtLog] disk full, log data lost\n";
+                (void)::write(STDERR_FILENO, kDiskFull, sizeof(kDiskFull) - 1);
                 break;
             }
 
@@ -441,72 +476,69 @@ public:
         return s_instance;
     }
 
-    enum class LogLevel {
-        trace = spdlog::level::trace,
-        debug = spdlog::level::debug, 
-        info = spdlog::level::info, 
-        warn = spdlog::level::warn, 
-        err = spdlog::level::err, 
-        critical = spdlog::level::critical, 
-        off = spdlog::level::off
-    };
-
-    static void Initialize(const std::string log_name, const std::string file_basename = "", bool enable_tui = false, bool annot_datetime = true, bool truncate = false, 
+    static void Initialize(const std::string& log_name, const std::string& file_basename = "", bool enable_tui = false, bool annot_datetime = true, bool truncate = false, 
                         size_t max_file_size = rtlog_constant::DEFAULT_MAX_SIZE, size_t max_files = rtlog_constant::DEFAULT_MAX_FILES) {
+        auto& s_instance = instance();
+        
         // create spdlog logger with appropriate sinks
-        instance().m_logger = std::make_shared<spdlog::logger>(log_name);
-        if (instance().m_logger) {
-            instance().m_logger->sinks().clear();
+        s_instance.m_logger = std::make_shared<spdlog::logger>(log_name);
+        if (s_instance.m_logger) {
+            s_instance.m_logger->sinks().clear();
 
             // create tui instance if enabled
             if (enable_tui) {
-                instance().m_tui = std::make_shared<Utils::RtTui>();
-                if (instance().m_tui->init()) {
-                    auto tui_sink = std::make_shared<TuiSink>(instance().m_tui);
+                s_instance.m_tui = std::make_shared<Utils::RtTui>();
+                if (s_instance.m_tui->init()) {
+                    auto tui_sink = std::make_shared<TuiSink>(s_instance.m_tui);
                     tui_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
-                    instance().m_logger->sinks().push_back(tui_sink);
+                    s_instance.m_logger->sinks().push_back(tui_sink);
                 }
                 else {
-                    // FIXME: TUI init failed: fallback to colored stdout sink
+                    // TUI init failed: fall back to colored stdout
+                    s_instance.m_tui.reset();
+                    auto console_sink = std::make_shared<ColorStdoutSinkMt>();
+                    console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+                    s_instance.m_logger->sinks().push_back(console_sink);
+                    RtLog::log_raw(RtLog::log_level::err, "TUI initialize failed -> use default stdout");
                 }
             }
             // create default color stdout sink
             else {
                 auto console_sink = std::make_shared<ColorStdoutSinkMt>();
                 console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
-                instance().m_logger->sinks().push_back(console_sink);
+                s_instance.m_logger->sinks().push_back(console_sink);
             }
         }
 
         if (!file_basename.empty() && (file_basename != "_STDOUT_")) {
             spdlog::filename_t filename = file_basename;
             if (annot_datetime) {
-                filename = instance()._annotate_filename_datetime(file_basename);
+                filename = s_instance._annotate_filename_datetime(file_basename);
                 std::string dname, fname;
-                std::tie(dname, fname) = instance()._split_by_directory(filename);
+                std::tie(dname, fname) = s_instance._split_by_directory(filename);
                 (void)remove(file_basename.c_str());
                 auto rtn = symlink(fname.c_str(), file_basename.c_str());
                 if (rtn < 0) {
                     // Cannot create symlink to this log file. Log a warning to the console sink if available.
-                    if (instance().m_logger) {
-                        instance().m_logger->log(spdlog::level::warn, "{} Cannot create symlink to this log file.", rtn);
+                    if (s_instance.m_logger) {
+                        s_instance.m_logger->log(spdlog::level::warn,
+                            "Cannot create symlink '{}' → '{}': {}", file_basename, fname, strerror(errno));
                     }
                 }
             }
 
             auto file_sink = std::make_shared<BasicFileSinkMt>(filename, max_file_size, max_files, truncate);
-            // file_sink->set_pattern("[%L][%H:%M:%S.%f] %v");
             file_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
-            instance().m_logger->sinks().push_back(file_sink);
+            s_instance.m_logger->sinks().push_back(file_sink);
         }
 
-        spdlog::set_default_logger(instance().m_logger);
-        instance().m_timebase = TimeBase::capture();
-        instance().m_initialized.store(true, std::memory_order_release);
+        spdlog::set_default_logger(s_instance.m_logger);
+        s_instance.m_timebase = TimeBase::capture();
+        s_instance.m_initialized.store(true, std::memory_order_release);
     }
 
     /**
-     * Logging 시스템 종료.
+     * Terminate logging system
      */
     static void Terminate() {
         // Report any messages that were dropped during operation
@@ -521,19 +553,19 @@ public:
             instance().m_tui->stop();
             instance().m_tui.reset();
         }
+
+        instance().m_initialized.store(false, std::memory_order_release);
         
-        // flush all peding log message
+        // flush all pending log messages
         spdlog::shutdown();
     }
 
     /**
-     * Default logger 의 log level 설정.
-     * @param log_name logger 이름.
-     * @param lvl log level.
+     * Set log level of default logger
+     * @param lvl log level
      */
-    static void SetLogLevel(LogLevel lvl) {
-        spdlog::default_logger()->set_level(static_cast<spdlog::level::level_enum>(lvl));
-        instance().m_level.store(static_cast<int>(lvl), std::memory_order_relaxed);
+    static void SetLogLevel(log_level lvl) {
+        instance().set_level(lvl);
     }
 
     // Get TUI instance (for external use)
@@ -599,8 +631,10 @@ public:
         m_timebase = TimeBase::capture();
     }
 
-    // Flush all remaining entries - call once after the run loop exits
-    // Returns the number of entries drained
+    // Flush all remaining entries from the RT queue.
+    // IMPORTANT: must only be called from a single consumer thread at a time.
+    // LogQueue is MPSC — concurrent try_pop() from two threads is undefined behaviour.
+    // Callers must ensure the drain thread has stopped before calling this (e.g. in Terminate()).
     size_t drain_all() noexcept {
         size_t count = 0;
         Entry entry;
@@ -652,13 +686,16 @@ public:
         }
 
         // Header: color-coded level + timestamp + bold [RAW] tag
-        // _sink_color_for() is defined in the same dt namespace, no allocation
-        const char* color = _sink_color_for(lvl);
+        // sink_color_for() is defined in the same dt namespace, no allocation
+        const char* color = sink_color_for(lvl);
         int hdr = snprintf(buf, sizeof(buf),
                            "%s[%c][%02d:%02d:%02d.%06d]\033[0m\033[1m[RAW]\033[0m ",
                            color, lc, hh, mm, ss, us);
         if (hdr < 0 || hdr >= (int)sizeof(buf))
             hdr = 0;
+
+        if (!fmt)
+            fmt = "(null)";
 
         // Message
         va_list args;
@@ -885,19 +922,17 @@ private:
         // Drain all queued entries (TuiSinkT pushes to TUI queue here)
         size_t count = drain_all();
 
-        // Rate-limit flush() to 100 ms: FlushOn(info) already flushes per message.
-        // Calling flush() on every drain_all() at 100 μs polling = 10,000 calls/sec overhead.
-        if (count > 0 && m_logger) {
-            int64_t now_ns = _mono_now_ns();
-            if (now_ns - m_last_flush_ns >= 100'000'000LL) {  // 100 ms
-                m_logger->flush();
-                m_last_flush_ns = now_ns;
-            }
+        // Rate-limit flush() to 100 ms regardless of message count.
+        // Flushing even when count == 0 drains EAGAIN-retained bytes left in the sink buffer,
+        // preventing the last few messages before a quiet period from being stuck.
+        const int64_t now_ns = _mono_now_ns();
+        if (m_logger && now_ns - m_last_flush_ns >= 100'000'000LL) {  // 100 ms
+            m_logger->flush();
+            m_last_flush_ns = now_ns;
         }
 
         // TUI tick: 25 Hz (40 ms) rate-limiter — drains queue, handles keys, renders
         if (m_tui) {
-            int64_t now_ns = static_cast<int64_t>(_mono_now_ns());
             if (now_ns - m_tui_last_render_ns >= 40'000'000LL) {
                 m_tui->tick();
                 m_tui_last_render_ns = now_ns;
@@ -948,8 +983,9 @@ private:
             );
         }
         catch (...) {
-            // Drop entry silently; m_drop_count is not incremented here since
-            // this is a non-RT path and the queue already accounted for the entry.
+            // Formatting failed (likely std::bad_alloc). Increment drop counter so
+            // Terminate() reports the true number of lost entries.
+            m_drop_count.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
@@ -960,15 +996,6 @@ private:
             // Monitor via drop_count() or display with TUI_SET_ROW_V.
             m_drop_count.fetch_add(1, std::memory_order_relaxed);
         }
-    }
-
-    void _enqueue_v(log_level lvl, const char* format, va_list args) noexcept {
-        if (!m_initialized.load(std::memory_order_acquire))
-            return;
-
-        Entry entry;
-        entry.set_v(lvl, _mono_now_ns(), format, args);
-        _enqueue(entry);
     }
 
     bool _is_active_level(log_level lvl) const noexcept {
@@ -1002,16 +1029,15 @@ private:
         auto dir_index = fname.rfind('/');
 
         // no valid directory found - return empty string as folder and whole path
-        if (dir_index == std::string::npos) {
-            return std::make_tuple(std::string(), fname);
-        }
+        if (dir_index == std::string::npos)
+            return {std::string(), fname};
+
         // ends up with '/' - return whole path as directory and empty string as filename
-        else if (dir_index == fname.size() - 1) {
-            return std::make_tuple(fname, std::string());
-        }
+        if (dir_index == fname.size() - 1)
+            return {fname, std::string()};
 
         // finally - return a valid directory and file path tuple
-        return std::make_tuple(fname.substr(0, dir_index+1), fname.substr(dir_index+1)); // '/' is included as directory name
+        return {fname.substr(0, dir_index + 1), fname.substr(dir_index + 1)};   // '/' is included as directory name
     }
 
 private:
@@ -1028,7 +1054,7 @@ private:
 };  // namespace dt
 
 #define LOG_RT_STREAM(level) \
-    dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
+    [[nodiscard]] dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
 
 #define LOG_RT(level, fmt, ...) \
     dt::RtLog::instance().log_rt(dt::RtLog::log_level::level, fmt, ##__VA_ARGS__)
@@ -1096,11 +1122,11 @@ void TuiSinkT<Mutex>::sink_it_(const spdlog::details::log_msg& msg) {
     if (sz > 0 && buf[sz - 1] == '\n') 
         sz--;
 
-    const char* color = _sink_color_for(msg.level);
+    const char* color = sink_color_for(msg.level);
     if (*color && msg.color_range_end > msg.color_range_start && msg.color_range_end <= sz) {
         // Color applied to prefix ([L][timestamp]) only; message body uses default color.
         // Assembled in a stack buffer (no heap allocation) then pushed to the TUI queue.
-        static constexpr size_t TMP_LEN = 512;
+        static constexpr size_t TMP_LEN = rtlog_constant::QUEUE_MSG_LEN;
         char tmp[TMP_LEN];
         size_t pos = 0;
 
@@ -1165,34 +1191,6 @@ RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const std::vector<T>& value) 
     _close_array();
     return *this;
 }
-
-// template <typename T, uint16_t N>
-// RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector<N, T>& value) noexcept {
-//     if (!m_active)
-//         return *this;
-
-//     // Open array bracket
-//     if (m_pos + 1 >= BUF_LEN)
-//         return *this;
-//     m_buf[m_pos++] = '[';
-
-//     for (size_t i = 0; i < N; i++) {
-//         // Format current element
-//         if (!_format_element(value(i))) {
-//             _add_truncation();
-//             break;
-//         }
-
-//         // Add separator if not the last element
-//         if (i != N - 1) {
-//             if (!_add_separator())
-//                 break;
-//         }
-//     }
-
-//     _close_array();
-//     return *this;
-// }
 
 inline RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const char* str) noexcept {
     if (m_active && str)
