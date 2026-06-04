@@ -359,7 +359,10 @@ private:
         m_fd = ::open(m_base_filename.c_str(), flags, 0644);
         if (m_fd < 0) {
             static const char kOpenErr[] = "[RtLog] failed to open log file\n";
-            (void)::write(STDERR_FILENO, kOpenErr, sizeof(kOpenErr) - 1);
+            ssize_t n = ::write(STDERR_FILENO, kOpenErr, sizeof(kOpenErr) - 1);
+            if (n < 0) {
+                // write error is occurred but it don't needed to be reported
+            }
         }
     }
 
@@ -378,13 +381,19 @@ private:
                 // Other error: discard buffer to avoid blocking.
                 // Notify via stderr (safe from noexcept, no allocation).
                 static const char kWriteErr[] = "[RtLog] file write error, log data lost\n";
-                (void)::write(STDERR_FILENO, kWriteErr, sizeof(kWriteErr) - 1);
+                ssize_t n = ::write(STDERR_FILENO, kWriteErr, sizeof(kWriteErr) - 1);
+                if (n < 0) {
+                    // write error is occurred but it don't needed to be reported
+                }
                 break;
             } 
             else if (written == 0) {
                 // Disk full or quota exceeded - discard buffer
                 static const char kDiskFull[] = "[RtLog] disk full, log data lost\n";
-                (void)::write(STDERR_FILENO, kDiskFull, sizeof(kDiskFull) - 1);
+                ssize_t n = ::write(STDERR_FILENO, kDiskFull, sizeof(kDiskFull) - 1);
+                if (n < 0) {
+                    // write error is occurred but it don't needed to be reported
+                }
                 break;
             }
 
@@ -746,7 +755,10 @@ public:
         buf[total++] = '\n';
 
         // Atomic write: messages ≤ PIPE_BUF (4096 B) are never interleaved on Linux
-        (void)::write(STDERR_FILENO, buf, total);
+        ssize_t n = ::write(STDERR_FILENO, buf, total);
+        if (n < 0) {
+            // write error is occurred but it don't needed to be reported
+        }
     }
 
     template<typename... Args>
@@ -827,7 +839,10 @@ public:
                 RtLog::instance().log_rt(m_log_level, "%.*s", (int)m_pos, m_buf);
         }
 
-        template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+        template<typename T, typename = std::enable_if_t<
+            std::is_arithmetic<T>::value ||
+            std::is_pointer<T>::value ||
+            std::is_enum<T>::value>>
         LogRtStream& operator<<(T value) noexcept;
 
         template <typename T>
@@ -900,7 +915,12 @@ public:
                 return false;
 
             int written = 0;
-            if constexpr (std::is_same_v<T, bool>)
+            if constexpr (std::is_pointer_v<T>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%p", static_cast<const void*>(value));
+            else if constexpr (std::is_enum_v<T>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%lld",
+                                        static_cast<long long>(static_cast<std::underlying_type_t<T>>(value)));
+            else if constexpr (std::is_same_v<T, bool>)
                 written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%s", value ? "true" : "false");
             else if constexpr (std::is_floating_point_v<T>)
                 written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%.6f", static_cast<double>(value));
@@ -1122,6 +1142,8 @@ private:
 //   LOG_RT(warn) << "q=" << q;   // dt::Math::Vector / Eigen: use operator<<, not format()
 #define LOG_RT(level) \
     dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
+#define LOG(level) \
+    dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
 
 // LOG_RT_RAW: immediate write to STDERR, bypassing drain thread and log queue.
 //
@@ -1258,7 +1280,10 @@ void TuiSinkT<Mutex>::sink_it_(const spdlog::details::log_msg& msg) {
     }
 }
 
-template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template<typename T, typename = std::enable_if_t<
+    std::is_arithmetic<T>::value ||
+    std::is_pointer<T>::value ||
+    std::is_enum<T>::value>>
 RtLog::LogRtStream& RtLog::LogRtStream::operator<<(T value) noexcept {
     if (!m_active)
         return *this;
