@@ -21,17 +21,20 @@ public:
     // ───────────────────────────────────────────────
     // Constants
     // ───────────────────────────────────────────────
-    static constexpr size_t TUI_MAX_GROUPS         = 4;   // max groups in Area 1
-    static constexpr size_t TUI_MAX_ROWS_PER_GROUP = 20;  // max data rows per group
-    static constexpr size_t TUI_DATA_COL_LEN       = 24;  // max column string length
-    static constexpr int    TUI_MAX_COLS           = 8;   // max columns per row
-    static constexpr size_t TUI_TEXT_ROW_LEN       = 200; // max text length for text-mode rows
-    static constexpr int    AREA2_MIN_ROWS         = 5;   // minimum Area 2 height (rows)
-    static constexpr size_t LOG_KEEP               = 2000; // minimum log history — circular buffer
-    static constexpr size_t OUT_BUF_SIZE           = 262144; // 256 KB ensures a full frame fits even on very wide terminals (500+ cols) without mid-frame flush
+    static constexpr size_t TUI_MAX_GROUPS         = 4;    // max groups in Area 1 per layout
+    static constexpr size_t TUI_MAX_ROWS_PER_GROUP = 20;   // max data rows per group
+    static constexpr size_t TUI_DATA_COL_LEN       = 24;   // max column string length
+    static constexpr int    TUI_MAX_COLS           = 8;    // max columns per row
+    static constexpr size_t TUI_TEXT_ROW_LEN       = 200;  // max text length for text-mode rows
+    static constexpr int    AREA2_MIN_ROWS         = 5;    // minimum Area 2 height (rows)
+    static constexpr size_t LOG_KEEP               = 2000; // log history circular buffer capacity
+    static constexpr size_t OUT_BUF_SIZE           = 262144; // 256 KB output buffer
+    static constexpr int    MAX_LAYOUTS            = 9;    // layouts switchable via keys '1'–'9'
+    static constexpr size_t QUEUE_CAPACITY         = 1024;
+    static constexpr size_t QUEUE_MSG_LEN          = 1024;
 
-    // TUI uses MpscLogQueue with 512 capacity and 256-byte messages
-    using TuiLogQueue = LogQueue<512, 256>;
+    // TUI uses MpscLogQueue with QUEUE_CAPACITY capacity and QUEUE_MSG_LEN-byte messages
+    using TuiLogQueue = LogQueue<QUEUE_CAPACITY, QUEUE_MSG_LEN>;
     using TuiLogEntry = TuiLogQueue::Entry;
 
     // ───────────────────────────────────────────────
@@ -63,6 +66,15 @@ public:
         bool active{false};
     };
 
+    // Per-layout state: name + group headers + double-buffered data rows
+    struct TuiLayoutData {
+        char             name[32]{};
+        TuiGroupHeader   group_headers[TUI_MAX_GROUPS]{};
+        TuiDataBuffer    data_buf[2]{};
+        std::atomic<int> data_write_idx{0};
+        bool             defined{false};  // true once any group/row is configured
+    };
+
 public:
     RtTui();
     ~RtTui();
@@ -72,39 +84,48 @@ public:
     void stop();   // restore terminal
     void tick();   // drain queue, handle keys, render (called from RtLog drain thread)
 
+    // ── Layout management ──────────────────────────────────
+    // layout_idx: 0 ~ MAX_LAYOUTS-1 (user switches via keys '1'~'9')
+    void set_layout_name(int layout_idx, const char* name);
+
     // ── Area 1 group header setup (call once at startup) ──
+    // layout_idx: 0 ~ MAX_LAYOUTS-1
     // group_idx : 0 ~ TUI_MAX_GROUPS-1
-    // label_hdr : header name for the left label column
-    // col_hdrs  : array of data column header names
-    // Example: set_group(0, "Joint", cols, 6);
-    void set_group(int group_idx, const char* label_hdr, const char* col_hdrs[], int ncols);
+    void set_group(int layout_idx, int group_idx, const char* label_hdr, const char* col_hdrs[], int ncols);
 
-    // Variadic convenience — all args must be const char*
-    // Example: set_group_v(0, "Joint", "J1","J2","J3","J4","J5","J6")
-    //          set_group_v(1, "Task",  "X", "Y", "Z")
+    // Variadic convenience — all col_hdrs args must be const char*
     template<typename... Args>
-    void set_group_v(int group_idx, const char* label_hdr, Args... col_hdrs);
+    void set_group_v(int layout_idx, int group_idx, const char* label_hdr, Args... col_hdrs);
 
-    // ── Area 1 data update API (RT-safe) ──────────
+    // ── Area 1 data update API (RT-safe) ──────────────────
+    // layout_idx: 0 ~ MAX_LAYOUTS-1
     // group_idx : 0 ~ TUI_MAX_GROUPS-1
     // row_idx   : 0 ~ TUI_MAX_ROWS_PER_GROUP-1
-    // Example: set_row_fmt(0, 2, "ABS_Enc", "%.2f", j1, j2, j3, j4, j5, j6)
     template<typename... Args>
-    void set_row_fmt(int group_idx, int row_idx, const char* label, const char* format, Args... args);
+    void set_row_fmt(int layout_idx, int group_idx, int row_idx,
+                     const char* label, const char* format, Args... args);
 
-    // Example: set_row_v(0, 0, "ABS_Enc", j1, j2, j3, j4, j5, j6)
     template<typename... Args>
-    void set_row_v(int group_idx, int row_idx, const char* label, Args... args);
+    void set_row_v(int layout_idx, int group_idx, int row_idx,
+                   const char* label, Args... args);
 
-    // Full-width text row: displays label + free-form string (ignores column layout)
-    // Example: set_text_row(1, 1, "cmd", "movej(posd=[...], time=5.0)")
-    void set_text_row(int group_idx, int row_idx, const char* label, const char* text);
+    // Full-width text row: displays label + pre-formatted string (ignores column layout)
+    void set_text_row(int layout_idx, int group_idx, int row_idx,
+                      const char* label, const char* text);
+
+    // printf-style text row: formats args into a buffer, then calls set_text_row.
+    // Equivalent to: snprintf(buf, ...); set_text_row(..., buf);
+    // Example: set_text_row_fmt(0, 2, 0, "Right",
+    //              "Pos:%+8.3f,%+8.3f,%+8.3f   Vel:%+8.3f,%+8.3f,%+8.3f",
+    //              px, py, pz, vx, vy, vz);
+    void set_text_row_fmt(int layout_idx, int group_idx, int row_idx,
+                          const char* label, const char* fmt, ...) noexcept
+        __attribute__((format(printf, 6, 7)));
 
     // ── Area 2 log API (RT-safe) ─────────────────
     void log(spdlog::level::level_enum level, const char* fmt, ...);
     void log_v(spdlog::level::level_enum level, const char* fmt, va_list args);
 
-    // convenience wrappers for macros
     void log_trace(const char* fmt, ...);
     void log_debug(const char* fmt, ...);
     void log_info (const char* fmt, ...);
@@ -117,19 +138,23 @@ public:
         return key;
     }
 
+    int get_current_layout() const noexcept {
+        return m_current_layout.load(std::memory_order_relaxed);
+    }
+
 private:
     // Helper for formatting individual columns
     template<typename T>
     void _format_column(char* buf, size_t buf_size, const char* format, T value);
 
-    // Helper for setting row data (group_idx, row_idx based)
-    void _set_row_data(int group_idx, int row_idx,
+    // Helper for setting row data (layout- and group-index based)
+    void _set_row_data(int layout_idx, int group_idx, int row_idx,
                        const char* label, const char* cols[], int ncols);
 
-    // Compute content-driven Area 1 height (used by tick())
+    // Compute content-driven Area 1 height using the current layout
     int calc_area1_height() const noexcept;
 
-    // Recursive variadic helpers
+    // Recursive variadic helpers for format-based columns
     template<typename T, typename... Args>
     void _format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
                                    const char* format, T value, Args... rest);
@@ -137,74 +162,70 @@ private:
     void _format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
                                    const char* format);
 
-    // Auto-format helpers
+    // Auto-format helpers (type-deduced)
     template<typename T, typename... Args>
     void _auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
-                               T value, Args... rest);
+                                T value, Args... rest);
 
     void _auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN]);
 
-    // terminal control (direct ANSI escape codes, no ncurses)
+    // Terminal control (direct ANSI escape codes, no ncurses)
     void term_init();
     void term_restore();
     void term_get_size(int& rows, int& cols);
 
-    // rendering
+    // Rendering
     void render_area1(int start_row, int height, int width);
     void render_area2(int start_row, int height, int width);
     void render_scrollbar(int start_row, int height, int col,
                           size_t total, size_t visible, size_t offset);
     void render_cmd_line(int row, int width);
 
-    // key input handler (buf: byte array read, len: byte count)
+    // Key input handler (buf: byte array read, len: byte count)
     void handle_key(const char* buf, ssize_t len);
 
-    // output buffer flush (single write() syscall)
+    // Output buffer (single write() syscall per frame)
     void flush_output();
     void buf_append(const char* s, size_t len);
     void buf_append_str(const char* s);
     void buf_append_hbar(int n);  // append n ─ (U+2500) characters (3 bytes each)
 
-    // safe snprintf
     template<typename... Args>
     inline void safe_snprintf(const char* fmt, Args... args) {
-        if (m_out_pos >= OUT_BUF_SIZE) 
+        if (m_out_pos >= OUT_BUF_SIZE)
             return;
-
         int n = snprintf(m_out_buf + m_out_pos, OUT_BUF_SIZE - m_out_pos, fmt, args...);
-        if (n > 0) 
+        if (n > 0)
             m_out_pos += std::min((size_t)n, OUT_BUF_SIZE - m_out_pos - 1);
     }
 
     // ── member variables ─────────────────────────────────
-    TuiLogQueue       m_log_queue;
+    TuiLogQueue         m_log_queue;
 
-    // Area 1: group headers (set once at startup via set_group)
-    TuiGroupHeader    m_group_headers[TUI_MAX_GROUPS]{};
-
-    // Area 1: double buffer (write=RT, read=render)
-    TuiDataBuffer     m_data_buf[2]{};
-    std::atomic<int>  m_data_write_idx{0};
+    // Area 1: per-layout state (name + group headers + double-buffered data)
+    TuiLayoutData       m_layouts[MAX_LAYOUTS]{};
+    std::atomic<int>    m_current_layout{0};     // 0-based; key '1' → layout 0
+    std::atomic<bool>   m_layout_changed{false}; // triggers screen clear on next tick
 
     // Area 2: log history (NRT only, no lock needed) — circular buffer
-    TuiLogEntry       m_log_history[LOG_KEEP]{};
-    size_t            m_log_count{0};
-    size_t            m_log_head{0};
-    size_t            m_scroll_offset{0};  // 0 = bottom
-    bool              m_auto_scroll{true};
-    std::atomic<char> m_last_key{0};  // TUI→main key relay (RT writes, main reads)
+    TuiLogEntry         m_log_history[LOG_KEEP]{};
+    size_t              m_log_count{0};
+    size_t              m_log_head{0};
+    size_t              m_scroll_offset{0};  // 0 = bottom (newest)
+    bool                m_auto_scroll{true};
+    std::atomic<char>   m_last_key{0};  // TUI→main key relay
 
-    std::atomic<bool> m_running{false};
-    std::atomic<bool> m_term_active{false};
+    std::atomic<bool>   m_running{false};
+    std::atomic<bool>   m_term_active{false};
 
-    // terminal state
-    struct termios*   m_old_termios{nullptr};
-    int               m_term_rows{24};
-    int               m_term_cols{80};
-    int               m_prev_term_rows{0};
-    int               m_prev_term_cols{0};
+    // Terminal state
+    struct termios*     m_old_termios{nullptr};
+    int                 m_term_rows{24};
+    int                 m_term_cols{80};
+    int                 m_prev_term_rows{0};
+    int                 m_prev_term_cols{0};
 
-    // output double-buffer (minimizes write() syscalls)
+    // Output double-buffer (minimizes write() syscalls)
     char   m_out_buf[OUT_BUF_SIZE];
     size_t m_out_pos{0};
 };
@@ -226,21 +247,23 @@ private:
 // Template Implementation (must be in header)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// set_group_v: variadic convenience (all args must be const char*)
-// Example: tui.set_group_v(0, "Joint", "J1","J2","J3")
 template<typename... Args>
-void dt::Utils::RtTui::set_group_v(int group_idx, const char* label_hdr, Args... col_hdrs) {
+void dt::Utils::RtTui::set_group_v(int layout_idx, int group_idx,
+                                    const char* label_hdr, Args... col_hdrs) {
     const char* cols[] = { static_cast<const char*>(col_hdrs)... };
-    set_group(group_idx, label_hdr, cols, (int)(sizeof...(col_hdrs)));
+    set_group(layout_idx, group_idx, label_hdr, cols, (int)(sizeof...(col_hdrs)));
 }
 
-// Format-based set_row (single format applied to all columns)
 template<typename... Args>
-void dt::Utils::RtTui::set_row_fmt(int group_idx, int row_idx, const char* label, const char* format, Args... args) {
+void dt::Utils::RtTui::set_row_fmt(int layout_idx, int group_idx, int row_idx,
+                                    const char* label, const char* format, Args... args) {
+    if (layout_idx < 0 || layout_idx >= MAX_LAYOUTS)
+        return;
+
     if (group_idx < 0 || group_idx >= (int)TUI_MAX_GROUPS)
         return;
 
-    if (row_idx  < 0 || row_idx  >= (int)TUI_MAX_ROWS_PER_GROUP)
+    if (row_idx < 0 || row_idx >= (int)TUI_MAX_ROWS_PER_GROUP)
         return;
 
     char cols[TUI_MAX_COLS][TUI_DATA_COL_LEN];
@@ -255,16 +278,19 @@ void dt::Utils::RtTui::set_row_fmt(int group_idx, int row_idx, const char* label
     for (int i = 0; i < ncols; ++i)
         col_ptrs[i] = cols[i];
 
-    _set_row_data(group_idx, row_idx, label, col_ptrs, ncols);
+    _set_row_data(layout_idx, group_idx, row_idx, label, col_ptrs, ncols);
 }
 
-// Auto-format variadic set_row (detects types automatically)
 template<typename... Args>
-void dt::Utils::RtTui::set_row_v(int group_idx, int row_idx, const char* label, Args... args) {
+void dt::Utils::RtTui::set_row_v(int layout_idx, int group_idx, int row_idx,
+                                   const char* label, Args... args) {
+    if (layout_idx < 0 || layout_idx >= MAX_LAYOUTS)
+        return;
+
     if (group_idx < 0 || group_idx >= (int)TUI_MAX_GROUPS)
         return;
 
-    if (row_idx  < 0 || row_idx  >= (int)TUI_MAX_ROWS_PER_GROUP)
+    if (row_idx < 0 || row_idx >= (int)TUI_MAX_ROWS_PER_GROUP)
         return;
 
     char cols[TUI_MAX_COLS][TUI_DATA_COL_LEN];
@@ -279,28 +305,25 @@ void dt::Utils::RtTui::set_row_v(int group_idx, int row_idx, const char* label, 
     for (int i = 0; i < ncols; ++i)
         col_ptrs[i] = cols[i];
 
-    _set_row_data(group_idx, row_idx, label, col_ptrs, ncols);
+    _set_row_data(layout_idx, group_idx, row_idx, label, col_ptrs, ncols);
 }
 
-// Recursive helper for format-based columns
 template<typename T, typename... Args>
 void dt::Utils::RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
-                                     const char* format, T value, Args... rest) {
+                                                   const char* format, T value, Args... rest) {
     if (col_idx >= TUI_MAX_COLS)
         return;
     _format_column(cols[col_idx], TUI_DATA_COL_LEN, format, value);
     _format_columns_recursive(col_idx + 1, cols, format, rest...);
 }
 
-// Base case for format-based recursion
 inline void dt::Utils::RtTui::_format_columns_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN],
-                                            const char* format) {
+                                                         const char* format) {
     (void)col_idx;
     (void)cols;
     (void)format;
 }
 
-// Recursive helper for auto-format columns
 template<typename T, typename... Args>
 void dt::Utils::RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN], T value, Args... rest) {
     if (col_idx >= TUI_MAX_COLS)
@@ -328,13 +351,11 @@ void dt::Utils::RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_
     dt::Utils::RtTui::_auto_format_recursive(col_idx + 1, cols, rest...);
 }
 
-// Base case for auto-format recursion
 inline void dt::Utils::RtTui::_auto_format_recursive(int col_idx, char cols[][TUI_DATA_COL_LEN]) {
     (void)col_idx;
     (void)cols;
 }
 
-// Format single column helper
 template<typename T>
 void dt::Utils::RtTui::_format_column(char* buf, size_t buf_size, const char* format, T value) {
     if constexpr (std::is_same_v<T, bool>) {
