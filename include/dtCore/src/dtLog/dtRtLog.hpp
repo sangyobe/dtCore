@@ -579,27 +579,18 @@ public:
         instance().set_level(lvl);
     }
 
-    // Get TUI instance (for external use)
+    // Returns the TUI instance (nullptr when TUI is disabled)
     std::shared_ptr<Utils::RtTui> get_tui() const noexcept {
         return m_tui;
     }
 
-    // Check if TUI mode is enabled
-    bool is_tui_mode() const noexcept {
-        return m_tui != nullptr;
-    }
-
     // Get the latest pending key from TUI (non-blocking, returns 0 if no key)
     char get_pending_key() const noexcept {
-        if (m_tui != nullptr) {
-            return m_tui->pop_pendingkey();
-        }
-        
-        return 0;
+        return m_tui ? m_tui->pop_pendingkey() : 0;
     }
 
-    // TUI Area 1 helpers (RT-safe, only if TUI enabled)
-    // layout_idx: 0 ~ MAX_LAYOUTS-1, group_idx: 0 ~ TUI_MAX_GROUPS-1, row_idx: 0 ~ TUI_MAX_ROWS_PER_GROUP-1
+    // TUI Area 1 helpers — RT-safe no-ops when TUI is disabled
+    // layout_idx: 0 ~ MAX_LAYOUTS-1  group_idx: 0 ~ TUI_MAX_GROUPS-1  row_idx: 0 ~ TUI_MAX_ROWS_PER_GROUP-1
     template<typename... Args>
     void tui_set_row(int layout_idx, int group_idx, int row_idx,
                      const char* label, const char* format, Args... args) noexcept {
@@ -608,11 +599,11 @@ public:
         }
     }
 
-    template<typename... Args>
-    void tui_set_row_v(int layout_idx, int group_idx, int row_idx,
-                       const char* label, Args... args) noexcept {
+    template<typename... Cols>
+    void tui_set_row_cols(int layout_idx, int group_idx, int row_idx,
+                          const char* label, Cols&&... cols) noexcept {
         if (m_tui) {
-            m_tui->set_row_v(layout_idx, group_idx, row_idx, label, args...);
+            m_tui->set_row_cols(layout_idx, group_idx, row_idx, label, std::forward<Cols>(cols)...);
         }
     }
 
@@ -623,6 +614,11 @@ public:
         }
     }
 
+    void tui_set_group_no_header(int layout_idx, int group_idx) noexcept {
+        if (m_tui)
+            m_tui->set_group_no_header(layout_idx, group_idx);
+    }
+
     void tui_set_text_row(int layout_idx, int group_idx, int row_idx,
                           const char* label, const char* text) noexcept {
         if (m_tui) {
@@ -630,10 +626,6 @@ public:
         }
     }
 
-    // printf-style text row: formats args internally, then calls set_text_row.
-    // Example: tui_set_text_row_fmt(0, 2, 0, "Right",
-    //              "Pos:%+8.3f,%+8.3f,%+8.3f   Vel:%+8.3f,%+8.3f,%+8.3f",
-    //              px, py, pz, vx, vy, vz);
     void tui_set_text_row_fmt(int layout_idx, int group_idx, int row_idx,
                               const char* label, const char* fmt, ...) noexcept
         __attribute__((format(printf, 6, 7))) {
@@ -652,13 +644,6 @@ public:
         if (m_tui) {
             m_tui->set_layout_name(layout_idx, name);
         }
-    }
-
-    int tui_get_layout() const noexcept {
-        if (m_tui)
-            return m_tui->get_current_layout();
-
-        return 0;
     }
 
     bool is_initialized() const noexcept {
@@ -1138,10 +1123,8 @@ private:
 
 // LOG_RT(level): returns a LogRtStream temporary — identical usage to dtLog's LOG(level).
 //   LOG_RT(info) << "msg: " << val;
-//   LOG_RT(info).format("x={:.3f} idx={}", x, idx);
-//   LOG_RT(warn) << "q=" << q;   // dt::Math::Vector / Eigen: use operator<<, not format()
-#define LOG_RT(level) \
-    dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
+//   LOG(info).format("x={:.3f} idx={}", x, idx);
+//   LOG(warn) << "q=" << q;   // dt::Math::Vector / Eigen: use operator<<, not format()
 #define LOG(level) \
     dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
 
@@ -1162,74 +1145,50 @@ private:
 #define LOG_RT_RAW(level, fmt, ...) \
     dt::RtLog::log_raw(dt::RtLog::log_level::level, fmt, ##__VA_ARGS__)
 
-#define LOG_RT_RAW_INFO(fmt, ...)  LOG_RT_RAW(info,     fmt, ##__VA_ARGS__)
-#define LOG_RT_RAW_WARN(fmt, ...)  LOG_RT_RAW(warn,     fmt, ##__VA_ARGS__)
-#define LOG_RT_RAW_ERR(fmt, ...)   LOG_RT_RAW(err,      fmt, ##__VA_ARGS__)
-#define LOG_RT_RAW_CRIT(fmt, ...)  LOG_RT_RAW(critical, fmt, ##__VA_ARGS__)
-
 // ═══════════════════════════════════════════════════════════════════════════
-// TUI Area 1 macros (RT-safe, no-op if TUI disabled)
+// TUI Area 1 macros — RT-safe, no-op when TUI is disabled
+// All macros take layout_idx as the first argument (0-based, key '1'~'9').
 // ═══════════════════════════════════════════════════════════════════════════
-//
-// Layout 0 (default) — backward-compatible macros
-// ─────────────────────────────────────────────────
-// Format-based row update
-// Example: TUI_SET_ROW(grp, row, "label", "%.2f", v1, v2, v3)
-#define TUI_SET_ROW(grp, row, label, fmt, ...) \
-    dt::RtLog::instance().tui_set_row(0, grp, row, label, fmt, ##__VA_ARGS__)
 
-// Auto-format row update (type-deduced)
-// Example: TUI_SET_ROW_V(grp, row, "label", v1, v2, v3)
-#define TUI_SET_ROW_V(grp, row, label, ...) \
-    dt::RtLog::instance().tui_set_row_v(0, grp, row, label, ##__VA_ARGS__)
-
-// Full-width text row (ignores column layout, max 200 chars)
-// Example: TUI_SET_TEXT_ROW(grp, row, "cmd", cmd_str.c_str())
-#define TUI_SET_TEXT_ROW(grp, row, label, text) \
-    dt::RtLog::instance().tui_set_text_row(0, grp, row, label, text)
-
-// Group header setup (call once at startup for layout 0)
-// Example: TUI_SET_GROUP(grp, "Joint", "J1", "J2", "J3")
-#define TUI_SET_GROUP(grp, label, ...) \
-    dt::RtLog::instance().tui_set_group(0, grp, label, ##__VA_ARGS__)
-
-//
-// Layout-aware macros — specify layout_idx (0-based) as first argument
-// ─────────────────────────────────────────────────────────────────────
-// Example: TUI_L_SET_ROW(1, grp, row, "label", "%.2f", v1, v2)  → layout 1
-#define TUI_L_SET_ROW(layout, grp, row, label, fmt, ...) \
-    dt::RtLog::instance().tui_set_row(layout, grp, row, label, fmt, ##__VA_ARGS__)
-
-#define TUI_L_SET_ROW_V(layout, grp, row, label, ...) \
-    dt::RtLog::instance().tui_set_row_v(layout, grp, row, label, ##__VA_ARGS__)
-
-#define TUI_L_SET_TEXT_ROW(layout, grp, row, label, text) \
-    dt::RtLog::instance().tui_set_text_row(layout, grp, row, label, text)
-
-// printf-style text row variants (format string + args)
-// Example: TUI_SET_TEXT_ROW_FMT(grp, row, "Right",
-//              "Pos:%+8.3f,%+8.3f,%+8.3f   Vel:%+8.3f,%+8.3f,%+8.3f", px,py,pz, vx,vy,vz)
-#define TUI_SET_TEXT_ROW_FMT(grp, row, label, fmt, ...) \
-    dt::RtLog::instance().tui_set_text_row_fmt(0, grp, row, label, fmt, ##__VA_ARGS__)
-
-#define TUI_L_SET_TEXT_ROW_FMT(layout, grp, row, label, fmt, ...) \
-    dt::RtLog::instance().tui_set_text_row_fmt(layout, grp, row, label, fmt, ##__VA_ARGS__)
-
-// Group header setup for a specific layout (call once at startup)
-// Example: TUI_L_SET_GROUP(1, grp, "TaskState", "X", "Y", "Z")
-#define TUI_L_SET_GROUP(layout, grp, label, ...) \
+// Group setup — call once at startup
+// Example: TUI_SET_GROUP(0, grp, "Joints", "[status]", "desPos", "actPos")
+#define TUI_SET_GROUP(layout, grp, label, ...) \
     dt::RtLog::instance().tui_set_group(layout, grp, label, ##__VA_ARGS__)
 
-// Set the display name of a layout (shown in the bottom status bar)
-// Example: TUI_SET_LAYOUT_NAME(0, "Overview")
+// Headerless group — data rows only, no label/column-header/underline rows
+// Example: TUI_SET_GROUP_NO_HDR(0, grp)
+#define TUI_SET_GROUP_NO_HDR(layout, grp) \
+    dt::RtLog::instance().tui_set_group_no_header(layout, grp)
+
+// Layout name — shown in the bottom status bar
+// Example: TUI_SET_LAYOUT_NAME(0, "Arm Control")
 #define TUI_SET_LAYOUT_NAME(layout, name) \
     dt::RtLog::instance().tui_set_layout_name(layout, name)
 
-// Query the currently active layout index (0-based)
-#define TUI_GET_LAYOUT()        dt::RtLog::instance().tui_get_layout()
+// Format-based row update — same format applied to every column value
+// Example: TUI_SET_ROW(0, grp, row, "label", "%.2f", v1, v2, v3)
+#define TUI_SET_ROW(layout, grp, row, label, fmt, ...) \
+    dt::RtLog::instance().tui_set_row(layout, grp, row, label, fmt, ##__VA_ARGS__)
 
+// Per-column row update — TUI_COL("fmt", value) per column, types can differ
+// Example: TUI_SET_ROW_COLS(0, grp, row, "R1",
+//              TUI_COL("0x%04X", status), TUI_COL("%+8.1f", pos), TUI_COL("%+8d", tpu))
+#define TUI_COL(fmt, val) dt::Utils::RtTui::TuiCol(fmt, val)
+#define TUI_SET_ROW_COLS(layout, grp, row, label, ...) \
+    dt::RtLog::instance().tui_set_row_cols(layout, grp, row, label, ##__VA_ARGS__)
+
+// Full-width text row — ignores column layout, max 200 chars
+// Example: TUI_SET_TEXT_ROW(0, grp, row, "label", text)
+#define TUI_SET_TEXT_ROW(layout, grp, row, label, text) \
+    dt::RtLog::instance().tui_set_text_row(layout, grp, row, label, text)
+
+// printf-style text row
+// Example: TUI_SET_TEXT_ROW_FMT(0, grp, row, "Right", "Pos:%+8.3f,%+8.3f", px, py)
+#define TUI_SET_TEXT_ROW_FMT(layout, grp, row, label, fmt, ...) \
+    dt::RtLog::instance().tui_set_text_row_fmt(layout, grp, row, label, fmt, ##__VA_ARGS__)
+
+// Keyboard input from TUI (non-blocking, returns 0 if none)
 #define TUI_GET_PENDING_KEY()   dt::RtLog::instance().get_pending_key()
-#define TUI_IS_ENABLED()        dt::RtLog::instance().is_tui_mode()
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TuiSinkT Implementation

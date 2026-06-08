@@ -170,6 +170,21 @@ void RtTui::set_group(int layout_idx, int group_idx, const char* label_hdr,
     m_layouts[layout_idx].defined = true;
 }
 
+void RtTui::set_group_no_header(int layout_idx, int group_idx) {
+    if (layout_idx < 0 || layout_idx >= MAX_LAYOUTS)
+        return;
+
+    if (group_idx < 0 || group_idx >= (int)TUI_MAX_GROUPS)
+        return;
+
+    TuiGroupHeader& gh = m_layouts[layout_idx].group_headers[group_idx];
+    gh.label[0]   = '\0';
+    gh.ncols      = 0;
+    gh.hide_header = true;
+    gh.active      = true;
+    m_layouts[layout_idx].defined = true;
+}
+
 // ───────────────────────────────────────────────
 // Area 1 data update (RT-safe)
 // ───────────────────────────────────────────────
@@ -244,8 +259,7 @@ void RtTui::set_text_row(int layout_idx, int group_idx, int row_idx, const char*
     layout.defined = true;
 }
 
-void RtTui::set_text_row_fmt(int layout_idx, int group_idx, int row_idx,
-                              const char* label, const char* fmt, ...) noexcept {
+void RtTui::set_text_row_fmt(int layout_idx, int group_idx, int row_idx, const char* label, const char* fmt, ...) noexcept {
     char buf[TUI_TEXT_ROW_LEN];
     va_list args;
     va_start(args, fmt);
@@ -273,10 +287,13 @@ int RtTui::calc_area1_height() const noexcept {
             content += 1;  // group separator line
 
         first = false;
-        content += 2;  // header row + underline separator
+        if (!layout.group_headers[g].hide_header)
+            content += 2;  // header row + underline separator
+
         content += buf.groups[g].nrows;
     }
-    return 2 + content;  // +2 for top and bottom border
+
+    return (2 + content);  // +2 for top and bottom border
 }
 
 // ───────────────────────────────────────────────
@@ -293,42 +310,6 @@ void RtTui::log_v(spdlog::level::level_enum level, const char* fmt, va_list args
     TuiLogEntry entry;
     entry.set_v(level, 0, fmt, args);
     m_log_queue.try_push(entry);
-}
-
-void RtTui::log_trace(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::trace, fmt, ap);
-    va_end(ap);
-}
-
-void RtTui::log_debug(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::debug, fmt, ap);
-    va_end(ap);
-}
-
-void RtTui::log_info(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::info, fmt, ap);
-    va_end(ap);
-}
-
-void RtTui::log_warn(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::warn, fmt, ap);
-    va_end(ap);
-}
-
-void RtTui::log_error(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::err, fmt, ap);
-    va_end(ap);
-}
-
-void RtTui::log_critical(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    log_v(spdlog::level::critical, fmt, ap);
-    va_end(ap);
 }
 
 // ───────────────────────────────────────────────
@@ -443,14 +424,14 @@ void RtTui::render_area1(int start_row, int height, int width) {
 
     // ── layout name in top border title ──────────────────
     char title[48];
-    snprintf(title, sizeof(title), "─[ %s ]─", layout.name);
+    snprintf(title, sizeof(title), "[ %s ]", layout.name);
 
     int title_len = 0;
     for (const char* p = title; *p; ++p)
         if ((*p & 0xC0) != 0x80) 
             ++title_len;
 
-    safe_snprintf("\x1b[%d;1H%s%s┌%s%s%s",  cur++, ansi::BOLD, ansi::FG_CYAN, ansi::FG_YELLOW, title, ansi::FG_CYAN);
+    safe_snprintf("\x1b[%d;1H%s%s┌─%s%s%s─",  cur++, ansi::BOLD, ansi::FG_CYAN, ansi::FG_YELLOW, title, ansi::FG_CYAN);
     int remain_top = width - 2 - title_len;
     buf_append_hbar(remain_top > 0 ? remain_top : 0);
     buf_append_str("┐");
@@ -472,36 +453,37 @@ void RtTui::render_area1(int start_row, int height, int width) {
 
         first_group = false;
 
-        // ── group header row ──
-        if (cur < bot) {
-            safe_snprintf("\x1b[%d;1H%s│%s %s%-20s%s",
-                cur, ansi::FG_CYAN, ansi::BOLD, ansi::FG_YELLOW, gh.label, ansi::FG_YELLOW);
+        // ── group header row + underline (skipped for headerless groups) ──
+        if (!gh.hide_header) {
+            if (cur < bot) {
+                safe_snprintf("\x1b[%d;1H%s│%s %s%-20s%s",
+                    cur, ansi::FG_CYAN, ansi::BOLD, ansi::FG_YELLOW, gh.label, ansi::FG_YELLOW);
 
-            for (int c = 0; c < max_cols_fit; ++c) {
-                char auto_hdr[16];
-                const char* hdr;
-                if (c < gh.ncols) {
-                    hdr = gh.cols[c];
+                for (int c = 0; c < max_cols_fit; ++c) {
+                    char auto_hdr[16];
+                    const char* hdr;
+                    if (c < gh.ncols) {
+                        hdr = gh.cols[c];
+                    }
+                    else {
+                        snprintf(auto_hdr, sizeof(auto_hdr), ".");
+                        hdr = auto_hdr;
+                    }
+                    safe_snprintf(" %11s", hdr);
                 }
-                else {
-                    snprintf(auto_hdr, sizeof(auto_hdr), ".");
-                    hdr = auto_hdr;
-                }
-                safe_snprintf(" %11s", hdr);
+
+                buf_append_str(ansi::RESET);
+                buf_append_str("\x1b[K");
+                safe_snprintf("\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
+                cur++;
             }
 
-            buf_append_str(ansi::RESET);
-            buf_append_str("\x1b[K");
-            safe_snprintf("\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
-            cur++;
-        }
-
-        // ── header underline ──
-        if (cur < bot) {
-            safe_snprintf("\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
-            buf_append_hbar(width - 2);
-            buf_append_str("┤");
-            buf_append_str(ansi::RESET);
+            if (cur < bot) {
+                safe_snprintf("\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
+                buf_append_hbar(width - 2);
+                buf_append_str("┤");
+                buf_append_str(ansi::RESET);
+            }
         }
 
         // ── data rows ──
@@ -558,15 +540,23 @@ void RtTui::render_area2(int start_row, int height, int width) {
 
     size_t visible_h = (size_t)(height - 2);
     size_t total     = m_log_count;
-    size_t offset    = m_scroll_offset;
+
+    // Maximum valid offset: oldest available message sits at the top of the viewport.
+    // Setting offset beyond this would make end_idx go to 0 and show nothing.
+    size_t max_offset = (total > visible_h) ? (total - visible_h) : 0;
+    size_t offset     = (m_scroll_offset > max_offset) ? max_offset : m_scroll_offset;
 
     auto utf8_cols = [](const char* s) -> int {
         int n = 0;
-        while (*s) { if ((*s & 0xC0) != 0x80) ++n; ++s; }
+        while (*s) {
+            if ((*s & 0xC0) != 0x80)
+                ++n;
+            ++s;
+        }
         return n;
     };
 
-    size_t end_idx       = (offset < total) ? (total - offset) : 0;
+    size_t end_idx       = total - offset;
     size_t start_idx     = (end_idx > visible_h) ? (end_idx - visible_h) : 0;
     size_t lines_to_show = end_idx - start_idx;
 
@@ -601,7 +591,7 @@ void RtTui::render_area2(int start_row, int height, int width) {
         safe_snprintf("\x1b[%d;%dH%s│%s", screen_row, width, ansi::FG_CYAN, ansi::RESET);
     }
 
-    // ── scrollbar ──
+    // ── scrollbar ── (pass clamped offset so the thumb tracks the actual visible position)
     render_scrollbar(start_row + 1, (int)visible_h, width - 1, total, visible_h, offset);
 
     // ── bottom border ──
@@ -657,16 +647,19 @@ void RtTui::handle_key(const char* buf, ssize_t len) {
             m_scroll_offset++;
             m_auto_scroll = false;
             break;
+
         case 'B':  // ↓ arrow
             if (m_scroll_offset > 0) m_scroll_offset--;
             if (m_scroll_offset == 0) m_auto_scroll = true;
             break;
+
         case '5':  // PgUp
             if (len >= 4 && buf[3] == '~') {
                 m_scroll_offset += page;
                 m_auto_scroll = false;
             }
             break;
+
         case '6':  // PgDn
             if (len >= 4 && buf[3] == '~') {
                 if (m_scroll_offset > page)
@@ -678,17 +671,20 @@ void RtTui::handle_key(const char* buf, ssize_t len) {
                     m_auto_scroll = true;
             }
             break;
+
         case 'F':  // End
             m_scroll_offset = 0;
             m_auto_scroll   = true;
             break;
+
         case 'H':  // Home
             m_scroll_offset = m_log_count;
             m_auto_scroll   = false;
             break;
         }
 
-        if (m_scroll_offset > m_log_count) 
+        // Coarse upper-bound clamp (fine clamp against visible height is done in render_area2)
+        if (m_scroll_offset > m_log_count)
             m_scroll_offset = m_log_count;
         return;
     }
@@ -790,17 +786,27 @@ void RtTui::flush_output() {
                 continue;
 
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // pty buffer is full (expected: stdout is O_NONBLOCK).
+                // Wait up to 10 ms for the terminal to drain before giving up.
+                // A timeout is normal backpressure — not an error.
                 struct pollfd pfd = {STDOUT_FILENO, POLLOUT, 0};
-                if (poll(&pfd, 1, 3) > 0 && (pfd.revents & POLLOUT))
+                if (poll(&pfd, 1, 10) > 0 && (pfd.revents & POLLOUT))
                     continue;
+                // Still not writable: retain unwritten bytes, retry next frame.
+                break;
             }
 
-            LOG_RT_RAW(err, "[ERROR] poll timeout or error: retain remaining bytes(%zu)", m_out_pos - written);
-            break;
+            // Real write error (EPIPE, EBADF, …): log once and discard remaining
+            // bytes to prevent the error from being logged again every frame.
+            LOG(err).printf("[TUI] write failed (%s): dropped %zu bytes", strerror(errno), m_out_pos - written);
+            m_out_pos = written;
+
+            return;
         }
 
         if (n == 0)
             break;
+
         written += (size_t)n;
     }
 
