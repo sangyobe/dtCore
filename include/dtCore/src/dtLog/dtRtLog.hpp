@@ -756,6 +756,37 @@ public:
         _enqueue(entry);
     }
 
+    void log_rt_v(log_level lvl, const char* format, va_list args) noexcept {
+        if (!m_initialized.load(std::memory_order_acquire))
+            return;
+
+        Entry entry;
+        entry.set_v(lvl, _mono_now_ns(), format, args);
+        _enqueue(entry);
+    }
+
+    template<typename... Args>
+    void log_rt_fmt(log_level lvl, fmt::format_string<Args...> fmt_str, Args&&... args) noexcept {
+        if (!m_initialized.load(std::memory_order_acquire))
+            return;
+
+        Entry entry;
+        entry.level        = lvl;
+        entry.timestamp_ns = _mono_now_ns();
+        try {
+            static constexpr size_t cap = QueueType::msg_len() - 1;
+            auto result      = fmt::format_to_n(entry.msg, cap, fmt_str, std::forward<Args>(args)...);
+            size_t sz        = result.size < cap ? result.size : cap;
+            entry.msg[sz]    = '\0';
+            entry.msg_len    = sz;
+        }
+        catch (...) {
+            entry.msg[0]  = '\0';
+            entry.msg_len = 0;
+        }
+        _enqueue(entry);
+    }
+
     void set_level(log_level lvl) noexcept {
         m_level.store(static_cast<int>(lvl), std::memory_order_relaxed);
         // Synchronize with spdlog logger level
@@ -820,7 +851,7 @@ public:
         LogRtStream& operator=(LogRtStream&&)      = delete;
 
         ~LogRtStream() noexcept {
-            if (m_active && m_pos > 0)
+            if (m_active && !m_submitted && m_pos > 0)
                 RtLog::instance().log_rt(m_log_level, "%.*s", (int)m_pos, m_buf);
         }
 
@@ -855,29 +886,20 @@ public:
         LogRtStream& operator<<(const std::string& str) noexcept;
         LogRtStream& operator<<(char c) noexcept;
 
-        // fmt-style format(), compatible with dtLog::LogStream::format().
-        // Uses fmt::format_to_n() which writes directly to the stack buffer —
-        // no heap allocation for primitive types (int, double, const char*, etc.).
+        // printf-style append into the stream buffer.
+        // Compatible with LOG_PRINTF — allows mixing with operator<< in one log line.
+        // Example: LOG(info).printf("x=%.3f idx=%d", x, idx);
+        LogRtStream& printf(const char* fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
+
+        // fmt-style format() — formats directly into the queue Entry, no intermediate buffer.
+        // Single format pass (same cost as LOG_PRINTF).
         // dt::Math::Vector / Eigen types have no fmt::formatter: use operator<< instead.
         template<typename... Args>
         LogRtStream& format(fmt::format_string<Args...> fmt_str, Args&&... args) noexcept {
-            if (!m_active) 
+            if (!m_active)
                 return *this;
-
-            size_t avail = BUF_LEN - 1 - m_pos;
-            if (avail == 0) { 
-                _add_truncation(); return *this; 
-            }
-
-            try {
-                auto result = fmt::format_to_n(m_buf + m_pos, avail, fmt_str, std::forward<Args>(args)...);
-                m_pos += result.size < avail ? result.size : avail;
-                m_buf[m_pos] = '\0';
-            }
-            catch (...) {
-                _add_truncation();
-            }
-
+            m_submitted = true;
+            RtLog::instance().log_rt_fmt(m_log_level, fmt_str, std::forward<Args>(args)...);
             return *this;
         }
 
@@ -958,6 +980,7 @@ public:
     private:
         log_level m_log_level;
         bool m_active;
+        bool m_submitted{false};
         size_t m_pos;
         char m_buf[BUF_LEN];
     };
@@ -1300,6 +1323,19 @@ inline RtLog::LogRtStream& RtLog::LogRtStream::operator<<(char c) noexcept {
         m_buf[m_pos++] = c;
         m_buf[m_pos] = '\0';
     }
+    return *this;
+}
+
+// printf() — formats directly into the queue Entry via log_rt_v(), no intermediate buffer.
+// Single format pass (same cost as LOG_PRINTF).
+inline RtLog::LogRtStream& RtLog::LogRtStream::printf(const char* fmt, ...) noexcept {
+    if (!m_active || !fmt)
+        return *this;
+    m_submitted = true;
+    va_list args;
+    va_start(args, fmt);
+    RtLog::instance().log_rt_v(m_log_level, fmt, args);
+    va_end(args);
     return *this;
 }
 
