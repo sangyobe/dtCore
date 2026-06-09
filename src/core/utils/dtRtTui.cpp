@@ -499,15 +499,15 @@ void RtTui::RenderArea1(int startRow, int height, int width)
     const TuiDataBuffer& buf = layout.dataBuf[ridx];
 
     // Column width: label 21 chars + 2 border + 12 per data column
-    int max_cols_fit = (width - 23) / 12;
-    if (max_cols_fit > TUI_MAX_COLS)
+    int maxColsFit = (width - 23) / 12;
+    if (maxColsFit > TUI_MAX_COLS)
     {
-        max_cols_fit = TUI_MAX_COLS;
+        maxColsFit = TUI_MAX_COLS;
     }
 
-    if (max_cols_fit < 0)
+    if (maxColsFit < 0)
     {
-        max_cols_fit = 0;
+        maxColsFit = 0;
     }
 
     int cur = startRow;
@@ -517,22 +517,22 @@ void RtTui::RenderArea1(int startRow, int height, int width)
     char title[48];
     snprintf(title, sizeof(title), "[ %s ]", layout.name);
 
-    int title_len = 0;
+    int titleLen = 0;
     for (const char* p = title; *p; ++p)
     {
         if ((*p & 0xC0) != 0x80) 
         {
-            ++title_len;
+            ++titleLen;
         }
     }
 
     SafeSnprintf("\x1b[%d;1H%s%s┌─%s%s%s─",  cur++, ansi::BOLD, ansi::FG_CYAN, ansi::FG_YELLOW, title, ansi::FG_CYAN);
-    int remain_top = width - 2 - title_len;
+    int remain_top = width - 2 - titleLen;
     AppendData_hbar(remain_top > 0 ? remain_top : 0);
     AppendData_str("┐");
     AppendData_str(ansi::RESET);
 
-    bool first_group = true;
+    bool firstGroup = true;
     for (int g = 0; g < (int)TUI_MAX_GROUPS && cur < bot; ++g) 
     {
         const TuiGroupHeader& gh = layout.groupHeaders[g];
@@ -542,7 +542,7 @@ void RtTui::RenderArea1(int startRow, int height, int width)
         }
 
         // ── group separator ──
-        if (!first_group && cur < bot) 
+        if (!firstGroup && cur < bot) 
         {
             SafeSnprintf("\x1b[%d;1H%s├", cur++, ansi::FG_CYAN);
             AppendData_hbar(width - 2);
@@ -550,7 +550,7 @@ void RtTui::RenderArea1(int startRow, int height, int width)
             AppendData_str(ansi::RESET);
         }
 
-        first_group = false;
+        firstGroup = false;
 
         // ── group header row + underline (skipped for headerless groups) ──
         if (!gh.hideHeader) 
@@ -560,9 +560,9 @@ void RtTui::RenderArea1(int startRow, int height, int width)
                 SafeSnprintf("\x1b[%d;1H%s│%s %s%-20s%s",
                                cur, ansi::FG_CYAN, ansi::BOLD, ansi::FG_YELLOW, gh.label, ansi::FG_YELLOW);
 
-                for (int c = 0; c < max_cols_fit; ++c) 
+                for (int c = 0; c < maxColsFit; ++c) 
                 {
-                    char auto_hdr[16];
+                    char autoHdr[16];
                     const char* hdr;
                     if (c < gh.ncols) 
                     {
@@ -570,8 +570,8 @@ void RtTui::RenderArea1(int startRow, int height, int width)
                     }
                     else 
                     {
-                        snprintf(auto_hdr, sizeof(auto_hdr), ".");
-                        hdr = auto_hdr;
+                        snprintf(autoHdr, sizeof(autoHdr), ".");
+                        hdr = autoHdr;
                     }
                     SafeSnprintf(" %11s", hdr);
                 }
@@ -600,15 +600,15 @@ void RtTui::RenderArea1(int startRow, int height, int width)
 
             if (dr.textMode) 
             {
-                int text_avail = width - 24;
-                if (text_avail > 0) 
+                int textAvail = width - 24;
+                if (textAvail > 0) 
                 {
-                    SafeSnprintf(" %s%-*.*s%s", ansi::FG_WHITE, text_avail, text_avail, dr.text, ansi::RESET);
+                    SafeSnprintf(" %s%-*.*s%s", ansi::FG_WHITE, textAvail, textAvail, dr.text, ansi::RESET);
                 }
             }
             else 
             {
-                for (int ci = 0; ci < max_cols_fit; ++ci) 
+                for (int ci = 0; ci < maxColsFit; ++ci) 
                 {
                     if (ci < dr.ncols) 
                     {
@@ -680,13 +680,13 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     size_t linesToShow = endIdx - startIdx;
 
     // ── top border ──
-    const char* title_color = m_autoScroll ? ansi::FG_CYAN : ansi::FG_YELLOW;
-    const char* title_text  = m_autoScroll ? "─[ LOG : AUTO SCROLL ]─" : "─[ LOG : PAUSED      ]─";
+    const char* titleColor = m_autoScroll ? ansi::FG_CYAN : ansi::FG_YELLOW;
+    const char* titleText  = m_autoScroll ? "─[ LOG : AUTO SCROLL ]─" : "─[ LOG : PAUSED      ]─";
 
     SafeSnprintf("\x1b[%d;1H%s%s┌%s%s%s",
                   startRow, ansi::BOLD, ansi::FG_CYAN,
-                  title_color, title_text, ansi::FG_CYAN);
-    int remain = width - 2 - Utf8Cols(title_text);
+                  titleColor, titleText, ansi::FG_CYAN);
+    int remain = width - 2 - Utf8Cols(titleText);
 
     AppendData_hbar(remain);
 
@@ -701,8 +701,8 @@ void RtTui::RenderArea2(int startRow, int height, int width)
         if (r < linesToShow) 
         {
             const TuiLogEntry& e = m_logHistory[(m_logHead + startIdx + r) % LOG_KEEP];
-            int max_msg = width - 4;
-            SafeSnprintf(" %.*s", max_msg, e.msg);
+            int maxMsg = width - 4;
+            SafeSnprintf(" %.*s", maxMsg, e.msg);
         }
 
         AppendData_str(ansi::RESET);
@@ -858,7 +858,7 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
 // ───────────────────────────────────────────────
 void RtTui::RenderCmdLine(int row, int width) 
 {
-    int cur_layout = m_currentLayout.load(std::memory_order_relaxed);
+    int curLayout = m_currentLayout.load(std::memory_order_relaxed);
 
     // Count active (defined) layouts to build the switcher hint
     // Format: ▶1:Name  2:Name  3:Name  (▶ marks active)
@@ -876,7 +876,7 @@ void RtTui::RenderCmdLine(int row, int width)
         strncpy(short_name, m_layouts[i].name, 8);
         short_name[8] = '\0';
 
-        if (i == cur_layout)
+        if (i == curLayout)
         {
             sw_pos += snprintf(switcher + sw_pos, sizeof(switcher) - sw_pos, "[%d:%s] ", i + 1, short_name);
         }
@@ -887,27 +887,27 @@ void RtTui::RenderCmdLine(int row, int width)
     }
 
     // Last key display
-    char key_str[16];
-    char _key = m_lastKey.load(std::memory_order_relaxed);
+    char keyStr[16];
+    char lastKey = m_lastKey.load(std::memory_order_relaxed);
 
-    if (_key == 0) 
+    if (lastKey == 0) 
     {
-        snprintf(key_str, sizeof(key_str), "(none)");
+        snprintf(keyStr, sizeof(keyStr), "(none)");
     }
-    else if (_key >= 0x20 && _key < 0x7f) 
+    else if (lastKey >= 0x20 && lastKey < 0x7f) 
     {
-        snprintf(key_str, sizeof(key_str), "'%c'", _key);
+        snprintf(keyStr, sizeof(keyStr), "'%c'", lastKey);
     }
     else 
     {
-        snprintf(key_str, sizeof(key_str), "0x%02X", (unsigned char)_key);
+        snprintf(keyStr, sizeof(keyStr), "0x%02X", (unsigned char)lastKey);
     }
 
     SafeSnprintf("\x1b[%d;1H%s LAYOUTS: %s%s%s  CMD: %s%-10s%s\x1b[K",
                   row,
                   ansi::FG_GRAY,
                   ansi::FG_MAGENTA, switcher, ansi::RESET,
-                  ansi::FG_WHITE, key_str, ansi::RESET);
+                  ansi::FG_WHITE, keyStr, ansi::RESET);
 }
 
 // ───────────────────────────────────────────────

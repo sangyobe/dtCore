@@ -28,123 +28,183 @@
 namespace dt {
 
 template<uint16_t N, typename T>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector<N, T>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector<N, T>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
-    for (uint16_t i = 0; i < N; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (uint16_t i = 0; i < N; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != N - 1) {
-            if (!_add_separator())
+        
+        if (i != N - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 
 template<typename T, uint16_t N>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector3<T, N>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector3<T, N>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
-    for (uint16_t i = 0; i < N; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (uint16_t i = 0; i < N; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != N - 1) {
-            if (!_add_separator())
+        
+        if (i != N - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 
 template<typename T, uint16_t N>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector4<T, N>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector4<T, N>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
-    for (uint16_t i = 0; i < N; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (uint16_t i = 0; i < N; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != N - 1) {
-            if (!_add_separator())
+
+        if (i != N - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 
 template<typename T, uint16_t N>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector6<T, N>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector6<T, N>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
-    for (uint16_t i = 0; i < N; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (uint16_t i = 0; i < N; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != N - 1) {
-            if (!_add_separator())
+
+        if (i != N - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 
 template<typename T>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::VectorX<T>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::VectorX<T>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
     const uint16_t n = vec.GetDim();
-    for (uint16_t i = 0; i < n; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (uint16_t i = 0; i < n; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != n - 1) {
-            if (!_add_separator())
+        
+        if (i != n - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 

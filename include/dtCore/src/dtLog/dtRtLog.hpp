@@ -28,6 +28,7 @@
 #include <ctime>
 #include <type_traits>
 #include <vector>
+#include <thread>
 
 #include "dtLogQueue.hpp"
 #include "dtRtTui.hpp"
@@ -60,9 +61,13 @@ namespace RtLogConstant
     inline constexpr size_t DEFAULT_MAX_FILES = 5;
     inline constexpr size_t OUT_BUF_SIZE      = 65536;  // 64 KB internal buffer
     inline constexpr size_t QUEUE_CAPACITY    = 1024;
-    inline constexpr size_t QUEUE_MSGLEN     = 1024;
+    inline constexpr size_t QUEUE_MSGLEN      = 1024;
     // Maximum delay between log output bursts (nanoseconds)
     inline constexpr long POLL_INTERVAL_NS    = 1'000'000L; // 1 ms
+    // Thread info
+    inline constexpr size_t THREAD_STACK_SIZE = 1024 * 1024; // 1MB
+    inline constexpr int THREAD_CPU_ID        = 1;
+    inline constexpr int THREAD_PRIORITY      = 0; // nonRt
 }   // namespace RtLogConstant
 
 // Colored stdout sink using a single write() syscall per message.
@@ -558,24 +563,27 @@ public:
     }
 
     static void Initialize(
-        const std::string &log_name, 
-        const std::string &file_basename = "", 
-        bool enable_tui = false, 
-        bool annot_datetime = true, 
-        bool truncate = false, 
-        size_t max_file_size = RtLogConstant::DEFAULT_MAX_SIZE, 
-        size_t max_files = RtLogConstant::DEFAULT_MAX_FILES) 
+        const std::string &logName, 
+        const std::string &fileBasename = "", 
+        bool enableTui = false,
+        int threadCpuId = RtLogConstant::THREAD_CPU_ID,
+        int threadPriority = RtLogConstant::THREAD_PRIORITY,
+        size_t threadStack = RtLogConstant::THREAD_STACK_SIZE,
+        size_t maxFiles = RtLogConstant::DEFAULT_MAX_FILES,
+        size_t maxFileSize = RtLogConstant::DEFAULT_MAX_SIZE, 
+        bool annotDatetime = true, 
+        bool truncate = false) 
     {
         auto &m_instance = Instance();
-        
+
         // create spdlog logger with appropriate sinks
-        m_instance.m_logger = std::make_shared<spdlog::logger>(log_name);
+        m_instance.m_logger = std::make_shared<spdlog::logger>(logName);
         if (m_instance.m_logger) 
         {
             m_instance.m_logger->sinks().clear();
 
             // create tui instance if enabled
-            if (enable_tui) 
+            if (enableTui) 
             {
                 m_instance.m_tui = std::make_shared<Utils::RtTui>();
                 if (m_instance.m_tui->Init()) 
@@ -603,27 +611,28 @@ public:
             }
         }
 
-        if (!file_basename.empty() && (file_basename != "_STDOUT_")) 
+        // basic file sink
+        if (!fileBasename.empty() && (fileBasename != "_STDOUT_")) 
         {
-            spdlog::filename_t filename = file_basename;
-            if (annot_datetime) 
+            spdlog::filename_t filename = fileBasename;
+            if (annotDatetime) 
             {
-                filename = m_instance.AnnotateFilenameDatetime(file_basename);
+                filename = m_instance.AnnotateFilenameDatetime(fileBasename);
                 auto [dname, fname] = m_instance.SplitByDirectory(filename);
-                (void)remove(file_basename.c_str());
-                auto rtn = symlink(fname.c_str(), file_basename.c_str());
+                (void)remove(fileBasename.c_str());
+                auto rtn = symlink(fname.c_str(), fileBasename.c_str());
                 if (rtn < 0) 
                 {
                     // Cannot create symlink to this log file. Log a warning to the console sink if available.
                     if (m_instance.m_logger) 
                     {
                         m_instance.m_logger->log(spdlog::level::warn,
-                            "Cannot create symlink '{}' → '{}': {}", file_basename, fname, strerror(errno));
+                            "Cannot create symlink '{}' → '{}': {}", fileBasename, fname, strerror(errno));
                     }
                 }
             }
 
-            auto file_sink = std::make_shared<BasicFileSinkMt>(filename, max_file_size, max_files, truncate);
+            auto file_sink = std::make_shared<BasicFileSinkMt>(filename, maxFileSize, maxFiles, truncate);
             file_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
             m_instance.m_logger->sinks().push_back(file_sink);
         }
@@ -631,6 +640,45 @@ public:
         spdlog::set_default_logger(m_instance.m_logger);
         m_instance.m_timebase = TimeBase::Capture();
         m_instance.m_initialized.store(true, std::memory_order_release);
+
+        // Create log thread
+        m_instance.m_logThreadInfo.name = "RtLogThread";
+        m_instance.m_logThreadInfo.stackSz = threadStack;
+        m_instance.m_logThreadInfo.cpuIdx = threadCpuId;
+        m_instance.m_logThreadInfo.priority = threadPriority;
+        m_instance.m_logThreadInfo.procFunc = PollLogQueue;
+        m_instance.m_logThreadInfo.procFuncArg = static_cast<void*>(&m_instance.m_logThreadInfo.run);
+        m_instance.m_logThreadInfo.run = true;
+
+        pthread_attr_t taskAttr;
+        pthread_attr_init(&taskAttr);
+        
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);               // removes all CPUs from cpuset
+        CPU_SET(threadCpuId, &cpuset); // add CPU idx to the cpuset
+        pthread_attr_setinheritsched(&taskAttr, PTHREAD_EXPLICIT_SCHED);
+        if (m_instance.m_logThreadInfo.priority > 0) 
+        {
+            struct sched_param taskParam = {.sched_priority = threadPriority};
+            pthread_attr_setschedpolicy(&taskAttr, SCHED_FIFO);
+            pthread_attr_setschedparam(&taskAttr, &taskParam);
+        }
+        else 
+        {
+            pthread_attr_setschedpolicy(&taskAttr, SCHED_OTHER);
+        }
+        pthread_attr_setaffinity_np(&taskAttr, CPU_SETSIZE, &cpuset);
+        pthread_attr_setdetachstate(&taskAttr, PTHREAD_CREATE_JOINABLE);
+        pthread_attr_setstacksize(&taskAttr, threadStack);
+
+        int ret = pthread_create(&m_instance.m_logThreadInfo.id, 
+                                 &taskAttr, 
+                                 m_instance.m_logThreadInfo.procFunc, 
+                                 m_instance.m_logThreadInfo.procFuncArg);
+        if (ret < 0) 
+        {
+            m_instance.LogRaw(RtLog::log_level::err, "[RTLOG] Create logger thread failed!!!!");
+        }
     }
 
     /**
@@ -638,25 +686,31 @@ public:
      */
     static void Terminate() 
     {
-        auto &m_instace = Instance();
+        auto &m_instance = Instance();
 
         // Report any messages that were dropped during operation
-        uint64_t drops = m_instace.DropCount();
+        uint64_t drops = m_instance.DropCount();
         if (drops > 0)
         {
-            m_instace.m_logger->log(spdlog::level::warn, "CloseLogger: RT log queue dropped %llu messages during operation", (unsigned long long)drops);
+            m_instance.m_logger->log(spdlog::level::warn, "CloseLogger: RT log queue dropped %llu messages during operation", (unsigned long long)drops);
         }
 
-        m_instace.DrainAll();
+        // thread join
+        m_instance.m_logThreadInfo.run = false;
+        pthread_join(m_instance.m_logThreadInfo.id, nullptr);
+        m_instance.m_logThreadInfo.id = (pthread_t)nullptr;
+        
+        // last flush
+        m_instance.DrainAll();
 
         // Stop TUI if enabled
-        if (m_instace.m_tui) 
+        if (m_instance.m_tui) 
         {
-            m_instace.m_tui->Stop();
-            m_instace.m_tui.reset();
+            m_instance.m_tui->Stop();
+            m_instance.m_tui.reset();
         }
 
-        m_instace.m_initialized.store(false, std::memory_order_release);
+        m_instance.m_initialized.store(false, std::memory_order_release);
         
         // flush all pending log messages
         spdlog::shutdown();
@@ -760,9 +814,15 @@ public:
     // Called repeatedly by the log thread in a loop.
     // Sleeps POLL_INTERVAL_NS then drains all queued entries.
     // No syscall occurs in the RT producer path.
-    static void PollLogQueue(void */*pArg*/) noexcept 
+    static void *PollLogQueue(void *pArg) noexcept 
     {
-        Instance().Poll();
+        bool *pRunFlag = static_cast<bool*>(pArg);
+        while (*pRunFlag)
+        {
+            Instance().Poll();
+        }
+        
+        return nullptr;
     }
 
     void RefreshTimebase() noexcept 
@@ -873,6 +933,11 @@ public:
             return;
         }
 
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed)) 
+        {
+            return;
+        }
+
         Entry entry;
         entry.Set(lvl, MonoNow_ns(), format, args...);
         Enqueue(entry);
@@ -881,6 +946,11 @@ public:
     void LogRtV(log_level lvl, const char* format, va_list args) noexcept 
     {
         if (!m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed)) 
         {
             return;
         }
@@ -894,6 +964,11 @@ public:
     void LogRtFmt(log_level lvl, fmt::format_string<Args...> fmt_str, Args&&... args) noexcept 
     {
         if (!m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed)) 
         {
             return;
         }
@@ -1155,6 +1230,20 @@ public:
     };
 
 private:
+    typedef struct _threadInfo
+    {
+        const char *name = nullptr;
+        void *(*procFunc)(void *arg) = nullptr;
+        void *procFuncArg = nullptr;
+        int cpuIdx = 0;
+        int priority = 0;
+        size_t stackSz = 0;
+        pthread_t id = 0;
+        int listIdx = 0;
+        bool run = false;
+    } ThreadInfo;
+
+private:
     std::shared_ptr<spdlog::logger> m_logger;
     std::shared_ptr<Utils::RtTui> m_tui;   // TUI instance (if enabled)
     int64_t               m_tuiLastRender_ns{0};  // last TUI render timestamp (25 Hz rate-limiter)
@@ -1164,6 +1253,7 @@ private:
     std::atomic<bool>     m_initialized;
     std::atomic<int>      m_level;
     std::atomic<uint64_t> m_dropCount;
+    ThreadInfo            m_logThreadInfo;
 
 private:
     RtLog() noexcept
@@ -1404,7 +1494,7 @@ private:
     dt::RtLog::Instance().TuiSetTextRowFmt(layout, grp, row, label, fmt, ##__VA_ARGS__)
 
 // Keyboard input from TUI (non-blocking, returns 0 if none)
-#define TUI_GETPENDINGKEY() \
+#define TUI_GET_PENDING_KEY() \
     dt::RtLog::Instance().GetPendingKey()
 
 // ═══════════════════════════════════════════════════════════════════════════

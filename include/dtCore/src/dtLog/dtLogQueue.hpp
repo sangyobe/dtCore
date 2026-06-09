@@ -38,7 +38,7 @@ public:
         int64_t   timeStamp_ns{0};
         log_level level{log_level::info};
         size_t    msgLen{0};
-        char      msg[m_msgLen]{};
+        char      msg[m_msgLen];
 
         // set message - template version (C++ style)
         template<typename... Args>

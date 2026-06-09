@@ -26,27 +26,39 @@
 namespace dt {
 
 template<typename Derived>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Derived>& vec) noexcept {
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Derived>& vec) noexcept 
+{
     if (!m_active)
+    {
         return *this;
+    }
 
     if (m_pos + 1 >= BUF_LEN)
+    {
         return *this;
+    }
+
     m_buf[m_pos++] = '[';
 
     const Eigen::Index n = vec.size();
-    for (Eigen::Index i = 0; i < n; ++i) {
-        if (!_format_element(static_cast<double>(vec(i)))) {
-            _add_truncation();
+    for (Eigen::Index i = 0; i < n; ++i) 
+    {
+        if (!FormatElement(static_cast<double>(vec(i)))) 
+        {
+            AddTruncation();
             break;
         }
-        if (i != n - 1) {
-            if (!_add_separator())
+        
+        if (i != n - 1) 
+        {
+            if (!AddSeparator())
+            {
                 break;
+            }
         }
     }
 
-    _close_array();
+    CloseArray();
     return *this;
 }
 
