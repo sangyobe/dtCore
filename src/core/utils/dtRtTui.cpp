@@ -832,25 +832,43 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
         return;
     }
 
-    // Layout switching: keys '1' ~ '9'
-    if (c >= '1' && c <= '9') 
-    {
-        int new_layout = c - '1';  // 0-based
-        if (new_layout < MAX_LAYOUTS) 
-        {
-            int old_layout = m_currentLayout.exchange(new_layout, std::memory_order_relaxed);
-            if (old_layout != new_layout)
-            {
-                m_layoutChanged.store(true, std::memory_order_relaxed);
+    // Layout switching: keys '[', ']'
+    int curr_layout = m_currentLayout.load(std::memory_order_relaxed);
+    int new_layout  = curr_layout;
+
+    if (c == '[') {
+        // direction: <<
+        if (curr_layout == 0) {
+            for (int i = 0; i < MAX_LAYOUTS; i++) {
+                if (!m_layouts[i].defined) {
+                    new_layout = i;
+                    break;
+                }
             }
         }
-        // also relay to main loop (for user-defined key handling)
+        else {
+            new_layout = curr_layout - 1;
+        }
+    }
+    else if (c == ']') {
+        // direction: >>
+        if (curr_layout == MAX_LAYOUTS || !m_layouts[curr_layout].defined) {
+            new_layout = 0;
+        }
+        else {
+            new_layout = curr_layout + 1;
+        }
+    }
+    else {
+        // Single-char key: relay to main loop
         m_lastKey.store(c, std::memory_order_relaxed);
         return;
     }
 
-    // Single-char key: relay to main loop
-    m_lastKey.store(c, std::memory_order_relaxed);
+    if (m_currentLayout.exchange(new_layout, std::memory_order_relaxed) != new_layout)
+    {
+        m_layoutChanged.store(true, std::memory_order_relaxed);
+    }
 }
 
 // ───────────────────────────────────────────────
