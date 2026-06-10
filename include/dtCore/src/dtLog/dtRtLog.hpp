@@ -59,7 +59,7 @@ namespace RtLogConstant
 {
     inline constexpr size_t DEFAULT_MAX_SIZE  = 10 * 1024 * 1024;  // 10MB
     inline constexpr size_t DEFAULT_MAX_FILES = 5;
-    inline constexpr size_t OUT_BUF_SIZE      = 65536;  // 64 KB internal buffer
+    inline constexpr size_t INTERNAL_BUF_SIZE = 65536;  // 64 KB internal buffer
     inline constexpr size_t QUEUE_CAPACITY    = 1024;
     inline constexpr size_t QUEUE_MSGLEN      = 1024;
     // Maximum delay between log output bursts (nanoseconds)
@@ -80,7 +80,7 @@ namespace RtLogConstant
 // on a tty for message sizes well within PIPE_BUF (4096 bytes).
 //
 // Shared level → ANSI color mapping used by ColorStdoutSinkT and TuiSinkT
-static inline const char *SinkColorFor(spdlog::level::level_enum lvl) noexcept 
+inline const char *SinkColorFor(spdlog::level::level_enum lvl) noexcept 
 {
     switch (lvl) 
     {
@@ -184,7 +184,7 @@ protected:
     }
 
 private:
-    std::array<char, RtLogConstant::OUT_BUF_SIZE> m_buf{};
+    std::array<char, RtLogConstant::INTERNAL_BUF_SIZE> m_buf{};
     size_t m_pos{0};
     int m_stdout_fd{-1};    
 
@@ -196,23 +196,23 @@ private:
             return;
         }
 
-        // Establish invariant: len < OUT_BUF_SIZE.
+        // Establish invariant: len < INTERNAL_BUF_SIZE.
         // For messages larger than the buffer, keep only the tail (most recent bytes).
-        if (len >= RtLogConstant::OUT_BUF_SIZE) 
+        if (len >= RtLogConstant::INTERNAL_BUF_SIZE) 
         {
-            data += len - (RtLogConstant::OUT_BUF_SIZE - 1);
-            len   = RtLogConstant::OUT_BUF_SIZE - 1;
+            data += len - (RtLogConstant::INTERNAL_BUF_SIZE - 1);
+            len   = RtLogConstant::INTERNAL_BUF_SIZE - 1;
         }
 
         // Make room: flush, then slide out oldest retained bytes when EAGAIN kept data.
-        // If EAGAIN left data: slide guarantees m_pos + len == OUT_BUF_SIZE.
+        // If EAGAIN left data: slide guarantees m_pos + len == INTERNAL_BUF_SIZE.
         // If flush succeeded: m_pos == 0, inner if is skipped.
-        if (m_pos + len > RtLogConstant::OUT_BUF_SIZE) 
+        if (m_pos + len > RtLogConstant::INTERNAL_BUF_SIZE) 
         {
             FlushBuffer();
-            if (m_pos + len > RtLogConstant::OUT_BUF_SIZE) 
+            if (m_pos + len > RtLogConstant::INTERNAL_BUF_SIZE) 
             {
-                size_t discard = m_pos + len - RtLogConstant::OUT_BUF_SIZE;
+                size_t discard = m_pos + len - RtLogConstant::INTERNAL_BUF_SIZE;
                 std::memmove(m_buf.data(), m_buf.data() + discard, m_pos - discard);
                 m_pos -= discard;
             }
@@ -363,13 +363,13 @@ protected:
         Base::formatter_->format(msg, buf);
 
         // Check if rotation is needed
-        if (m_maxSize > 0 && m_currentSize + buf.size() > m_maxSize) 
+        if (m_maxSize > 0 && m_currentSize + m_bufPos + buf.size() > m_maxSize) 
         {
             RotateFiles();
         }
 
         // If message is larger than buffer, flush current buffer and write directly
-        if (buf.size() > RtLogConstant::OUT_BUF_SIZE) 
+        if (buf.size() > RtLogConstant::INTERNAL_BUF_SIZE) 
         {
             FlushBuffer();
             ssize_t written = ::write(m_fd, buf.data(), buf.size());
@@ -381,7 +381,7 @@ protected:
         }
 
         // If adding this message would overflow buffer, flush first
-        if (m_bufPos + buf.size() > RtLogConstant::OUT_BUF_SIZE) 
+        if (m_bufPos + buf.size() > RtLogConstant::INTERNAL_BUF_SIZE) 
         {
             FlushBuffer();
         }
@@ -399,7 +399,7 @@ protected:
 private:
     int m_fd;
     std::string m_baseFilename;
-    std::array<char, RtLogConstant::OUT_BUF_SIZE> m_buffer{};
+    std::array<char, RtLogConstant::INTERNAL_BUF_SIZE> m_buffer{};
     size_t m_bufPos;
     size_t m_currentSize;
     size_t m_maxSize;
@@ -575,6 +575,11 @@ public:
         bool truncate = false) 
     {
         auto &m_instance = Instance();
+        if (m_instance.m_initialized.load(std::memory_order_acquire))   // check initialize state
+        {
+            m_instance.LogRt(log_level::err, "[RtLog] Initialize() is already called!!!");
+            return;
+        }
 
         // create spdlog logger with appropriate sinks
         m_instance.m_logger = std::make_shared<spdlog::logger>(logName);
@@ -647,8 +652,8 @@ public:
         m_instance.m_logThreadInfo.cpuIdx = threadCpuId;
         m_instance.m_logThreadInfo.priority = threadPriority;
         m_instance.m_logThreadInfo.procFunc = PollLogQueue;
-        m_instance.m_logThreadInfo.procFuncArg = static_cast<void*>(&m_instance.m_logThreadInfo.run);
-        m_instance.m_logThreadInfo.run = true;
+        m_instance.m_logThreadInfo.procFuncArg = nullptr;
+        m_instance.m_logThreadInfo.run.store(true, std::memory_order_release);
 
         pthread_attr_t taskAttr;
         pthread_attr_init(&taskAttr);
@@ -679,6 +684,8 @@ public:
         {
             m_instance.LogRaw(RtLog::log_level::err, "[RTLOG] Create logger thread failed!!!!");
         }
+
+        pthread_attr_destroy(&taskAttr);
     }
 
     /**
@@ -696,7 +703,7 @@ public:
         }
 
         // thread join
-        m_instance.m_logThreadInfo.run = false;
+        m_instance.m_logThreadInfo.run.store(false, std::memory_order_release);
         pthread_join(m_instance.m_logThreadInfo.id, nullptr);
         m_instance.m_logThreadInfo.id = (pthread_t)nullptr;
         
@@ -734,7 +741,7 @@ public:
     // Get the latest pending key from TUI (non-blocking, returns 0 if no key)
     char GetPendingKey() const noexcept 
     {
-        return m_tui ? m_tui->PopPendingkey() : 0;
+        return m_tui ? m_tui->PopPendingKey() : 0;
     }
 
     // TUI Area 1 helpers — RT-safe no-ops when TUI is disabled
@@ -816,8 +823,9 @@ public:
     // No syscall occurs in the RT producer path.
     static void *PollLogQueue(void *pArg) noexcept 
     {
-        bool *pRunFlag = static_cast<bool*>(pArg);
-        while (*pRunFlag)
+        auto &m_instance = Instance();
+        
+        while (m_instance.m_logThreadInfo.run.load(std::memory_order_acquire))
         {
             Instance().Poll();
         }
@@ -1104,7 +1112,6 @@ public:
         LogRtStream &operator<<(char c) noexcept;
 
         // printf-style append into the stream buffer.
-        // Compatible with LOG_PRINTF — allows mixing with operator<< in one log line.
         // Example: LOG(info).printf("x=%.3f idx=%d", x, idx);
         LogRtStream &printf(const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
 
@@ -1240,7 +1247,7 @@ private:
         size_t stackSz = 0;
         pthread_t id = 0;
         int listIdx = 0;
-        bool run = false;
+        std::atomic<bool> run;
     } ThreadInfo;
 
 private:
@@ -1527,7 +1534,7 @@ void TuiSinkT<Mutex>::sink_it_(const spdlog::details::log_msg &msg)
     {
         // Color applied to prefix ([L][timestamp]) only; message body uses default color.
         // Assembled in a stack buffer (no heap allocation) then pushed to the TUI queue.
-        static constexpr size_t TMP_LEN = RtLogConstant::QUEUE_MSGLEN;
+        static constexpr size_t TMP_LEN = Utils::RtTui::QUEUE_MSG_LEN;
         char tmp[TMP_LEN];
         size_t pos = 0;
 

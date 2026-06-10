@@ -41,7 +41,7 @@ namespace ansi
 RtTui::RtTui() 
 {
     memset(m_outBuf, 0, sizeof(m_outBuf));
-    m_oldTermios = new struct termios();
+    m_oldTermios = std::make_unique<struct termios>();
 
     // Assign default layout names
     for (int i = 0; i < MAX_LAYOUTS; ++i) 
@@ -53,7 +53,6 @@ RtTui::RtTui()
 RtTui::~RtTui() 
 {
     Stop();
-    delete m_oldTermios;
 }
 
 // ───────────────────────────────────────────────
@@ -61,6 +60,10 @@ RtTui::~RtTui()
 // ───────────────────────────────────────────────
 bool RtTui::Init() 
 {
+    // already initialized
+    if (m_termActive.load(std::memory_order_acquire))
+        return true;
+
     TermInit();
     m_running.store(true, std::memory_order_release);
     return true;
@@ -78,7 +81,7 @@ void RtTui::Stop()
 void RtTui::TermInit() 
 {
     m_termActive.store(true, std::memory_order_release);
-    tcgetattr(STDIN_FILENO, m_oldTermios);
+    tcgetattr(STDIN_FILENO, m_oldTermios.get());
 
     struct termios raw = *m_oldTermios;
     raw.c_lflag &= ~(ECHO | ICANON | ISIG);  // raw mode
@@ -90,11 +93,20 @@ void RtTui::TermInit()
     int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 
-    // stdout non-blocking: prevents drain thread from blocking on terminal writes
-    int out_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
-    if (out_flags != -1)
+    // Open a private stdout fd with O_NONBLOCK.
+    // STDOUT_FILENO's file description is left unmodified, so printf/write(1,...)
+    // from other threads never see EAGAIN during TUI operation.
+    // O_APPEND prevents offset corruption when stdout is redirected to a regular file.
+    m_stdout_fd = ::open("/proc/self/fd/1", O_WRONLY | O_APPEND | O_NONBLOCK | O_CLOEXEC);
+    if (m_stdout_fd < 0)
     {
-        fcntl(STDOUT_FILENO, F_SETFL, out_flags | O_NONBLOCK);
+        // /proc unavailable: fall back to setting O_NONBLOCK on STDOUT_FILENO directly
+        m_stdout_fd = STDOUT_FILENO;
+        int out_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
+        if (out_flags != -1)
+        {
+            fcntl(STDOUT_FILENO, F_SETFL, out_flags | O_NONBLOCK);
+        }
     }
 
     AppendData_str(ansi::HIDE_CURSOR);
@@ -109,10 +121,15 @@ void RtTui::TermRestore()
         return;
     }
 
-    int out_flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
-    if (out_flags != -1)
+    // Switch the private fd to blocking so the final flush always completes.
+    // In fallback mode (m_stdout_fd == STDOUT_FILENO), also restores STDOUT_FILENO.
+    if (m_stdout_fd >= 0)
     {
-        fcntl(STDOUT_FILENO, F_SETFL, out_flags & ~O_NONBLOCK);
+        int out_flags = fcntl(m_stdout_fd, F_GETFL, 0);
+        if (out_flags != -1)
+        {
+            fcntl(m_stdout_fd, F_SETFL, out_flags & ~O_NONBLOCK);
+        }
     }
 
     m_outPos = 0;
@@ -122,13 +139,19 @@ void RtTui::TermRestore()
     AppendData_str("\x1b[1;1H");
     FlushOutput();
 
+    if (m_stdout_fd >= 0 && m_stdout_fd != STDOUT_FILENO)
+    {
+        ::close(m_stdout_fd);
+    }
+    m_stdout_fd = -1;
+
     int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     if (flags != -1)
     {
         fcntl(STDIN_FILENO, F_SETFL, flags & ~O_NONBLOCK);
     }
 
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, m_oldTermios);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, m_oldTermios.get());
 }
 
 void RtTui::TermGetSize(int& rows, int& cols) 
@@ -517,15 +540,7 @@ void RtTui::RenderArea1(int startRow, int height, int width)
     char title[48];
     snprintf(title, sizeof(title), "[ %s ]", layout.name);
 
-    int titleLen = 0;
-    for (const char* p = title; *p; ++p)
-    {
-        if ((*p & 0xC0) != 0x80) 
-        {
-            ++titleLen;
-        }
-    }
-
+    int titleLen = Utf8Cols(title);
     SafeSnprintf("\x1b[%d;1H%s%s┌─%s%s%s─",  cur++, ansi::BOLD, ansi::FG_CYAN, ansi::FG_YELLOW, title, ansi::FG_CYAN);
     int remain_top = width - 2 - titleLen;
     AppendData_hbar(remain_top > 0 ? remain_top : 0);
@@ -597,31 +612,31 @@ void RtTui::RenderArea1(int startRow, int height, int width)
             const TuiDataRow& dr = gdata.rows[r];
             SafeSnprintf("\x1b[%d;1H%s│%s", cur, ansi::FG_CYAN, ansi::RESET);
             SafeSnprintf(" %s%-20s%s", ansi::FG_WHITE, dr.label, ansi::RESET);
+            AppendData_str("\x1b[K");  // erase from end-of-label to EOL before writing content
 
-            if (dr.textMode) 
+            if (dr.textMode)
             {
                 int textAvail = width - 24;
-                if (textAvail > 0) 
+                if (textAvail > 0)
                 {
                     SafeSnprintf(" %s%-*.*s%s", ansi::FG_WHITE, textAvail, textAvail, dr.text, ansi::RESET);
                 }
             }
-            else 
+            else
             {
-                for (int ci = 0; ci < maxColsFit; ++ci) 
+                for (int ci = 0; ci < maxColsFit; ++ci)
                 {
-                    if (ci < dr.ncols) 
+                    if (ci < dr.ncols)
                     {
                         SafeSnprintf(" %s%11s%s", ansi::FG_WHITE, dr.col[ci], ansi::RESET);
                     }
-                    else 
+                    else
                     {
                         SafeSnprintf("            ");
                     }
                 }
             }
 
-            AppendData_str("\x1b[K");
             SafeSnprintf("\x1b[%d;%dH%s│%s", cur, width, ansi::FG_CYAN, ansi::RESET);
             cur++;
         }
@@ -661,20 +676,6 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     size_t maxOffset = (total > visibleH) ? (total - visibleH) : 0;
     size_t offset     = (m_scrollOffset > maxOffset) ? maxOffset : m_scrollOffset;
 
-    auto Utf8Cols = [](const char* s) -> int 
-    {
-        int n = 0;
-        while (*s) 
-        {
-            if ((*s & 0xC0) != 0x80)
-            {
-                ++n;
-            }
-            ++s;
-        }
-        return n;
-    };
-
     size_t endIdx      = total - offset;
     size_t startIdx    = (endIdx > visibleH) ? (endIdx - visibleH) : 0;
     size_t linesToShow = endIdx - startIdx;
@@ -697,8 +698,9 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     {
         int screen_row = startRow + 1 + (int)r;
         SafeSnprintf("\x1b[%d;1H%s│%s", screen_row, ansi::FG_CYAN, ansi::RESET);
+        AppendData_str("\x1b[K");  // erase from col 2 to EOL before writing message
 
-        if (r < linesToShow) 
+        if (r < linesToShow)
         {
             const TuiLogEntry& e = m_logHistory[(m_logHead + startIdx + r) % LOG_KEEP];
             int maxMsg = width - 4;
@@ -706,7 +708,6 @@ void RtTui::RenderArea2(int startRow, int height, int width)
         }
 
         AppendData_str(ansi::RESET);
-        AppendData_str("\x1b[K");
         SafeSnprintf("\x1b[%d;%dH%s│%s", screen_row, width, ansi::FG_CYAN, ansi::RESET);
     }
 
@@ -839,6 +840,7 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
     if (c == '[') {
         // direction: <<
         if (curr_layout == 0) {
+            new_layout = MAX_LAYOUTS - 1;
             for (int i = 0; i < MAX_LAYOUTS; i++) {
                 if (!m_layouts[i].defined) {
                     new_layout = i;
@@ -852,7 +854,7 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
     }
     else if (c == ']') {
         // direction: >>
-        if (curr_layout == MAX_LAYOUTS || !m_layouts[curr_layout].defined) {
+        if (curr_layout == (MAX_LAYOUTS - 1) || !m_layouts[curr_layout].defined) {
             new_layout = 0;
         }
         else {
@@ -967,7 +969,7 @@ void RtTui::FlushOutput()
     size_t written = 0;
     while (written < m_outPos) 
     {
-        ssize_t n = write(STDOUT_FILENO, m_outBuf + written, m_outPos - written);
+        ssize_t n = write(m_stdout_fd, m_outBuf + written, m_outPos - written);
         if (n < 0) 
         {
             if (errno == EINTR)
@@ -980,7 +982,7 @@ void RtTui::FlushOutput()
                 // pty buffer is full (expected: stdout is O_NONBLOCK).
                 // Wait up to 10 ms for the terminal to drain before giving up.
                 // A timeout is normal backpressure — not an error.
-                struct pollfd pfd = {STDOUT_FILENO, POLLOUT, 0};
+                struct pollfd pfd = {m_stdout_fd, POLLOUT, 0};
                 if (poll(&pfd, 1, 10) > 0 && (pfd.revents & POLLOUT))
                 {
                     continue;

@@ -161,7 +161,7 @@ public:
     void Log(spdlog::level::level_enum level, const char *fmt, ...);
     void LogV(spdlog::level::level_enum level, const char *fmt, va_list args);
 
-    char PopPendingkey() 
+    char PopPendingKey() 
     {
         char key = m_lastKey.exchange(0, std::memory_order_relaxed);
         return key;
@@ -193,11 +193,12 @@ private:
     std::atomic<bool>   m_termActive{false};
 
     // Terminal state
-    struct termios*     m_oldTermios{nullptr};
+    std::unique_ptr<struct termios> m_oldTermios;
     int                 m_termRows{24};
     int                 m_termCols{80};
     int                 m_prevTermRows{0};
     int                 m_prevTermCols{0};
+    int                 m_stdout_fd{-1};    // private O_NONBLOCK fd; STDOUT_FILENO as fallback
 
     // Output double-buffer (minimizes write() syscalls)
     char                m_outBuf[OUT_BUF_SIZE];
@@ -240,6 +241,21 @@ private:
     void AppendData_str(const char *s);
     void AppendData_hbar(int n);  // append n ─ (U+2500) characters (3 bytes each)
 
+    int Utf8Cols(const char* s)
+    {
+        int n = 0;
+        while (*s) 
+        {
+            if ((*s & 0xC0) != 0x80)
+            {
+                ++n;
+            }
+            ++s;
+        }
+
+        return n;
+    };
+
     template<typename... Args>
     inline void SafeSnprintf(const char *fmt, Args... args) 
     {
@@ -251,7 +267,7 @@ private:
         int n = snprintf(m_outBuf + m_outPos, OUT_BUF_SIZE - m_outPos, fmt, args...);
         if (n > 0)
         {
-            m_outPos += std::min((size_t)n, OUT_BUF_SIZE - m_outPos - 1);
+            m_outPos += std::min((size_t)n, OUT_BUF_SIZE - m_outPos);
         }
     }
 };
