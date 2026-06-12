@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(example_log_tui)
+project(example_rtlog_tui)
 
 list(APPEND CMAKE_PREFIX_PATH "$ENV{ARTF_INSTALL_DIR}/lib/cmake")
 find_package(artf CONFIG REQUIRED)

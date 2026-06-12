@@ -724,6 +724,12 @@ public:
         spdlog::shutdown();
     }
 
+    // dummy function for migration
+    static void FlushOn(LogLevel lvl)
+    {
+        Instance().LogRt(LogLevel::debug, "[RtLog] No need: FlushOn()");
+    }
+
     /**
      * Set log level of default logger
      * @param lvl log level
@@ -1467,6 +1473,9 @@ private:
     }
 
 };  // class RtLog
+
+using Log = RtLog;
+
 };  // namespace dt
 
 // LOG_RT(level): returns a LogRtStream temporary — identical usage to dtLog's LOG(level).
