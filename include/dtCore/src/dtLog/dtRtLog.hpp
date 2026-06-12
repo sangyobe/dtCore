@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <vector>
 #include <thread>
+#include <iomanip>
 
 #include "dtLogQueue.hpp"
 #include "dtRtTui.hpp"
@@ -1110,6 +1111,9 @@ public:
         LogRtStream &operator<<(const char *str) noexcept;
         LogRtStream &operator<<(const std::string &str) noexcept;
         LogRtStream &operator<<(char c) noexcept;
+        LogRtStream &operator<<(std::ios_base &(*fn)(std::ios_base &)) noexcept;
+        LogRtStream &operator<<(decltype(std::setw(0)) w) noexcept;
+        LogRtStream &operator<<(decltype(std::setfill(' ')) f) noexcept;
 
         // printf-style append into the stream buffer.
         // Example: LOG(info).printf("x=%.3f idx=%d", x, idx);
@@ -1135,6 +1139,9 @@ public:
         bool m_submitted{false};
         size_t m_pos;
         char m_buf[BUF_LEN];
+        bool m_hexMode{false};
+        int  m_width{0};
+        char m_fillChar{' '};
 
     private:
         void Append(const char *src, size_t len) noexcept 
@@ -1177,11 +1184,11 @@ public:
             }
             else if constexpr (std::is_signed_v<T>)
             {
-                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%lld", static_cast<long long>(value));
+                written = FormatIntState(static_cast<long long>(value), true);
             }
             else
             {
-                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%llu", static_cast<unsigned long long>(value));
+                written = FormatIntState(static_cast<long long>(static_cast<unsigned long long>(value)), false);
             }
 
             // Check if snprintf failed or buffer was insufficient
@@ -1226,13 +1233,42 @@ public:
         }
 
         // Helper to close array with ']'
-        void CloseArray() noexcept 
+        void CloseArray() noexcept
         {
-            if (m_pos + 1 < BUF_LEN) 
+            if (m_pos + 1 < BUF_LEN)
             {
                 m_buf[m_pos++] = ']';
                 m_buf[m_pos] = '\0';
             }
+        }
+
+        // Format integer with current hex/width/fill state (via m_hexMode, m_width, m_fillChar).
+        // m_width is one-shot (reset after use). m_hexMode and m_fillChar are sticky.
+        // Supports fill chars '0' and ' ' only (snprintf limitation).
+        int FormatIntState(long long val, bool is_signed) noexcept
+        {
+            char fmtbuf[20];
+            char *p = fmtbuf;
+            *p++ = '%';
+
+            const int w = m_width;
+            m_width = 0;  // one-shot: reset before snprintf
+
+            if (w > 0 && m_fillChar == '0') *p++ = '0';
+            if      (w >= 100) { *p++ = char('0' + w / 100); *p++ = char('0' + (w % 100) / 10); *p++ = char('0' + w % 10); }
+            else if (w >=  10) { *p++ = char('0' + w / 10);  *p++ = char('0' + w % 10); }
+            else if (w >    0) { *p++ = char('0' + w); }
+
+            *p++ = 'l'; *p++ = 'l';
+            *p++ = m_hexMode ? 'X' : (is_signed ? 'd' : 'u');
+            *p   = '\0';
+
+            if (m_hexMode || !is_signed)
+            {
+                return std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, fmtbuf,
+                                     static_cast<unsigned long long>(val));
+            }
+            return std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, fmtbuf, val);
         }
     };
 
@@ -1650,7 +1686,7 @@ inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(char c) noexcept
 
 // printf() — formats directly into the queue Entry via log_rt_v(), no intermediate buffer.
 // Single format pass (same cost as LOG_PRINTF).
-inline RtLog::LogRtStream &RtLog::LogRtStream::printf(const char *fmt, ...) noexcept 
+inline RtLog::LogRtStream &RtLog::LogRtStream::printf(const char *fmt, ...) noexcept
 {
     if (!m_active || !fmt)
     {
@@ -1661,6 +1697,31 @@ inline RtLog::LogRtStream &RtLog::LogRtStream::printf(const char *fmt, ...) noex
     va_start(args, fmt);
     Instance().LogRtV(m_logLevel, fmt, args);
     va_end(args);
+    return *this;
+}
+
+// std::hex / std::dec stream manipulators — update hex mode flag.
+// Other manipulators (std::oct, std::uppercase, …) are silently ignored.
+inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(std::ios_base &(*fn)(std::ios_base &)) noexcept
+{
+    if (!m_active) return *this;
+    if      (fn == std::hex) m_hexMode = true;
+    else if (fn == std::dec) m_hexMode = false;
+    return *this;
+}
+
+// std::setw(n) — GCC/libstdc++: returns std::_Setw{_M_n}.
+inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(decltype(std::setw(0)) w) noexcept
+{
+    if (m_active) m_width = w._M_n;
+    return *this;
+}
+
+// std::setfill(c) — GCC/libstdc++: returns std::_Setfill<char>{_M_c}.
+// Only '0' and ' ' (default) take effect; other chars are accepted but fall back to space.
+inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(decltype(std::setfill(' ')) f) noexcept
+{
+    if (m_active) m_fillChar = f._M_c;
     return *this;
 }
 
