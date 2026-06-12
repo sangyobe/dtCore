@@ -57,12 +57,12 @@ int main(int argc, const char **argv)
     
     std::string logName = "example_log_tui";
     std::string logFilepath = "";
-    int logLevelVal = dt::RtLog::log_level::trace;
+    int logLevelVal = dt::RtLog::LogLevel::trace;
     bool enableTui = true;
     uint32_t debug_cnt = 0;
 
     dt::RtLog::Initialize(logName, logFilepath, enableTui);
-    dt::RtLog::SetLogLevel(static_cast<dt::RtLog::log_level>(logLevelVal));
+    dt::RtLog::SetLogLevel(static_cast<dt::RtLog::LogLevel>(logLevelVal));
     // FlushOn is not necessary for RT Log because it is designed to be non-blocking and thread-safe automatically flushes on periodic intervals.
 
     if (enableTui)

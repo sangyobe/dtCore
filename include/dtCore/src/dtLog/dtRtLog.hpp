@@ -525,7 +525,7 @@ using BasicFileSinkMt = BasicFileSinkT<std::mutex>;
 
 class RtLog {
 public:
-    using log_level = spdlog::level::level_enum;
+    using LogLevel = spdlog::level::level_enum;
     // Increased capacity from 256 to 2048 to handle high-frequency burst logging
     // if system generates total message per ~3400 msg/sec
     // With 2048 capacity, can buffer ~600ms worth of messages during drain delays
@@ -577,7 +577,7 @@ public:
         auto &m_instance = Instance();
         if (m_instance.m_initialized.load(std::memory_order_acquire))   // check initialize state
         {
-            m_instance.LogRt(log_level::err, "[RtLog] Initialize() is already called!!!");
+            m_instance.LogRt(LogLevel::err, "[RtLog] Initialize() is already called!!!");
             return;
         }
 
@@ -604,7 +604,7 @@ public:
                     auto console_sink = std::make_shared<ColorStdoutSinkMt>();
                     console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
                     m_instance.m_logger->sinks().push_back(console_sink);
-                    RtLog::LogRaw(RtLog::log_level::err, "TUI initialize failed -> use default stdout");
+                    LogRaw(LogLevel::err, "TUI initialize failed -> use default stdout");
                 }
             }
             // create default color stdout sink
@@ -682,7 +682,7 @@ public:
                                  m_instance.m_logThreadInfo.procFuncArg);
         if (ret < 0) 
         {
-            m_instance.LogRaw(RtLog::log_level::err, "[RTLOG] Create logger thread failed!!!!");
+            m_instance.LogRaw(LogLevel::err, "[RTLOG] Create logger thread failed!!!!");
         }
 
         pthread_attr_destroy(&taskAttr);
@@ -727,7 +727,7 @@ public:
      * Set log level of default logger
      * @param lvl log level
      */
-    static void SetLogLevel(log_level lvl) 
+    static void SetLogLevel(LogLevel lvl) 
     {
         Instance().SetLevel(lvl);
     }
@@ -871,7 +871,7 @@ public:
     //     callers from different threads will not interleave mid-message.
     //   - clock_gettime(CLOCK_REALTIME) is Cobalt-intercepted: stays in primary mode.
     //   - Time shown is UTC (avoids localtime_r() which may malloc/lock).
-    static void LogRaw(log_level lvl, const char *fmt, ...) noexcept 
+    static void LogRaw(LogLevel lvl, const char *fmt, ...) noexcept 
     {
         char buf[512];
 
@@ -934,7 +934,7 @@ public:
     }
 
     template<typename... Args>
-    void LogRt(log_level lvl, const char *format, Args... args) noexcept 
+    void LogRt(LogLevel lvl, const char *format, Args... args) noexcept 
     {
         if (!m_initialized.load(std::memory_order_acquire))
         {
@@ -951,7 +951,7 @@ public:
         Enqueue(entry);
     }
 
-    void LogRtV(log_level lvl, const char* format, va_list args) noexcept 
+    void LogRtV(LogLevel lvl, const char* format, va_list args) noexcept 
     {
         if (!m_initialized.load(std::memory_order_acquire))
         {
@@ -969,7 +969,7 @@ public:
     }
 
     template<typename... Args>
-    void LogRtFmt(log_level lvl, fmt::format_string<Args...> fmt_str, Args&&... args) noexcept 
+    void LogRtFmt(LogLevel lvl, fmt::format_string<Args...> fmt_str, Args&&... args) noexcept 
     {
         if (!m_initialized.load(std::memory_order_acquire))
         {
@@ -1001,7 +1001,7 @@ public:
         Enqueue(entry);
     }
 
-    void SetLevel(log_level lvl) noexcept 
+    void SetLevel(LogLevel lvl) noexcept 
     {
         m_level.store(static_cast<int>(lvl), std::memory_order_relaxed);
         // Synchronize with spdlog logger level
@@ -1011,9 +1011,9 @@ public:
         }
     }
 
-    log_level GetLevel() const noexcept 
+    LogLevel GetLevel() const noexcept 
     {
-        return static_cast<log_level>(m_level.load(std::memory_order_relaxed));
+        return static_cast<LogLevel>(m_level.load(std::memory_order_relaxed));
     }
 
     uint64_t DropCount() const noexcept 
@@ -1059,7 +1059,7 @@ public:
     public:
         static constexpr size_t BUF_LEN = QueueType::MsgLen();
                 
-        LogRtStream(log_level lvl) noexcept
+        LogRtStream(LogLevel lvl) noexcept
             : m_logLevel(lvl),
               m_active(Instance().IsActiveLevel(lvl)),
               m_pos(0)
@@ -1125,12 +1125,12 @@ public:
                 return *this;
             }
             m_submitted = true;
-            RtLog::Instance().LogRtFmt(m_logLevel, fmtStr, std::forward<Args>(args)...);
+            Instance().LogRtFmt(m_logLevel, fmtStr, std::forward<Args>(args)...);
             return *this;
         }
     
     private:
-        log_level m_logLevel;
+        LogLevel m_logLevel;
         bool m_active;
         bool m_submitted{false};
         size_t m_pos;
@@ -1268,7 +1268,7 @@ private:
           m_timebase{},
           m_initialized(false)
     {
-        m_level.store(static_cast<int>(log_level::trace), std::memory_order_relaxed);
+        m_level.store(static_cast<int>(LogLevel::trace), std::memory_order_relaxed);
         m_dropCount.store(0, std::memory_order_relaxed);
     }
 
@@ -1379,7 +1379,7 @@ private:
         }
     }
 
-    bool IsActiveLevel(log_level lvl) const noexcept 
+    bool IsActiveLevel(LogLevel lvl) const noexcept 
     {
         return (static_cast<int>(lvl) >= m_level.load(std::memory_order_relaxed));
     }
@@ -1438,7 +1438,7 @@ private:
 //   LOG(info).format("x={:.3f} idx={}", x, idx);
 //   LOG(warn) << "q=" << q;   // dt::Math::Vector / Eigen: use operator<<, not format()
 #define LOG(level) \
-    dt::RtLog::LogRtStream(dt::RtLog::log_level::level)
+    dt::RtLog::LogRtStream(dt::RtLog::LogLevel::level)
 
 // LOG_RT_RAW: immediate write to STDERR, bypassing drain thread and log queue.
 //
@@ -1455,7 +1455,7 @@ private:
 //   LOG_RT_RAW(err,      "queue full: dropped %llu messages", drop_cnt);
 //   LOG_RT_RAW(critical, "logger init failed, errno=%d", errno);
 #define LOG_RT_RAW(level, fmt, ...) \
-    dt::RtLog::LogRaw(dt::RtLog::log_level::level, fmt, ##__VA_ARGS__)
+    dt::RtLog::LogRaw(dt::RtLog::LogLevel::level, fmt, ##__VA_ARGS__)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TUI Area 1 macros — RT-safe, no-op when TUI is disabled
@@ -1659,7 +1659,7 @@ inline RtLog::LogRtStream &RtLog::LogRtStream::printf(const char *fmt, ...) noex
     m_submitted = true;
     va_list args;
     va_start(args, fmt);
-    RtLog::Instance().LogRtV(m_logLevel, fmt, args);
+    Instance().LogRtV(m_logLevel, fmt, args);
     va_end(args);
     return *this;
 }
