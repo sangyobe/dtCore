@@ -16,6 +16,54 @@
 * std::format 스타일의 로그 메시지 저장을 지원합니다. 
 * streaming operator(<<) 스타일의 로그 메시지 저장을 지원합니다.
 * 로그 레벨(error, warning, info, debug 등) 지정을 지원합니다.
+#### dtLog / RtLog
+* RT 태스크에서도 로그 기능을 이용할 수 있습니다.
+* printf 스타일의 로그 메시지 저장을 지원합니다.
+* dtTerm의 기능을 하나로 통합하였습니다.
+#### dtLog -> RtLog Migration 방법
+* 아래와 같이 헤더파일 인클루드 변경, Initialize() 함수 인자 변경, 기존 dtTerm::Printf 함수 변경 작업 필요
+```
+#include <dtCore/dtLog>     // <-- dtCore/src/dtLog/dtLog.h & dtCore/dtUtils/dtTerminal.h
+
+void dt::Log::Initialize(
+    const std::string &logName,                             // Logger name
+    const std::string &fileBasename = "",                   // Log file base name
+    bool enableTui = false,                                 // TUI mode: true(enable) / false(disable)
+    int threadCpuId = RtLogConstant::THREAD_CPU_ID,         // default cpu core: core 1
+    int threadPriority = RtLogConstant::THREAD_PRIORITY,    // default priority: 0 (non-RT)
+    size_t threadStack = RtLogConstant::THREAD_STACK_SIZE,  // default stack: 1MB
+    size_t maxFiles = RtLogConstant::DEFAULT_MAX_FILES,     // max log file number: 5
+    size_t maxFileSize = RtLogConstant::DEFAULT_MAX_SIZE,   // max log file size: 10MB
+    bool annotDatetime = true,
+    bool truncate = false);
+
+LOG(level).printf(...)      // <-- dtTerm::Printf(...)
+
+// LOG(level) << ... 
+// 위와 같은 스트림 방식으로 호출할 경우 에러 발생시, 
+// LOG(level).printf 또는 LOG(level).format 과 같은 가변인자 방식으로 사용
+```
+
+* TUI Migration: 기존 dtTerm::Printf로 작업하는 대신, 아래와 같은 매크로들을 이용해서 TUI 화면을 구성하도록 변경 필요
+
+| 매크로 | 파라미터 | 예시 | 비고 |
+| :---  | :---    | :---  | :--- |
+| TUI_SET_LAYOUT_NAME | layout 번호(int), layout 라벨(str) | TUI_SET_LAYOUT_NAME(0, "Layout#1") | layout은 최대 9개까지 추가 가능 |
+| TUI_SET_GROUP | layout 번호(int), group 번호(int), group 라벨(str), column 라벨(empty or string array) | TUI_SET_GROUP(0, 0, "Joint State", "pos", "vel", "tor") | layout 당 group은 최대 10개까지 설정 가능<br>group 당 column은 최대 10개까지 설정 가능 |
+| TUI_SET_GROUP_NO_HDR | layout 번호(int), group 번호(int) | TUI_SET_GROUP_NO_HDR(0, 0) |	headerless group 추가 |
+| TUI_SET_TEXT_ROW_FMT | layout 번호(int), group 번호(int), row 번호(int), row 라벨(str), 데이터(printf 방식) | TUI_SET_TEXT_ROW_FMT(0, 0, 0, "Ctrl",<br>&nbsp;&nbsp;&nbsp;"period: %6.3f ms, load: %6.3f ms, maxLoad: %6.3f ms, overrun: %d",<br>&nbsp;&nbsp;&nbsp;sysData->ctrlTime.period_ms,<br>&nbsp;&nbsp;&nbsp;sysData->ctrlTime.algo_ms,<br>&nbsp;&nbsp;&nbsp;sysData->ctrlTime.algoMax_ms,<br>&nbsp;&nbsp;&nbsp;sysData->ctrlTime.overrun) | group 당 row는 최대 20개까지 설정 가능<br>string 타입 출력 |
+| TUI_SET_ROW | layout 번호(int), group 번호(int), row 번호(int), row 라벨(str), 데이터 포맷(printf 방식), 데이터 (array) | TUI_SET_ROW(0, 0, 0, "Test Int", "%d",<br>&nbsp;&nbsp;&nbsp;random_int_list[0],<br>&nbsp;&nbsp;&nbsp;random_int_list[1],<br>&nbsp;&nbsp;&nbsp;random_int_list[2],<br>&nbsp;&nbsp;&nbsp;random_int_list[3],<br>&nbsp;&nbsp;&nbsp;random_int_list[4],<br>&nbsp;&nbsp;&nbsp;random_int_list[5]) | 실수, 정수 등 정해진 타입으로 모든 데이터 출력 |
+| TUI_SET_ROW_COLS | layout 번호(int), group 번호(int), row 번호(int), row 라벨(str), 데이터(printf 방식) | TUI_SET_ROW_COLS(0, 0, 0, "Joint#1",<br>&nbsp;&nbsp;&nbsp;TUI_COL("0x%04X", statusWord),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[0] * RAD2DEGd),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[1] * RAD2DEGd),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[1] * RAD2DEGd),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[3] * RAD2DEGd),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[4] * RAD2DEGd),<br>&nbsp;&nbsp;&nbsp;TUI_COL("%+8.2f", pos_rad[5] * RAD2DEGd)) | 실수, 정수, Str 등 타입을 혼용해서 출력 |
+
+* <b>(주의) TUI 모드 사용시 아래 예약어들은 키보드 매핑에서 사용할 수 없습니다. (사용은 가능하나 아래 기능과 중복 적용됨!!!)</b>
+  * Page Up : (스크롤 수동 모드로 전환 후) 스크롤 영역 페이지 이동 (up)
+  * Page Down : (스크롤 수동 모드로 전환 후) 스크롤 영역 페이지 이동 (down)
+  * ↑ : (스크롤 수동 모드로 전환 후) 스크롤 영역 라인 이동 (up)
+  * ↓ : (스크롤 수동 모드로 전환 후) 스크롤 영역 라인 이동 (down)
+  * Home : (스크롤 수동 모드로 전환 후) 스크롤 영역 첫 페이지로 이동
+  * End : (스크롤 자동 모드로 전환 후) 스크롤 영역 최신 라인으로 이동
+  * [ : 레이아웃 전환 (왼쪽 방향) ex) layout#3 -> layout#2
+  * ] : 레이아웃 전환 (오른쪽 방향) ex) layout#1 -> layout#2
 
 ### dtDAQ
 * 센서 데이터 등의 저장을 지원하기 위한 utility library 입니다.
