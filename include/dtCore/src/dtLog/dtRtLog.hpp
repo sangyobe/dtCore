@@ -67,8 +67,8 @@ namespace RtLogConstant
     inline constexpr long POLL_INTERVAL_NS    = 1'000'000L; // 1 ms
     // Thread info
     inline constexpr size_t THREAD_STACK_SIZE = 1024 * 1024; // 1MB
-    inline constexpr int THREAD_CPU_ID        = 1;
-    inline constexpr int THREAD_PRIORITY      = 0; // nonRt
+    inline constexpr int THREAD_CPU_ID        = 2;  // default CPU core(#2)
+    inline constexpr int THREAD_PRIORITY      = 0;  // nonRt
 }   // namespace RtLogConstant
 
 // Colored stdout sink using a single write() syscall per message.
@@ -568,10 +568,10 @@ public:
         const std::string &fileBasename = "", 
         bool enableTui = false,
         int threadCpuId = RtLogConstant::THREAD_CPU_ID,
-        int threadPriority = RtLogConstant::THREAD_PRIORITY,
-        size_t threadStack = RtLogConstant::THREAD_STACK_SIZE,
         size_t maxFiles = RtLogConstant::DEFAULT_MAX_FILES,
         size_t maxFileSize = RtLogConstant::DEFAULT_MAX_SIZE, 
+        int threadPriority = RtLogConstant::THREAD_PRIORITY,
+        size_t threadStack = RtLogConstant::THREAD_STACK_SIZE,
         bool annotDatetime = true, 
         bool truncate = false) 
     {
