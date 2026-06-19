@@ -305,7 +305,7 @@ void RtTui::SetRowData(int layoutIdx, int groupIdx, int row_idx, const char *lab
     layout.defined = true;
 }
 
-void RtTui::SetTextRow(int layoutIdx, int groupIdx, int row_idx, const char *label, const char *text) 
+void RtTui::SetTextRow(int layoutIdx, int groupIdx, int row_idx, const char *label, const char *text) noexcept
 {
     if (layoutIdx < 0 || layoutIdx >= MAX_LAYOUTS)
     {
@@ -540,7 +540,7 @@ void RtTui::RenderArea1(int startRow, int height, int width)
     char title[48];
     snprintf(title, sizeof(title), "[ %s ]", layout.name);
 
-    int titleLen = Utf8Cols(title);
+    int titleLen = Utf8CodePointCount(title);
     SafeSnprintf("\x1b[%d;1H%s%s┌─%s%s%s─",  cur++, ansi::BOLD, ansi::FG_CYAN, ansi::FG_YELLOW, title, ansi::FG_CYAN);
     int remain_top = width - 2 - titleLen;
     AppendData_hbar(remain_top > 0 ? remain_top : 0);
@@ -687,7 +687,7 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     SafeSnprintf("\x1b[%d;1H%s%s┌%s%s%s",
                   startRow, ansi::BOLD, ansi::FG_CYAN,
                   titleColor, titleText, ansi::FG_CYAN);
-    int remain = width - 2 - Utf8Cols(titleText);
+    int remain = width - 2 - Utf8CodePointCount(titleText);
 
     AppendData_hbar(remain);
 
@@ -719,7 +719,7 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     AppendData_hbar(width - 2);
 
     const char* hint = " ↑↓:Line  PgUp/PgDn:Page ";
-    int hint_cols = Utf8Cols(hint);
+    int hint_cols = Utf8CodePointCount(hint);
     int hint_col = std::max(2, width - 1 - hint_cols);
     SafeSnprintf("\x1b[%d;%dH%s%s", startRow + height - 1, hint_col, ansi::FG_GRAY, hint);
     SafeSnprintf("\x1b[%d;%dH%s─┘%s", startRow + height - 1, width - 1, ansi::FG_CYAN, ansi::RESET);
@@ -993,7 +993,15 @@ void RtTui::FlushOutput()
 
             // Real write error (EPIPE, EBADF, …): log once and discard remaining
             // bytes to prevent the error from being logged again every frame.
-            LOG(err).printf("[TUI] write failed (%s): dropped %zu bytes", strerror(errno), m_outPos - written);
+            static std::chrono::steady_clock::time_point last_times;
+            auto now = std::chrono::steady_clock::now();
+            auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_times).count();
+            if (interval >= 1000) {
+                last_times = now;
+                char errbuf[64];
+                auto temp = strerror_r(errno, errbuf, sizeof(errbuf));
+                LOG(err).printf("[TUI] write failed (%s): dropped %zu bytes", errbuf, m_outPos - written);
+            }
             m_outPos = written;
 
             return;

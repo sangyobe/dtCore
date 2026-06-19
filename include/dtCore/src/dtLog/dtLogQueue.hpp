@@ -32,20 +32,23 @@ public:
     using log_level = spdlog::level::level_enum;
 
     // LOG message structure
-    struct Entry 
+    struct Entry
     {
         // When enqueue is called, Should enter the latest timestamp value obtained without a syscall
         int64_t   timeStamp_ns{0};
         log_level level{log_level::info};
         size_t    msgLen{0};
         char      msg[m_msgLen];
+        // Empty string means default logger; non-empty routes to a named logger registered via Create().
+        char      loggerName[64];
 
         // set message - template version (C++ style)
         template<typename... Args>
-        void Set(log_level lvl, int64_t ts_ns, const char* format, Args... args) noexcept 
+        void Set(log_level lvl, int64_t ts_ns, const char* format, Args... args) noexcept
         {
-            level        = lvl;
-            timeStamp_ns = ts_ns;
+            level          = lvl;
+            timeStamp_ns   = ts_ns;
+            loggerName[0]  = '\0';
             // Suppress -Wformat-security warning: format string comes from LOG_RT macro,
             // which is always a string literal in user code
 #pragma GCC diagnostic push
@@ -58,8 +61,9 @@ public:
         // set message - va_list version (for internal use)
         void SetV(log_level lvl, int64_t ts_ns, const char* format, va_list args) noexcept
         {
-            level        = lvl;
-            timeStamp_ns = ts_ns;
+            level         = lvl;
+            timeStamp_ns  = ts_ns;
+            loggerName[0] = '\0';
             int n  = std::vsnprintf(msg, m_msgLen, format, args);
             msgLen = (n > 0) ? static_cast<size_t>(std::min(n, (int)m_msgLen - 1)) : 0;
         }

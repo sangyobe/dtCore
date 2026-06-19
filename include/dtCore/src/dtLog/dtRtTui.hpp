@@ -147,7 +147,7 @@ public:
     void SetRowCols(int layoutIdx, int groupIdx, int rowIdx, const char *label, Cols &&...cols);
 
     // Full-width text row: displays label + pre-formatted string (ignores column layout)
-    void SetTextRow(int layoutIdx, int groupIdx, int rowIdx, const char *label, const char *text);
+    void SetTextRow(int layoutIdx, int groupIdx, int rowIdx, const char *label, const char *text) noexcept;
 
     // printf-style text row: formats args into a buffer, then calls set_text_row.
     // Equivalent to: snprintf(buf, ...); set_text_row(..., buf);
@@ -241,7 +241,7 @@ private:
     void AppendData_str(const char *s);
     void AppendData_hbar(int n);  // append n ─ (U+2500) characters (3 bytes each)
 
-    int Utf8Cols(const char* s)
+    int Utf8CodePointCount(const char* s)
     {
         int n = 0;
         while (*s) 
@@ -375,7 +375,7 @@ void dt::Utils::RtTui::FormatColumn(char *buf, size_t buf_size, const char *form
 {
     if constexpr (std::is_same_v<T, bool>) 
     {
-        snprintf(buf, buf_size, "%s", value ? "true" : "false");
+        snprintf(buf, buf_size, format, static_cast<bool>(value));
     }
     else if constexpr (std::is_floating_point_v<T>) 
     {

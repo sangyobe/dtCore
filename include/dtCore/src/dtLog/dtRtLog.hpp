@@ -373,11 +373,23 @@ protected:
         if (buf.size() > RtLogConstant::INTERNAL_BUF_SIZE) 
         {
             FlushBuffer();
-            ssize_t written = ::write(m_fd, buf.data(), buf.size());
-            if (written > 0) 
+            size_t total = 0;
+            while (total < buf.size()) 
             {
-                m_currentSize += written;
+                ssize_t n = ::write(m_fd, buf.data() + total, buf.size() - total);
+                if (n <= 0) 
+                { 
+                    if (errno == EINTR) 
+                    {
+                        continue; 
+                    }
+                
+                    break; 
+                }
+
+                total += n;
             }
+            m_currentSize += total;
             return;
         }
 
@@ -556,6 +568,23 @@ public:
         }
     };
 
+    typedef uint32_t LogPattern;
+    
+    class LogPatternFlag {
+    public:
+        enum _flag {
+            none         = 0,
+            type         = 0x0001,
+            type_long    = 0x0002,
+            date         = 0x0010,
+            time         = 0x0020,
+            datetime     = 0x0040,
+            epoch        = 0x0080,
+            elapsed      = 0x0100,
+            name         = 0x0004,
+        };
+    };
+
 public:
     static RtLog &Instance() noexcept 
     {
@@ -584,37 +613,34 @@ public:
 
         // create spdlog logger with appropriate sinks
         m_instance.m_logger = std::make_shared<spdlog::logger>(logName);
-        if (m_instance.m_logger) 
-        {
-            m_instance.m_logger->sinks().clear();
+        m_instance.m_logger->sinks().clear();
 
-            // create tui instance if enabled
-            if (enableTui) 
+        // create tui instance if enabled
+        if (enableTui) 
+        {
+            m_instance.m_tui = std::make_shared<Utils::RtTui>();
+            if (m_instance.m_tui->Init()) 
             {
-                m_instance.m_tui = std::make_shared<Utils::RtTui>();
-                if (m_instance.m_tui->Init()) 
-                {
-                    auto tui_sink = std::make_shared<TuiSink>(m_instance.m_tui);
-                    tui_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
-                    m_instance.m_logger->sinks().push_back(tui_sink);
-                }
-                else 
-                {
-                    // TUI init failed: fall back to colored stdout
-                    m_instance.m_tui.reset();
-                    auto console_sink = std::make_shared<ColorStdoutSinkMt>();
-                    console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
-                    m_instance.m_logger->sinks().push_back(console_sink);
-                    LogRaw(LogLevel::err, "TUI initialize failed -> use default stdout");
-                }
+                auto tui_sink = std::make_shared<TuiSink>(m_instance.m_tui);
+                tui_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+                m_instance.m_logger->sinks().push_back(tui_sink);
             }
-            // create default color stdout sink
             else 
             {
+                // TUI init failed: fall back to colored stdout
+                m_instance.m_tui.reset();
                 auto console_sink = std::make_shared<ColorStdoutSinkMt>();
                 console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
                 m_instance.m_logger->sinks().push_back(console_sink);
+                LogRaw(LogLevel::err, "TUI initialize failed -> use default stdout");
             }
+        }
+        // create default color stdout sink
+        else 
+        {
+            auto console_sink = std::make_shared<ColorStdoutSinkMt>();
+            console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+            m_instance.m_logger->sinks().push_back(console_sink);
         }
 
         // basic file sink
@@ -673,7 +699,7 @@ public:
         {
             pthread_attr_setschedpolicy(&taskAttr, SCHED_OTHER);
         }
-        pthread_attr_setaffinity_np(&taskAttr, CPU_SETSIZE, &cpuset);
+        pthread_attr_setaffinity_np(&taskAttr, sizeof(cpuset), &cpuset);
         pthread_attr_setdetachstate(&taskAttr, PTHREAD_CREATE_JOINABLE);
         pthread_attr_setstacksize(&taskAttr, threadStack);
 
@@ -690,9 +716,62 @@ public:
     }
 
     /**
+     * Default logger 외에 새로운 로거를 생성하고 spdlog 레지스트리에 등록.
+     * @param logName logger 이름.
+     * @param fileBasename 로그 파일 이름. "_STDOUT_"인 경우 terminal. 그 외는 해당 파일명으로 로그 생성.
+     * @param annotDatetime 파일 로그의 경우 파일 이름에 생성 날짜 및 시간을 뒤에 붙일지 여부.
+     * @param truncate 동일 이름의 로그 파일이 있는 경우 해당 파일을 지우고 새로 만들지 여부.
+     * @param maxFiles 최대 로그 파일 개수 (파일 rotation 시).
+     * @param maxFileSize 최대 파일 크기 (bytes).
+     */
+    static void Create(
+        const std::string &logName,
+        const std::string &fileBasename,
+        bool annotDatetime = true,
+        bool truncate = false,
+        size_t maxFiles = RtLogConstant::DEFAULT_MAX_FILES,
+        size_t maxFileSize = RtLogConstant::DEFAULT_MAX_SIZE)
+    {
+        auto &inst = Instance();
+        auto logger = std::make_shared<spdlog::logger>(logName);
+        logger->sinks().clear();
+
+        if (fileBasename == "_STDOUT_")
+        {
+            auto console_sink = std::make_shared<ColorStdoutSinkMt>();
+            console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+            logger->sinks().push_back(console_sink);
+        }
+        else
+        {
+            spdlog::filename_t filename = fileBasename;
+            if (annotDatetime)
+            {
+                filename = inst.AnnotateFilenameDatetime(fileBasename);
+                auto [dname, fname] = inst.SplitByDirectory(filename);
+                (void)remove(fileBasename.c_str());
+                auto rtn = symlink(fname.c_str(), fileBasename.c_str());
+                if (rtn < 0)
+                {
+                    if (inst.m_logger)
+                    {
+                        inst.m_logger->log(spdlog::level::warn,
+                            "Cannot create symlink '{}' -> '{}': {}", fileBasename, fname, strerror(errno));
+                    }
+                }
+            }
+            auto file_sink = std::make_shared<BasicFileSinkMt>(filename, maxFileSize, maxFiles, truncate);
+            file_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
+            logger->sinks().push_back(file_sink);
+        }
+
+        spdlog::register_logger(logger);
+    }
+
+    /**
      * Terminate logging system
      */
-    static void Terminate() 
+    static void Terminate()
     {
         auto &m_instance = Instance();
 
@@ -706,7 +785,7 @@ public:
         // thread join
         m_instance.m_logThreadInfo.run.store(false, std::memory_order_release);
         pthread_join(m_instance.m_logThreadInfo.id, nullptr);
-        m_instance.m_logThreadInfo.id = (pthread_t)nullptr;
+        m_instance.m_logThreadInfo.id = {};
         
         // last flush
         m_instance.DrainAll();
@@ -737,6 +816,42 @@ public:
     static void SetLogLevel(LogLevel lvl) 
     {
         Instance().SetLevel(lvl);
+    }
+
+    /**
+     * Default logger 로그 패턴 설정 (flag 조합 방식).
+     * @param pattern LogPatternFlag 조합.
+     * @param delimiter 각 항목 사이의 구분자 문자열 (e.g. "|", " ").
+     *
+     * 주의: spdlog 원시 패턴 문자열을 직접 사용하려면
+     *       SetLogPattern(const std::string &raw_pattern) 오버로드를 사용하세요.
+     */
+    static void SetLogPattern(LogPattern pattern = LogPatternFlag::type|LogPatternFlag::time, const std::string &delimiter = "|")
+    {
+        std::string pattern_str = "%^";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::type))      ? std::string("%L") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::type_long)) ? std::string("%l") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::date))      ? std::string("%Y-%m-%d") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::time))      ? std::string("%H:%M:%S.%f") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::datetime))  ? std::string("%Y-%m-%d %H:%M:%S.%f") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::epoch))     ? std::string("%E.%f") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::elapsed))   ? std::string("%8i") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::name))      ? std::string("%n") + delimiter : "";
+        pattern_str += "%$%v";
+        Sync();  // 이미 큐에 쌓인 메시지가 모두 이전 패턴으로 출력된 뒤 패턴을 변경
+        auto &inst = Instance();
+        if (inst.m_logger) inst.m_logger->set_pattern(pattern_str);
+    }
+
+    /**
+     * Default logger 로그 패턴 설정 (spdlog 원시 패턴 문자열 방식).
+     * @param raw_pattern spdlog 패턴 문자열 (e.g. "[%Y-%m-%d %H:%M:%S.%f][%^%l%$] %n: %v").
+     */
+    static void SetLogPattern(const std::string &raw_pattern)
+    {
+        Sync();  // 이미 큐에 쌓인 메시지가 모두 이전 패턴으로 출력된 뒤 패턴을 변경
+        auto &inst = Instance();
+        if (inst.m_logger) inst.m_logger->set_pattern(raw_pattern);
     }
 
     // Returns the TUI instance (nullptr when TUI is disabled)
@@ -860,6 +975,38 @@ public:
         }
 
         return count;
+    }
+
+    // drain 스레드가 현재 큐에 있는 모든 메시지를 처리할 때까지 대기.
+    //
+    // SetLogPattern() / SetLogLevel() 등 포맷에 영향을 주는 변경 전에 호출하면
+    // "이미 쌓인 메시지가 새 패턴으로 출력되는" 문제를 방지할 수 있음.
+    //
+    // 동작 원리:
+    //   1. m_syncSeq를 1 증가시켜 drain 스레드에 동기화 요청을 등록.
+    //   2. drain 스레드는 DrainAll() 완료 직후 m_syncAck = m_syncSeq 로 응답.
+    //   3. m_syncAck >= target 이 될 때까지 500μs 간격으로 대기.
+    //   4. 대기 후 sink 내부 버퍼를 flush() 하여 이전 메시지가 출력 장치에 반영되도록 함.
+    //
+    // 비RT 컨텍스트에서만 사용 가능 (clock_nanosleep 사용).
+    static void Sync() noexcept
+    {
+        auto &inst = Instance();
+        if (!inst.m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        uint64_t target = inst.m_syncSeq.fetch_add(1, std::memory_order_acq_rel) + 1;
+
+        while (inst.m_syncAck.load(std::memory_order_acquire) < target)
+        {
+            struct timespec ts{0, 500000L};  // 500 μs
+            clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, nullptr);
+        }
+
+        // sink 내부 버퍼 flush (ColorStdoutSinkT는 64KB 내부 버퍼를 사용)
+        if (inst.m_logger) inst.m_logger->flush();
     }
 
     // Immediate raw output to STDERR, bypassing the drain thread and log queue.
@@ -991,6 +1138,7 @@ public:
         Entry entry;
         entry.level        = lvl;
         entry.timeStamp_ns = MonoNow_ns();
+        entry.loggerName[0] = '\0';
         try 
         {
             static constexpr size_t cap = QueueType::MsgLen() - 1;
@@ -1008,7 +1156,81 @@ public:
         Enqueue(entry);
     }
 
-    void SetLevel(LogLevel lvl) noexcept 
+    // Named logger 경로 — LOG_U() 소멸자에서 호출. RT 큐를 통해 drain 스레드가 처리.
+    template<typename... Args>
+    void LogRtNamed(const char *loggerName, LogLevel lvl, const char *format, Args... args) noexcept
+    {
+        if (!m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+        {
+            return;
+        }
+
+        Entry entry;
+        entry.Set(lvl, MonoNow_ns(), format, args...);
+        strncpy(entry.loggerName, loggerName, sizeof(entry.loggerName) - 1);
+        entry.loggerName[sizeof(entry.loggerName) - 1] = '\0';
+        Enqueue(entry);
+    }
+
+    void LogRtNamedV(const char *loggerName, LogLevel lvl, const char *format, va_list args) noexcept
+    {
+        if (!m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+        {
+            return;
+        }
+
+        Entry entry;
+        entry.SetV(lvl, MonoNow_ns(), format, args);
+        strncpy(entry.loggerName, loggerName, sizeof(entry.loggerName) - 1);
+        entry.loggerName[sizeof(entry.loggerName) - 1] = '\0';
+        Enqueue(entry);
+    }
+
+    template<typename... Args>
+    void LogRtNamedFmt(const char *loggerName, LogLevel lvl, fmt::format_string<Args...> fmt_str, Args&&... args) noexcept
+    {
+        if (!m_initialized.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+        {
+            return;
+        }
+
+        Entry entry;
+        entry.level        = lvl;
+        entry.timeStamp_ns = MonoNow_ns();
+        strncpy(entry.loggerName, loggerName, sizeof(entry.loggerName) - 1);
+        entry.loggerName[sizeof(entry.loggerName) - 1] = '\0';
+        try
+        {
+            static constexpr size_t cap = QueueType::MsgLen() - 1;
+            auto result   = fmt::format_to_n(entry.msg, cap, fmt_str, std::forward<Args>(args)...);
+            size_t sz     = result.size < cap ? result.size : cap;
+            entry.msg[sz] = '\0';
+            entry.msgLen  = sz;
+        }
+        catch (...)
+        {
+            entry.msg[0]  = '\0';
+            entry.msgLen  = 0;
+        }
+        Enqueue(entry);
+    }
+
+    void SetLevel(LogLevel lvl) noexcept
     {
         m_level.store(static_cast<int>(lvl), std::memory_order_relaxed);
         // Synchronize with spdlog logger level
@@ -1278,6 +1500,178 @@ public:
         }
     };
 
+    // NamedLogRtStream: Create()로 생성한 named logger에 기록하는 RT-safe 스트림 인터페이스.
+    // LOG()와 동일하게 MPSC 큐를 통해 drain 스레드에서 처리하므로 RT 태스크에서 사용 가능.
+    // spdlog::get()은 drain 스레드(비RT)의 FlushEntry()에서만 호출됨.
+    class [[nodiscard]] NamedLogRtStream
+    {
+    public:
+        static constexpr size_t BUF_LEN      = QueueType::MsgLen();
+        static constexpr size_t NAME_BUF_LEN = 64;
+
+        explicit NamedLogRtStream(const char *logName, LogLevel lvl) noexcept
+            : m_logLevel(lvl),
+              m_active(Instance().IsInitialized() && Instance().IsActiveLevel(lvl)),
+              m_submitted(false),
+              m_pos(0)
+        {
+            strncpy(m_logName, logName, NAME_BUF_LEN - 1);
+            m_logName[NAME_BUF_LEN - 1] = '\0';
+            m_buf[0] = '\0';
+        }
+
+        NamedLogRtStream(const NamedLogRtStream &)            = delete;
+        NamedLogRtStream &operator=(const NamedLogRtStream &) = delete;
+        NamedLogRtStream(NamedLogRtStream &&)                 = delete;
+        NamedLogRtStream &operator=(NamedLogRtStream &&)      = delete;
+
+        ~NamedLogRtStream() noexcept
+        {
+            if (m_active && !m_submitted && m_pos > 0)
+            {
+                Instance().LogRtNamed(m_logName, m_logLevel, "%.*s", (int)m_pos, m_buf);
+            }
+        }
+
+        template<typename T, typename = std::enable_if_t<
+            std::is_arithmetic<T>::value ||
+            std::is_pointer<T>::value ||
+            std::is_enum<T>::value>>
+        NamedLogRtStream &operator<<(T value) noexcept;
+
+        template<typename T>
+        NamedLogRtStream &operator<<(const std::vector<T> &value) noexcept;
+
+        NamedLogRtStream &operator<<(const char *str) noexcept;
+        NamedLogRtStream &operator<<(const std::string &str) noexcept;
+        NamedLogRtStream &operator<<(char c) noexcept;
+        NamedLogRtStream &operator<<(std::ios_base &(*fn)(std::ios_base &)) noexcept;
+        NamedLogRtStream &operator<<(decltype(std::setw(0)) w) noexcept;
+        NamedLogRtStream &operator<<(decltype(std::setfill(' ')) f) noexcept;
+
+        // printf-style: RT 큐를 통해 처리 (RT-safe)
+        NamedLogRtStream &printf(const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
+
+        // fmt-style: RT 큐를 통해 처리 (RT-safe)
+        template<typename... Args>
+        NamedLogRtStream &format(fmt::format_string<Args...> fmtStr, Args&&... args) noexcept
+        {
+            if (!m_active)
+            {
+                return *this;
+            }
+            m_submitted = true;
+            Instance().LogRtNamedFmt(m_logName, m_logLevel, fmtStr, std::forward<Args>(args)...);
+            return *this;
+        }
+
+    private:
+        LogLevel m_logLevel;
+        bool     m_active;
+        bool     m_submitted;
+        size_t   m_pos;
+        char     m_logName[NAME_BUF_LEN];
+        char     m_buf[BUF_LEN];
+        bool     m_hexMode{false};
+        int      m_width{0};
+        char     m_fillChar{' '};
+
+    private:
+        void Append(const char *src, size_t len) noexcept
+        {
+            size_t avail = BUF_LEN - 1 - m_pos;
+            size_t copy  = (len < avail) ? len : avail;
+            memcpy(m_buf + m_pos, src, copy);
+            m_pos       += copy;
+            m_buf[m_pos] = '\0';
+        }
+
+        template<typename T>
+        bool FormatElement(T value) noexcept
+        {
+            if (m_pos + 10 >= BUF_LEN)
+            {
+                return false;
+            }
+            int written = 0;
+            if constexpr (std::is_pointer_v<T>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%p", static_cast<const void*>(value));
+            else if constexpr (std::is_enum_v<T>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%lld",
+                              static_cast<long long>(static_cast<std::underlying_type_t<T>>(value)));
+            else if constexpr (std::is_same_v<T, bool>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%s", value ? "true" : "false");
+            else if constexpr (std::is_floating_point_v<T>)
+                written = std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, "%.6f", static_cast<double>(value));
+            else if constexpr (std::is_signed_v<T>)
+                written = FormatIntState(static_cast<long long>(value), true);
+            else
+                written = FormatIntState(static_cast<long long>(static_cast<unsigned long long>(value)), false);
+
+            if (written < 0 || written >= static_cast<int>(BUF_LEN - m_pos))
+            {
+                return false;
+            }
+
+            m_pos += written;
+            if (m_pos < BUF_LEN)
+            {
+                m_buf[m_pos] = '\0';
+            }
+            return true;
+        }
+
+        void AddTruncation() noexcept
+        {
+            if (m_pos + 3 < BUF_LEN)
+            {
+                m_buf[m_pos++] = '.';
+                m_buf[m_pos++] = '.';
+                m_buf[m_pos++] = '.';
+                m_buf[m_pos]   = '\0';
+            }
+        }
+
+        bool AddSeparator() noexcept
+        {
+            if (m_pos + 2 < BUF_LEN)
+            {
+                m_buf[m_pos++] = ',';
+                m_buf[m_pos++] = ' ';
+                return true;
+            }
+            return false;
+        }
+
+        void CloseArray() noexcept
+        {
+            if (m_pos + 1 < BUF_LEN)
+            {
+                m_buf[m_pos++] = ']';
+                m_buf[m_pos]   = '\0';
+            }
+        }
+
+        int FormatIntState(long long val, bool is_signed) noexcept
+        {
+            char fmtbuf[20];
+            char *p = fmtbuf;
+            *p++ = '%';
+            const int w = m_width;
+            m_width = 0;
+            if (w > 0 && m_fillChar == '0') *p++ = '0';
+            if      (w >= 100) { *p++ = char('0' + w / 100); *p++ = char('0' + (w % 100) / 10); *p++ = char('0' + w % 10); }
+            else if (w >=  10) { *p++ = char('0' + w / 10);  *p++ = char('0' + w % 10); }
+            else if (w >    0) { *p++ = char('0' + w); }
+            *p++ = 'l'; *p++ = 'l';
+            *p++ = m_hexMode ? 'X' : (is_signed ? 'd' : 'u');
+            *p   = '\0';
+            if (m_hexMode || !is_signed)
+                return std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, fmtbuf, static_cast<unsigned long long>(val));
+            return std::snprintf(&m_buf[m_pos], BUF_LEN - m_pos, fmtbuf, val);
+        }
+    };
+
 private:
     typedef struct _threadInfo
     {
@@ -1302,16 +1696,23 @@ private:
     std::atomic<bool>     m_initialized;
     std::atomic<int>      m_level;
     std::atomic<uint64_t> m_dropCount;
+    std::atomic<uint64_t> m_syncSeq;  // Sync() 요청 시퀀스: 호출 시 증가
+    std::atomic<uint64_t> m_syncAck;  // drain 스레드가 DrainAll() 완료 후 갱신
     ThreadInfo            m_logThreadInfo;
 
 private:
     RtLog() noexcept
         : m_logger(nullptr),
+          m_tui(nullptr),
+          m_tuiLastRender_ns(0),
+          m_lastFlush_ns(0),
           m_timebase{},
           m_initialized(false)
     {
         m_level.store(static_cast<int>(LogLevel::trace), std::memory_order_relaxed);
         m_dropCount.store(0, std::memory_order_relaxed);
+        m_syncSeq.store(0, std::memory_order_relaxed);
+        m_syncAck.store(0, std::memory_order_relaxed);
     }
 
     ~RtLog() = default;
@@ -1332,6 +1733,16 @@ private:
 
         // Drain all queued entries (TuiSinkT pushes to TUI queue here)
         size_t count = DrainAll();
+
+        // Acknowledge any pending Sync() requests.
+        // Sync()는 이 store를 감지할 때까지 대기하며, 이 시점에 DrainAll()이 완료된 것이 보장됨.
+        {
+            uint64_t pending = m_syncSeq.load(std::memory_order_acquire);
+            if (pending > m_syncAck.load(std::memory_order_relaxed))
+            {
+                m_syncAck.store(pending, std::memory_order_release);
+            }
+        }
 
         // Rate-limit flush() to 100 ms regardless of message count.
         // Flushing even when count == 0 drains EAGAIN-retained bytes left in the sink buffer,
@@ -1380,29 +1791,42 @@ private:
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, nullptr);
     }
 
-    void FlushEntry(const Entry &entry) noexcept 
+    void FlushEntry(const Entry &entry) noexcept
     {
-        if (!m_logger)
-        {
-            return;
-        }
-
         // spdlog sinks allocate heap memory for formatting (spdlog::memory_buf_t).
         // An std::bad_alloc thrown inside this noexcept function would call std::terminate().
-        try 
+        try
         {
+            // Route to named logger if entry has a logger name, otherwise use default logger.
+            // spdlog::get() is called here on the drain thread (non-RT), so mutex is safe.
+            std::shared_ptr<spdlog::logger> target;
+            if (entry.loggerName[0] != '\0')
+            {
+                target = spdlog::get(entry.loggerName);
+            }
+
+            if (!target)
+            {
+                target = m_logger;
+            }
+
+            if (!target)
+            {
+                return;
+            }
+
             auto wall_ns = m_timebase.ToWall_ns(entry.timeStamp_ns);
             auto duration = std::chrono::nanoseconds(wall_ns);
             auto tp = spdlog::log_clock::time_point(std::chrono::duration_cast<spdlog::log_clock::duration>(duration));
 
-            m_logger->log(
+            target->log(
                 tp,
                 spdlog::source_loc{},
                 entry.level,
                 spdlog::string_view_t(entry.msg, entry.msgLen)
             );
         }
-        catch (...) 
+        catch (...)
         {
             // Formatting failed (likely std::bad_alloc). Increment drop counter so
             // Terminate() reports the true number of lost entries.
@@ -1501,6 +1925,14 @@ using Log = RtLog;
 //   LOG_RT_RAW(critical, "logger init failed, errno=%d", errno);
 #define LOG_RT_RAW(level, fmt, ...) \
     dt::RtLog::LogRaw(dt::RtLog::LogLevel::level, fmt, ##__VA_ARGS__)
+
+// LOG_U: Create()로 생성한 named logger에 기록하는 스트림 매크로.
+// LOG()와 동일하게 MPSC 큐를 통해 drain 스레드에서 처리하므로 RT 태스크에서 사용 가능.
+// Usage: LOG_U(logger_name, info) << "msg " << value;
+//        LOG_U(logger_name, warn).printf("x=%.3f", x);
+//        LOG_U(logger_name, debug).format("x={:.3f} idx={}", x, idx);
+#define LOG_U(log_name, level) \
+    dt::RtLog::NamedLogRtStream(#log_name, dt::RtLog::LogLevel::level)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TUI Area 1 macros — RT-safe, no-op when TUI is disabled
@@ -1731,6 +2163,142 @@ inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(decltype(std::setw(0))
 inline RtLog::LogRtStream &RtLog::LogRtStream::operator<<(decltype(std::setfill(' ')) f) noexcept
 {
     if (m_active) m_fillChar = f._M_c;
+    return *this;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NamedLogRtStream Implementations
+// ═══════════════════════════════════════════════════════════════════════════
+
+template<typename T, typename>
+RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(T value) noexcept
+{
+    if (!m_active)
+    {
+        return *this;
+    }
+
+    if (!FormatElement(value))
+    {
+        AddTruncation();
+    }
+    return *this;
+}
+
+template<typename T>
+RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(const std::vector<T> &value) noexcept
+{
+    if (!m_active)
+    {
+        return *this;
+    }
+
+    if (m_pos + 1 >= BUF_LEN)
+    {
+        return *this;
+    }
+    m_buf[m_pos++] = '[';
+
+    const size_t count = value.size();
+    for (size_t i = 0; i < count; i++)
+    {
+        if (!FormatElement(value[i]))
+        {
+            AddTruncation();
+            break;
+        }
+        if (i != count - 1)
+        {
+            if (!AddSeparator())
+            {
+                break;
+            }
+        }
+    }
+
+    CloseArray();
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(const char *str) noexcept
+{
+    if (m_active && str)
+    {
+        Append(str, strnlen(str, BUF_LEN));
+    }
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(const std::string &str) noexcept
+{
+    if (m_active)
+    {
+        Append(str.c_str(), str.size());
+    }
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(char c) noexcept
+{
+    if (m_active && m_pos + 1 < BUF_LEN)
+    {
+        m_buf[m_pos++] = c;
+        m_buf[m_pos]   = '\0';
+    }
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(std::ios_base &(*fn)(std::ios_base &)) noexcept
+{
+    if (!m_active) 
+    {
+        return *this;
+    }
+
+    if (fn == std::hex) 
+    {
+        m_hexMode = true;
+    }
+    else if (fn == std::dec) 
+    {
+        m_hexMode = false;
+    }
+
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(decltype(std::setw(0)) w) noexcept
+{
+    if (m_active) 
+    {
+        m_width = w._M_n;
+    }
+
+    return *this;
+}
+
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::operator<<(decltype(std::setfill(' ')) f) noexcept
+{
+    if (m_active) 
+    {
+        m_fillChar = f._M_c;
+    }
+
+    return *this;
+}
+
+// printf-style: RT 큐를 통해 처리 (RT-safe)
+inline RtLog::NamedLogRtStream &RtLog::NamedLogRtStream::printf(const char *fmt, ...) noexcept
+{
+    if (!m_active || !fmt)
+    {
+        return *this;
+    }
+    m_submitted = true;
+    va_list args;
+    va_start(args, fmt);
+    Instance().LogRtNamedV(m_logName, m_logLevel, fmt, args);
+    va_end(args);
     return *this;
 }
 
