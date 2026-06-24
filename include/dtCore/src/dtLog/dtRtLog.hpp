@@ -651,6 +651,14 @@ public:
             {
                 filename = m_instance.AnnotateFilenameDatetime(fileBasename);
                 auto [dname, fname] = m_instance.SplitByDirectory(filename);
+                // check folder
+                std::error_code ec;
+                auto result = m_instance.EnsureDirectoryExistes(dname, ec);
+                if (!result)
+                {
+                    m_instance.m_logger->log(spdlog::level::err, "Cannot create directory '{}': {}", dname, ec.message());
+                }
+
                 (void)remove(fileBasename.c_str());
                 auto rtn = symlink(fname.c_str(), fileBasename.c_str());
                 if (rtn < 0) 
@@ -1896,6 +1904,33 @@ private:
         return {fname.substr(0, dirIndex + 1), fname.substr(dirIndex + 1)};   // '/' is included as directory name
     }
 
+    bool EnsureDirectoryExistes(const std::string &dname, std::error_code &ec)
+    {
+        if (dname.empty()) 
+        {
+            return true;
+        }
+
+        struct stat st {};
+        if (::stat(dname.c_str(), &st) == 0)
+        {
+            if (S_ISDIR(st.st_mode))
+            {
+                return true;
+            }
+
+            ec.assign(ENOTDIR, std::generic_category());
+            return false;
+        }
+
+        if (::mkdir(dname.c_str(), 0755) == 0)
+        {
+            return true;
+        }
+
+        ec.assign(errno, std::generic_category());
+        return false;
+    }
 };  // class RtLog
 
 using Log = RtLog;
