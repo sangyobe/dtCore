@@ -264,7 +264,16 @@ private:
             return;
         }
 
-        int n = snprintf(m_outBuf + m_outPos, OUT_BUF_SIZE - m_outPos, fmt, args...);
+        int n;
+        if constexpr (sizeof...(args) == 0)
+        {
+            n = snprintf(m_outBuf + m_outPos, OUT_BUF_SIZE - m_outPos, "%s", fmt);
+        }
+        else
+        {
+            n = snprintf(m_outBuf + m_outPos, OUT_BUF_SIZE - m_outPos, fmt, args...);
+        }
+
         if (n > 0)
         {
             m_outPos += std::min((size_t)n, OUT_BUF_SIZE - m_outPos);

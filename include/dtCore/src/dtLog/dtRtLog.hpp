@@ -817,6 +817,12 @@ public:
         Instance().LogRt(LogLevel::debug, "[RtLog] No need: FlushOn()");
     }
 
+    // dummy function for migration
+    static void FlushOn(const std::string &logger_name, LogLevel lvl)
+    {
+        Instance().LogRt(LogLevel::debug, "[RtLog] No need: FlushOn()");
+    }
+
     /**
      * Set log level of default logger
      * @param lvl log level
@@ -824,6 +830,20 @@ public:
     static void SetLogLevel(LogLevel lvl) 
     {
         Instance().SetLevel(lvl);
+    }
+
+    /**
+     * Set log level of custom logger
+     * @param logger_name name of custom logger
+     * @param lvl log level
+     */
+    static void SetLogLevel(const std::string &logger_name, LogLevel lvl)
+    {
+        std::shared_ptr<spdlog::logger> logger = spdlog::get(logger_name);
+        if (logger) 
+        {
+            logger->set_level(lvl);
+        }
     }
 
     /**
@@ -848,13 +868,48 @@ public:
         pattern_str += "%$%v";
         Sync();  // 이미 큐에 쌓인 메시지가 모두 이전 패턴으로 출력된 뒤 패턴을 변경
         auto &inst = Instance();
-        if (inst.m_logger) inst.m_logger->set_pattern(pattern_str);
+        if (inst.m_logger)
+        {
+            inst.m_logger->set_pattern(pattern_str);
+        }
     }
 
-    /**
-     * Default logger 로그 패턴 설정 (spdlog 원시 패턴 문자열 방식).
-     * @param raw_pattern spdlog 패턴 문자열 (e.g. "[%Y-%m-%d %H:%M:%S.%f][%^%l%$] %n: %v").
-     */
+    static void SetLogPattern(const std::string &logger_name, LogPattern pattern = LogPatternFlag::type|LogPatternFlag::time, const std::string &delimiter = "|")
+    {
+        std::string pattern_str = "%^";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::type))      ? std::string("%L") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::type_long)) ? std::string("%l") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::date))      ? std::string("%Y-%m-%d") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::time))      ? std::string("%H:%M:%S.%f") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::datetime))  ? std::string("%Y-%m-%d %H:%M:%S.%f") + delimiter :
+                       (pattern & static_cast<LogPattern>(LogPatternFlag::epoch))     ? std::string("%E.%f") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::elapsed))   ? std::string("%8i") + delimiter : "";
+        pattern_str += (pattern & static_cast<LogPattern>(LogPatternFlag::name))      ? std::string("%n") + delimiter : "";
+        pattern_str += "%$%v";
+        Sync();  // drain queued messages and flush all sinks before changing the pattern
+        std::shared_ptr<spdlog::logger> logger = spdlog::get(logger_name);
+        if (logger)
+        {
+            // Flush the named logger's sink buffer so that already-formatted (old-pattern)
+            // bytes are written out before the formatter is replaced.  Without this, the
+            // sink buffer would be flushed later with new-pattern messages appended,
+            // mixing two formats in the output.
+            logger->flush();
+            logger->set_pattern(pattern_str);
+        }
+    }
+
+    static void SetLogPattern(const std::string &logger_name, const std::string &raw_pattern)
+    {
+        Sync();  // drain queued messages and flush all sinks before changing the pattern
+        std::shared_ptr<spdlog::logger> logger = spdlog::get(logger_name);
+        if (logger)
+        {
+            logger->flush();
+            logger->set_pattern(raw_pattern);
+        }
+    }
+
     static void SetLogPattern(const std::string &raw_pattern)
     {
         Sync();  // 이미 큐에 쌓인 메시지가 모두 이전 패턴으로 출력된 뒤 패턴을 변경
@@ -1013,8 +1068,9 @@ public:
             clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, nullptr);
         }
 
-        // sink 내부 버퍼 flush (ColorStdoutSinkT는 64KB 내부 버퍼를 사용)
-        if (inst.m_logger) inst.m_logger->flush();
+        // Flush all registered loggers (default + every named logger created via Create()).
+        // Named loggers use their own sinks whose internal buffers are not flushed elsewhere.
+        spdlog::apply_all([](std::shared_ptr<spdlog::logger> _logger) { _logger->flush(); });
     }
 
     // Immediate raw output to STDERR, bypassing the drain thread and log queue.
@@ -1755,10 +1811,11 @@ private:
         // Rate-limit flush() to 100 ms regardless of message count.
         // Flushing even when count == 0 drains EAGAIN-retained bytes left in the sink buffer,
         // preventing the last few messages before a quiet period from being stuck.
+        // apply_all covers both the default logger and every named logger created via Create().
         const int64_t now_ns = MonoNow_ns();
-        if (m_logger && now_ns - m_lastFlush_ns >= 100'000'000LL) 
+        if (now_ns - m_lastFlush_ns >= 100'000'000LL)
         {  // 100 ms
-            m_logger->flush();
+            spdlog::apply_all([](std::shared_ptr<spdlog::logger> l) { l->flush(); });
             m_lastFlush_ns = now_ns;
         }
 
