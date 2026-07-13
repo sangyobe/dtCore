@@ -2131,10 +2131,7 @@ void TuiSinkT<Mutex>::sink_it_(const spdlog::details::log_msg &msg)
     }
 }
 
-template<typename T, typename = std::enable_if_t<
-    std::is_arithmetic<T>::value ||
-    std::is_pointer<T>::value ||
-    std::is_enum<T>::value>>
+template<typename T, typename>
 RtLog::LogRtStream &RtLog::LogRtStream::operator<<(T value) noexcept 
 {
     if (!m_active)
