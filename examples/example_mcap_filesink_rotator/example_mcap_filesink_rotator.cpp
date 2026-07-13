@@ -1,5 +1,7 @@
+#include "dtCore/src/dtDAQ/mcap/mcapImp.hpp"
+
 #include "dtCore/src/dtDAQ/mcap/dtDataSinkPBMcapRotator.hpp"
-#include "dtCore/src/dtLog/dtLog.h"
+#include "dtCore/dtLog"
 #include "dtProto/robot_msgs/ArbitraryState.pb.h"
 #include "dtProto/robot_msgs/RobotState.pb.h"
 #include <ratio>
