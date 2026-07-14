@@ -42,23 +42,38 @@ public:
         end();
     }
 
-    int open(std::string filename, bool bTruncate)
+    int open(std::string filename, bool truncate)
     {
-        if (bTruncate)
+        if (truncate)
         {
             fd_ = ::open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd_ < 0) {
+                LOG(err) << "[MCAP] Failed to open file \"" << filename << "\" for writing: " << strerror(errno);
+                return (-1);
+            }
+            size_ = 0;
         }
         else
         {
-            LOG(err) << "[MCAP] Failed to open file \"" << filename << "\" for writing: " << "support only truncate mode";
-            return (-1);
+            // Append mode: open (or create) without truncating, seek to end.
+            // size_ is initialized to the existing file size so that McapWriter
+            // calculates absolute file offsets correctly for the new sub-file.
+            // The result is a concatenated MCAP, which is valid per the MCAP spec
+            // CAUTION: Foxglove library supports concatenated MCAP. but, if another library will be used, then must be needed to check support or not
+            fd_ = ::open(filename.c_str(), O_WRONLY | O_CREAT, 0644);
+            if (fd_ < 0) {
+                LOG(err) << "[MCAP] Failed to open file \"" << filename << "\" for writing: " << strerror(errno);
+                return (-1);
+            }
+            off_t end = ::lseek(fd_, 0, SEEK_END);
+            if (end < 0) {
+                LOG(err) << "[MCAP] Failed to seek to end of file \"" << filename << "\": " << strerror(errno);
+                ::close(fd_);
+                fd_ = -1;
+                return (-1);
+            }
+            size_ = static_cast<uint64_t>(end);
         }
-
-        if (fd_ < 0) {
-            LOG(err) << "[MCAP] Failed to open file \"" << filename << "\" for writing: " << strerror(errno);
-            return (-1);
-        }
-        size_ = 0;
 
         return 0;
     }
@@ -176,7 +191,10 @@ public:
     void Publish(T& msg) override
     {
         if (!_is_open.load()) 
+        {
+            LOG(err) << "[MCAP] Publish error: file is not opened!!!";
             return;
+        }
 
         mcap::Timestamp publishTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
                                         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -198,7 +216,10 @@ public:
     void Write(const mcap::Message &msg)
     {
         if (!_is_open.load()) 
+        {
+            LOG(err) << "[MCAP] Write error: file is not opened!!!";
             return;
+        }
 
         const auto res = _writer.write(msg);
         if (!res.ok())

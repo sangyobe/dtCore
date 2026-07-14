@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     bRun.store(true);
 
     std::thread proc_pub_robot_state = std::thread([&bRun]() {
-        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "data/robot_state.mcap");
+        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::RobotStateTimeStamped> pub("RobotState", "data/robot_state.mcap", false, true);
         dtproto::robot_msgs::RobotStateTimeStamped msg;
 
         for (int ji = 0; ji < 3; ji++)
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     });
 
     std::thread proc_pub_arbitrary_state = std::thread([&bRun]() {
-        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::ArbitraryStateTimeStamped> pub("ArbitraryState", "data/arbitrary_state.mcap");
+        dt::DAQ::DataSinkPBMcap<dtproto::robot_msgs::ArbitraryStateTimeStamped> pub("ArbitraryState", "data/arbitrary_state.mcap", false, false);
         dtproto::robot_msgs::ArbitraryStateTimeStamped msg;
 
         for (int ji = 0; ji < 2; ji++)
