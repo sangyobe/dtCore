@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package dtproto.sensor_msgs;
+
+import "dtProto/std_msgs/Header.proto";
+
+enum ImageEncoding {
+  IMAGE_ENCODING_UNKNOWN = 0;
+  IMAGE_ENCODING_MONO8   = 1;  // 8비트 그레이스케일
+  IMAGE_ENCODING_RGB8    = 2;  // 8비트 RGB
+  IMAGE_ENCODING_RGBA8   = 3;  // 8비트 RGBA
+  IMAGE_ENCODING_BGR8    = 4;  // 8비트 BGR
+  IMAGE_ENCODING_BGRA8   = 5;  // 8비트 BGRA
+  IMAGE_ENCODING_16UC1   = 6;  // 16비트 unsigned, 1채널
+  IMAGE_ENCODING_32FC1   = 7;  // 32비트 float, 1채널
+}
+
+message Image {
+  uint32        width    = 1;
+  uint32        height   = 2;
+  ImageEncoding encoding = 3;  // 이미지 인코딩 형식
+  uint32        step     = 4;  // 한 행의 길이 (바이트)
+  bytes         data     = 5;  // 이미지 데이터bytes data = 0;
+}
+
+message ImageTimeStamped {
+  std_msgs.Header header = 1;
+  Image           img    = 2;
+}
