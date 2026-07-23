@@ -203,6 +203,10 @@ install(DIRECTORY ./include/dtCore
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include
 )
 
+install(DIRECTORY ./extlib/mcap/cpp/mcap/include
+        DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     artfConfigVersion.cmake

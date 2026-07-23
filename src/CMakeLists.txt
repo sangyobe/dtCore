@@ -5,7 +5,11 @@ if(BUILD_dtProto)
   # Find Protobuf installation
   # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
   set(protobuf_MODULE_COMPATIBLE TRUE)
-  find_package(Protobuf CONFIG REQUIRED)
+  if(CMAKE_CROSSCOMPILING)
+    find_package(Protobuf REQUIRED)
+  else()
+    find_package(Protobuf CONFIG REQUIRED)
+  endif()
   message(STATUS "Using protobuf ${Protobuf_VERSION}")
   message(STATUS "    Protobuf_INCLUDE_DIRS ${Protobuf_INCLUDE_DIRS}")
   message(STATUS "    Protobuf_LIBRARY ${Protobuf_LIBRARY}")

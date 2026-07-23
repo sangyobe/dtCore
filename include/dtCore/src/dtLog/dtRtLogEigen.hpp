@@ -11,6 +11,7 @@
    Eigen::VectorXf, VectorXd, VectorXi
    Eigen::Vector3f, Vector4d, ...
    Eigen::MatrixXf, MatrixXd, ...  (elements printed in column-major order)
+   std::vector<Eigen::VectorXd>   (nested array, e.g. [[1.0, 2.0], [3.0, 4.0]])
 
  Usage:
    #include <dtCore/src/dtLog/dtRtLogEigen.hpp>
@@ -18,6 +19,10 @@
    Eigen::VectorXf q(6);
    LOG_RT(info) << "joint_pos=" << q;
    // → joint_pos=[0.100000, 0.200000, ...]
+
+   std::vector<Eigen::VectorXd> trajs = { ... };
+   LOG(info) << "trajs=" << trajs;
+   // → trajs=[[1.000000, 2.000000], [3.000000, 4.000000]]
 */
 #pragma once
 #include "dtRtLog.hpp"
@@ -25,8 +30,10 @@
 
 namespace dt {
 
+namespace Log {
+
 template<typename Derived>
-RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Derived>& vec) noexcept 
+RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Derived>& vec) noexcept
 {
     if (!m_active)
     {
@@ -41,15 +48,15 @@ RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Deriv
     m_buf[m_pos++] = '[';
 
     const Eigen::Index n = vec.size();
-    for (Eigen::Index i = 0; i < n; ++i) 
+    for (Eigen::Index i = 0; i < n; ++i)
     {
-        if (!FormatElement(static_cast<double>(vec(i)))) 
+        if (!FormatElement(static_cast<double>(vec(i))))
         {
             AddTruncation();
             break;
         }
-        
-        if (i != n - 1) 
+
+        if (i != n - 1)
         {
             if (!AddSeparator())
             {
@@ -62,4 +69,43 @@ RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const Eigen::MatrixBase<Deriv
     return *this;
 }
 
-}  // namespace dt
+// Explicit specialization for std::vector<Eigen::VectorXd>.
+// Reuses the MatrixBase overload above to format each inner vector as [...].
+// Output example: [[1.000000, 2.000000], [3.000000, 4.000000]]
+template<>
+inline RtLog::LogRtStream&
+RtLog::LogRtStream::operator<<(const std::vector<Eigen::VectorXd>& vecs) noexcept
+{
+    if (!m_active)
+    {
+        return *this;
+    }
+
+    if (m_pos + 1 >= BUF_LEN)
+    {
+        return *this;
+    }
+
+    m_buf[m_pos++] = '[';
+
+    const size_t count = vecs.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        *this << vecs[i];
+
+        if (i != count - 1)
+        {
+            if (!AddSeparator())
+            {
+                break;
+            }
+        }
+    }
+
+    CloseArray();
+    return *this;
+}
+
+}   // namespace Log
+
+}   // namespace dt

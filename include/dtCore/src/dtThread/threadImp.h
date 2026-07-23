@@ -115,6 +115,15 @@ typedef struct _mtxInfo
 int GetCpuCount();
 
 /**
+ * Create a RT or a non-RT thread.
+ * @param[in, out] thread Thread attributes to create.
+ * @param realtime RT or non-RT
+ * @param addList Add thread id to internal list or not
+ * @return It returns 0 if successful. Otherwise it returns non-zero error code.
+ */
+int CreateThread(ThreadInfo &thread, bool realtime, bool addList);
+
+/**
  * Create a RT thread.
  * @param[in, out] thread Thread attributes to create.
  * @return It returns 0 if successful. Otherwise it returns non-zero error code.

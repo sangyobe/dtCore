@@ -11,7 +11,7 @@
 
 namespace dt
 {
-namespace Utils
+namespace Log
 {
 
 // ───────────────────────────────────────────────
@@ -281,7 +281,7 @@ private:
     }
 };
 
-};  // namespace Utils
+};  // namespace Log
 };  // namespace dt
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -289,14 +289,14 @@ private:
 // ═══════════════════════════════════════════════════════════════════════════
 
 template<typename... Args>
-void dt::Utils::RtTui::SetGroupV(int layoutIdx, int groupIdx, const char *labelHdr, Args... colHdrs) 
+void dt::Log::RtTui::SetGroupV(int layoutIdx, int groupIdx, const char *labelHdr, Args... colHdrs) 
 {
     const char *cols[] = { static_cast<const char*>(colHdrs)... };
     SetGroup(layoutIdx, groupIdx, labelHdr, cols, (int)(sizeof...(colHdrs)));
 }
 
 template<typename... Args>
-void dt::Utils::RtTui::SetRowFmt(int layoutIdx, int groupIdx, int rowIdx, const char *label, const char *format, Args... args) 
+void dt::Log::RtTui::SetRowFmt(int layoutIdx, int groupIdx, int rowIdx, const char *label, const char *format, Args... args) 
 {
     if (layoutIdx < 0 || layoutIdx >= MAX_LAYOUTS)
     {
@@ -333,7 +333,7 @@ void dt::Utils::RtTui::SetRowFmt(int layoutIdx, int groupIdx, int rowIdx, const 
 }
 
 template<typename... Cols>
-void dt::Utils::RtTui::SetRowCols(int layoutIdx, int groupIdx, int rowIdx, const char *label, Cols &&...cols) 
+void dt::Log::RtTui::SetRowCols(int layoutIdx, int groupIdx, int rowIdx, const char *label, Cols &&...cols) 
 {
     if (layoutIdx < 0 || layoutIdx >= MAX_LAYOUTS)
         return;
@@ -361,7 +361,7 @@ void dt::Utils::RtTui::SetRowCols(int layoutIdx, int groupIdx, int rowIdx, const
 }
 
 template<typename T, typename... Args>
-void dt::Utils::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI_DATA_COL_LEN], const char *format, T value, Args... rest) 
+void dt::Log::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI_DATA_COL_LEN], const char *format, T value, Args... rest) 
 {
     if (colIdx >= TUI_MAX_COLS)
     {
@@ -372,7 +372,7 @@ void dt::Utils::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI_DATA_C
     FormatColumnsRecursive(colIdx + 1, cols, format, rest...);
 }
 
-inline void dt::Utils::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI_DATA_COL_LEN], const char *format) 
+inline void dt::Log::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI_DATA_COL_LEN], const char *format) 
 {
     (void)colIdx;
     (void)cols;
@@ -380,7 +380,7 @@ inline void dt::Utils::RtTui::FormatColumnsRecursive(int colIdx, char cols[][TUI
 }
 
 template<typename T>
-void dt::Utils::RtTui::FormatColumn(char *buf, size_t buf_size, const char *format, T value) 
+void dt::Log::RtTui::FormatColumn(char *buf, size_t buf_size, const char *format, T value) 
 {
     if constexpr (std::is_same_v<T, bool>) 
     {

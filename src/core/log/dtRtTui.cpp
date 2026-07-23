@@ -13,7 +13,7 @@
 
 namespace dt 
 {
-namespace Utils 
+namespace Log 
 {
 
 // ═══════════════════════════════════════════════
@@ -999,8 +999,8 @@ void RtTui::FlushOutput()
             if (interval >= 1000) {
                 last_times = now;
                 char errbuf[64];
-                auto temp = strerror_r(errno, errbuf, sizeof(errbuf));
-                LOG(err).printf("[TUI] write failed (%s): dropped %zu bytes", errbuf, m_outPos - written);
+                const char* errstr = strerror_r(errno, errbuf, sizeof(errbuf));
+                LOG(err).printf("[TUI] write failed (%s): dropped %zu bytes", errstr, m_outPos - written);
             }
             m_outPos = written;
 
@@ -1024,5 +1024,5 @@ void RtTui::FlushOutput()
     m_outPos = remaining;
 }
 
-}  // namespace Utils
+}  // namespace Log
 }  // namespace dt
