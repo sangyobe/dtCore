@@ -90,6 +90,8 @@ namespace RtLogConstant
     inline constexpr size_t QUEUE_MSGLEN        = 1024;
     // Maximum delay between log output bursts (nanoseconds)
     inline constexpr long POLL_INTERVAL_NS      = 1'000'000L; // 1 ms
+    inline constexpr long FLUSH_INTERVAL_NS     = 20'000'000L;  // 20ms (50Hz)
+    inline constexpr long TUI_FLUSH_INTERVAL_NS = 40'000'000L;  // 40ms (25Hz)
     // Thread info
     inline constexpr size_t THREAD_STACK_SIZE   = 1024 * 1024; // 1MB
     inline constexpr int THREAD_CPU_ID          = 2;  // default CPU core(#2)

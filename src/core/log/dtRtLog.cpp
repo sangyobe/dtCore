@@ -434,8 +434,8 @@ void RtLog::Sync() noexcept
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, nullptr);
     }
 
-    // sink 내부 버퍼 flush (ColorStdoutSinkT는 64KB 내부 버퍼를 사용)
-    if (inst.m_logger) inst.m_logger->flush();
+    // Flush all registered logger sinks (default + any named loggers from Create())
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> l) { l->flush(); });
 }
 
 void RtLog::LogRaw(LogLevel lvl, const char *fmt, ...) noexcept
@@ -601,20 +601,21 @@ void RtLog::Poll() noexcept
         }
     }
 
-    // Rate-limit flush() to 100 ms regardless of message count.
+    // Rate-limit flush() to FLUSH_INTERVAL_NS ms regardless of message count.
     // Flushing even when count == 0 drains EAGAIN-retained bytes left in the sink buffer,
     // preventing the last few messages before a quiet period from being stuck.
     const int64_t now_ns = MonoNow_ns();
-    if (m_logger && now_ns - m_lastFlush_ns >= 100'000'000LL)
-    {  // 100 ms
-        m_logger->flush();
+    if (now_ns - m_lastFlush_ns >= RtLogConstant::FLUSH_INTERVAL_NS)
+    {   
+        // FLUSH_INTERVAL_NS ms — flush all registered loggers (default + any named loggers from Create())
+        spdlog::apply_all([](std::shared_ptr<spdlog::logger> l) { l->flush(); });
         m_lastFlush_ns = now_ns;
     }
 
-    // TUI tick: 25 Hz (40 ms) rate-limiter — drains queue, handles keys, renders
+    // TUI tick: (TUI_FLUSH_INTERVAL_NS ms) rate-limiter — drains queue, handles keys, renders
     if (m_tui)
     {
-        if (now_ns - m_tuiLastRender_ns >= 40'000'000LL)
+        if (now_ns - m_tuiLastRender_ns >= RtLogConstant::TUI_FLUSH_INTERVAL_NS)
         {
             m_tui->Tick();
             m_tuiLastRender_ns = now_ns;

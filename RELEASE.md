@@ -1,3 +1,56 @@
+#### [v1.16.1]
+(2026/6/15)
+##### dt::Log (dtRtLog)
+- (Hot fix) Create()로 생성한 로거의 flush() 호출 누락 수정
+- Logger flush 주기 변경: 100ms (10Hz) -> 20ms (50Hz)
+
+#### [v1.16.0]
+(2026/7/23)
+##### dt::Log (dtRtLog)
+- `LOG_U(logger_name, level)` 매크로 추가: `Create()`로 생성한 named logger에 RT-safe 스트림 로그 기록 (`NamedLogRtStream`)
+- `LOG_CONT(level)` 매크로 추가: prefix 없이 연속 출력을 위한 continuation 로그 스트림 (`LogRtContStream`). 명시적 `\n`으로 줄 바꿈, 21칸 자동 indent 적용
+- `Create(logName, fileBasename, ...)` 함수 추가: named logger 생성 및 spdlog 레지스트리 등록. `"_STDOUT_"` 지정 시 stdout 출력, 그 외 파일 출력
+- `SetLogLevel(logger_name, lvl)` / `SetLogPattern(logger_name, ...)` / `FlushOn(logger_name, lvl)` 오버로드 추가: named logger별 레벨·패턴 개별 설정 지원
+- `SetLogPattern()` raw spdlog 패턴 문자열 직접 지정 오버로드 추가
+- `Sync()` 함수 추가: 드레인 스레드가 현재 큐의 모든 메시지를 처리할 때까지 대기 (non-RT context 전용)
+- `ColorStdoutSinkT` 커스텀 sink 추가: 64KB 내부 버퍼 + O_NONBLOCK 단일 `write()`로 Xenomai primary mode 유지
+- `BasicFileSinkT` 커스텀 file sink 추가: 64KB 내부 버퍼 + 파일 크기 기반 rotation 지원
+- 드레인 스레드 적응형 polling 간격 적용: 큐 점유율에 따라 100μs ~ 1ms 자동 조정
+- 드레인 스레드 기본 CPU core #2 변경 (`THREAD_CPU_ID = 2`)
+- `config.yaml`의 `logFile` 경로에 디렉토리가 없을 경우 자동 생성
+- `example_rtlog_pattern`, `example_rtlog_create` 예제 추가
+##### dt::Thread
+- `CreateRtThread()` / `CreateNonRtThread()` 통합: `CreateThread(thread, realtime, addList)` 단일 함수로 API 일원화
+- 스레드 생성 진단 출력을 `dtTerm::Printf` → `LOG_CONT(info)`로 변경
+- `pthread_attr_setschedparam()` 누락 및 `CPU_SETSIZE` → `sizeof(cpuset)` 오류 수정
+##### dt::DAQ (dtDataSinkPBMcap)
+- MCAP 파일 손상 문제 수정 (ARTF-7): `handleWrite()` 내 partial write 재시도 루프 추가, `FileWriterCustom` 클래스로 직접 syscall `write()` 사용
+- append 모드 지원 추가: truncate 없이 파일 열기 가능. 기존 파일 크기를 `size_`에 반영하여 McapWriter 오프셋 계산 정확성 확보
+##### dtProto
+- `dtproto::sensor_msgs::Image` 메시지 정의 추가
+
+#### [v1.15.0]
+(2026/6/15)
+##### dt::Log (dtRtLog / dtRtTui) — 신규 모듈
+- `dt::Log::RtLog` 신규 도입: Xenomai 등 실시간 시스템을 위한 RT-safe 로거
+  - MPSC lock-free 큐(1024슬롯 × 1024B/msg) 기반, 드레인 스레드에서 비동기 출력
+  - `LOG(level)` 매크로: `LogRtStream` 스트림 인터페이스 (`operator<<`, `printf()`, `format()`)
+  - `LOG_RT_RAW(level, fmt, ...)` 매크로: STDERR 직접 출력 (드레인 스레드 미사용, 신호 핸들러·긴급 경로 전용)
+  - `std::hex`, `std::dec`, `std::setw`, `std::setfill` 스트림 조작자 지원
+  - Eigen `MatrixBase` 및 dt::Math `Vector` 계열 타입 `operator<<` 지원
+  - `std::vector<T>` 배열 형식(`[v0, v1, ...]`) 출력 지원
+  - 이전 `dt::Log` 클래스 대비 마이그레이션 편의를 위한 `using Log = RtLog` alias 추가
+- `dt::Log::RtTui` 신규 도입: 실시간 데이터 시각화를 위한 TUI 모드
+  - Area 1: 그룹/행 구조의 수치 데이터 표시 (`TUI_SET_GROUP`, `TUI_SET_ROW`, `TUI_SET_ROW_COLS`, `TUI_SET_TEXT_ROW`, `TUI_SET_TEXT_ROW_FMT`)
+  - Area 2: 컬러 레벨 표시 로그 출력 영역
+  - 멀티 레이아웃 지원: `[` / `]` 키로 레이아웃 전환, `TUI_SET_LAYOUT_NAME`으로 레이아웃명 설정
+  - `TUI_GET_PENDING_KEY()`: 키 입력 non-blocking 조회
+  - `TUI_COL(fmt, val)`: 컬럼별 포맷 개별 지정
+- `Initialize()` 내부에서 드레인 스레드 자동 생성으로 변경 (외부 생성 방식 제거)
+- `example_log_tui` 예제 추가
+##### dt::Thread
+- `CreateRtThread()` / `CreateNonRtThread()`에 `pthread_setname_np()` 추가: OS 스레드 이름 설정
+
 #### [v1.14.0]
 (2026/3/16)
 ##### 
