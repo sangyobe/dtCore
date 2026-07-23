@@ -257,7 +257,7 @@ std::size_t filesize(FILE *f)
     }
 #endif
 #endif
-    throw("Failed getting file size from fd", errno);
+    throw("Failed getting file size from fd");
     return 0; // will not be reached.
 }
 

@@ -147,7 +147,7 @@ public:
                 std::lock_guard<std::mutex> lock(_proc_mtx);
                 LOG(trace) << "RequestRobotInfo[" << _id << "] Finish()";
                 _responder.Finish(_response, grpc::Status::CANCELLED, this);
-                _call_state == CallState::WAIT_FINISH;
+                _call_state = CallState::WAIT_FINISH;
             }
         }
         return true;
