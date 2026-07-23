@@ -27,6 +27,8 @@
 
 namespace dt {
 
+namespace Log {
+
 template<uint16_t N, typename T>
 RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::Vector<N, T>& vec) noexcept 
 {
@@ -207,5 +209,7 @@ RtLog::LogRtStream& RtLog::LogRtStream::operator<<(const dt::Math::VectorX<T>& v
     CloseArray();
     return *this;
 }
+
+}  // namespace Log
 
 }  // namespace dt

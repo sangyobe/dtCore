@@ -13,7 +13,7 @@
 
 //* Other Lib Headers --------------------------------------------------------*/
 //* Project Headers ----------------------------------------------------------*/
-#include "dtCore/src/dtUtils/dtTerminal.h"
+#include <dtCore/dtLog>
 
 //* System-Specific Headers --------------------------------------------------*/
 
@@ -60,7 +60,7 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
     size_t  len = sizeof(core_count);
     int ret = sysctlbyname(SYSCTL_CORE_COUNT, &core_count, &len, 0, 0);
     if (ret) {
-        dtTerm::Printf("error while get core count %d\n", ret);
+        LOG_CONT(info).printf("error while get core count %d\n", ret);
         return -1;
     }
     mask->count = 0;
@@ -78,7 +78,7 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)
     for (core = 0; core < 8 * cpusetsize; core++) {
         if (CPU_ISSET(core, mask)) break;
     }
-    dtTerm::Printf("binding to core %d\n", core);
+    LOG_CONT(info).printf("binding to core %d\n", core);
     thread_affinity_policy_data_t policy = { core };
     mach_thread = pthread_mach_thread_np(thread);
     thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1);
@@ -115,45 +115,44 @@ int PrintThreadAttr(const pthread_attr_t *attr)
     int rtnParam;
 
     if (pthread_attr_getstacksize(attr, &memSize)) goto error;
-    dtTerm::Printf("  Stack size: %zd\n", memSize);
+    LOG_CONT(info).printf("  Stack size: %zd\n", memSize);
 
     if (pthread_attr_getguardsize(attr, &memSize)) goto error;
-    dtTerm::Printf("  Guard size: %zd\n", memSize);
+    LOG_CONT(info).printf("  Guard size: %zd\n", memSize);
 
     if (pthread_attr_getschedpolicy(attr, &rtnParam)) goto error;
     if (rtnParam == SCHED_FIFO)
-        dtTerm::Print("  Scheduling policy: SCHED_FIFO\n");
+        LOG_CONT(info).printf("  Scheduling policy: SCHED_FIFO\n");
     else if (rtnParam == SCHED_RR)
-        dtTerm::Print("  Scheduling policy: SCHED_RR\n");
+        LOG_CONT(info).printf("  Scheduling policy: SCHED_RR\n");
     else if (rtnParam == SCHED_OTHER)
-        dtTerm::Print("  Scheduling policy: SCHED_OTHER\n");
+        LOG_CONT(info).printf("  Scheduling policy: SCHED_OTHER\n");
     else
-        dtTerm::Print("  Scheduling policy: [unknown]\n");
+        LOG_CONT(info).printf("  Scheduling policy: [unknown]\n");
 
     if (pthread_attr_getschedparam(attr, &schedparam)) goto error;
-    dtTerm::Printf("  Scheduling priority: %d\n", schedparam.sched_priority);
+    LOG_CONT(info).printf("  Scheduling priority: %d\n", schedparam.sched_priority);
 
     if (pthread_attr_getdetachstate(attr, &rtnParam)) goto error;
     if (rtnParam == PTHREAD_CREATE_DETACHED)
-        dtTerm::Print("  Detach state: DETACHED\n");
+        LOG_CONT(info).printf("  Detach state: DETACHED\n");
     else if (rtnParam == PTHREAD_CREATE_JOINABLE)
-        dtTerm::Print("  Detach state: JOINABLE\n");
+        LOG_CONT(info).printf("  Detach state: JOINABLE\n");
     else
-        dtTerm::Print("[unknown]\n");
+        LOG_CONT(info).printf("  Detach state: [unknown]\n");
 
     if (pthread_attr_getinheritsched(attr, &rtnParam)) goto error;
     if (rtnParam == PTHREAD_INHERIT_SCHED)
-        dtTerm::Print("  Inherit scheduler: INHERIT\n");
+        LOG_CONT(info).printf("  Inherit scheduler: INHERIT\n");
     else if (rtnParam == PTHREAD_EXPLICIT_SCHED)
-        dtTerm::Print("  Inherit scheduler: EXPLICIT\n");
+        LOG_CONT(info).printf("  Inherit scheduler: EXPLICIT\n");
     else
-        dtTerm::Print("  Inherit scheduler: [unknown]\n");
+        LOG_CONT(info).printf("  Inherit scheduler: [unknown]\n");
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! PrintThreadAttr() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! PrintThreadAttr() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 #endif
@@ -175,7 +174,7 @@ int GetCpuCount(void)
             // success
             // maxCpuCnt = CPU_COUNT_S(setsize, cpusetp);
             maxCpuCnt = sysconf(_SC_NPROCESSORS_ONLN);
-            dtTerm::Printf("Max CPU Core Count: %d\n", maxCpuCnt);
+            LOG_CONT(info).printf("Max CPU Core Count: %d\n", maxCpuCnt);
             CPU_FREE(cpusetp);
             break;
         }
@@ -191,148 +190,113 @@ int GetCpuCount(void)
     return maxCpuCnt;
 }
 
-int CreateRtThread(ThreadInfo &thread)
+int CreateThread(ThreadInfo &thread, bool realtime, bool addList)
 {
     cpu_set_t cpuset;
     pthread_attr_t taskAttr;
     struct sched_param taskParam = {.sched_priority = thread.priority};
+    LOG(info).printf("========= %s =========", realtime ? "CreateRtThread()": "CreateNonRtThread()");
     if (maxCpuCnt == 0) GetCpuCount();
-
-    dtTerm::PrintTitle(" Create Thread ");
-    dtTerm::Printf("Thread Name: %s\n", thread.name);
+    LOG_CONT(info).printf("Thread Name: %s\n", thread.name);
 
     /* Step 1. Check CPU assign */
     if (thread.cpuIdx < 0 || thread.cpuIdx >= maxCpuCnt)
     {
-        dtTerm::Printf("CPU Index: %d ... user error: Check the CPU Index\n", thread.cpuIdx);
+        LOG_CONT(info).printf("CPU Index: %d ... user error: Check the CPU Index\n", thread.cpuIdx);
         thread.cpuIdx = 0;
-        dtTerm::Printf("CPU Index: default(%d) ... ok\n", thread.cpuIdx);
+        LOG_CONT(info).printf("CPU Index: default(%d) ... ok\n", thread.cpuIdx);
     }
     else
-        dtTerm::Printf("CPU Index: %d ... ok\n", thread.cpuIdx);
+        LOG_CONT(info).printf("CPU Index: %d ... ok\n", thread.cpuIdx);
     CPU_ZERO(&cpuset);               // removes all CPUs from cpuset
     CPU_SET(thread.cpuIdx, &cpuset); // add CPU idx to the cpuset
 
     /* Step 2. Thread attribute setting */
-    dtTerm::Print("Set pthread attribute ... ");
+    LOG_CONT(info).printf("Set pthread attribute ... ");
     if (pthread_attr_init(&taskAttr)) goto error;
     if (pthread_attr_setinheritsched(&taskAttr, PTHREAD_EXPLICIT_SCHED)) goto error;
-    if (pthread_attr_setschedpolicy(&taskAttr, SCHED_FIFO)) goto error;
-    if (pthread_attr_setaffinity_np(&taskAttr, CPU_SETSIZE, &cpuset)) goto error;
+    if (realtime)
+    {
+        if (pthread_attr_setschedpolicy(&taskAttr, SCHED_FIFO)) goto error;
+        if (pthread_attr_setschedparam(&taskAttr, &taskParam)) goto error;
+    }
+    else
+    {
+        if (pthread_attr_setschedpolicy(&taskAttr, SCHED_OTHER)) goto error;
+    }
+    if (pthread_attr_setaffinity_np(&taskAttr, sizeof(cpuset), &cpuset)) goto error;
     if (pthread_attr_setdetachstate(&taskAttr, PTHREAD_CREATE_JOINABLE)) goto error;
-    if (pthread_attr_setschedparam(&taskAttr, &taskParam)) goto error;
+    
     if (thread.stackSz > 0)
     {
         if (pthread_attr_setstacksize(&taskAttr, thread.stackSz)) goto error;
     }
-    dtTerm::Print("ok\n");
+    LOG_CONT(info).printf("ok\n");
 
     /* Step 3. Thread Create */
-    dtTerm::Print("Create RT Thread ... ");
+    LOG_CONT(info).printf("Create %s Thread ... ", realtime ? "RT" : "Non-RT");
     if (pthread_create(&thread.id, &taskAttr, thread.procFunc, thread.procFuncArg)) goto error;
 #if defined(__APPLE__)
     if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
 #endif
     pthread_setname_np(thread.id, thread.name);
-    dtTerm::Print("ok\n");
+    LOG_CONT(info).printf("ok\n");
 
     /* Step 4. Check and Destroy the Attribute */
     PrintThreadAttr(&taskAttr);
-    if (pthread_attr_destroy(&taskAttr)) goto error;
-    dtTerm::Print("Complete\n");
-    threadList[threadNum] = &thread.id;
-    thread.listIdx = threadNum;
-    threadNum++;
-    dtTerm::PrintEndLine();
+    if (pthread_attr_destroy(&taskAttr)) goto error_no_destroy;
+    LOG_CONT(info).printf("Complete\n");
+    
+    if (addList)
+    {
+        threadList[threadNum] = &thread.id;
+        thread.listIdx = threadNum;
+        threadNum++;
+    }
+    else
+    {
+        thread.listIdx = (-1);
+    }
+    LOG_CONT(info).printf("------------------------------------");
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! CreateRtThread() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
-    return -1;
+    pthread_attr_destroy(&taskAttr);
+error_no_destroy:
+    LOG_CONT(err).printf("!Error! %s : %s(%d)", realtime ? "CreateRtThread()": "CreateNonRtThread()", strerror(errno), errno);
+    LOG_CONT(info).printf("------------------------------------\n");
+    return (-1);
+}
+
+int CreateRtThread(ThreadInfo &thread)
+{
+    return (CreateThread(thread, true, true));
 }
 
 int CreateNonRtThread(ThreadInfo &thread)
 {
-    cpu_set_t cpuset;
-    pthread_attr_t taskAttr;
-    if (maxCpuCnt == 0) GetCpuCount();
-
-    dtTerm::PrintTitle(" Create Thread ");
-    dtTerm::Printf("Thread Name: %s\n", thread.name);
-
-    /* Step 1. Check CPU assign */
-    if (thread.cpuIdx < 0 || thread.cpuIdx >= maxCpuCnt)
-    {
-        dtTerm::Printf("CPU Index: %d ... user error: Check the CPU Index\n", thread.cpuIdx);
-        thread.cpuIdx = 0;
-        dtTerm::Printf("CPU Index: default(%d) ... ok\n", thread.cpuIdx);
-    }
-    else
-        dtTerm::Printf("CPU Index: %d ... ok\n", thread.cpuIdx);
-    CPU_ZERO(&cpuset);               // removes all CPUs from cpuset
-    CPU_SET(thread.cpuIdx, &cpuset); // add CPU idx to the cpuset
-
-    /* Step 2. Thread attribute setting */
-    dtTerm::Printf("Set pthread attribute ... ");
-    if (pthread_attr_init(&taskAttr)) goto error;
-    if (pthread_attr_setinheritsched(&taskAttr, PTHREAD_EXPLICIT_SCHED)) goto error;
-    if (pthread_attr_setschedpolicy(&taskAttr, SCHED_OTHER)) goto error;
-    if (pthread_attr_setaffinity_np(&taskAttr, sizeof(cpuset), &cpuset)) goto error;
-    if (pthread_attr_setdetachstate(&taskAttr, PTHREAD_CREATE_JOINABLE)) goto error;
-
-    if (thread.stackSz > 0)
-    {
-        if (pthread_attr_setstacksize(&taskAttr, thread.stackSz)) goto error;
-    }
-
-    dtTerm::Print("ok\n");
-
-    /* Step 3. Create Thread */
-    dtTerm::Print("Create Non-RT Thread ... ");
-    if (pthread_create(&thread.id, &taskAttr, thread.procFunc, thread.procFuncArg)) goto error;
-#if defined(__APPLE__)
-    if (pthread_setaffinity_np(thread.id, CPU_SETSIZE, &cpuset)) goto error;
-#endif
-    pthread_setname_np(thread.id, thread.name);
-    dtTerm::Print("ok\n");
-
-    /* Step 4. Check and Destroy the Attribute */
-    PrintThreadAttr(&taskAttr);
-    if (pthread_attr_destroy(&taskAttr)) goto error;
-
-    dtTerm::Print("Complete\n");
-    threadList[threadNum] = &thread.id;
-    thread.listIdx = threadNum;
-    threadNum++;
-    dtTerm::PrintEndLine();
-
-    return 0;
-
-error:
-    fprintf(stderr, "!Error! CreateNonRtThread() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
-    return -1;
+    return (CreateThread(thread, false, true));
 }
 
 int DeleteThread(ThreadInfo &thread)
 {
-    dtTerm::PrintTitle(" Delete Thread ");
-    dtTerm::Printf("Delete %s ... ", thread.name);
+    LOG(info).printf("Delete Thread ");
+    LOG_CONT(info).printf("  Delete %s ... ", thread.name);
 
     if (pthread_join(thread.id, NULL)) goto error;
-    dtTerm::Print("ok\n");
-    dtTerm::Print("Complete\n");
+    LOG_CONT(info).printf("  ok\n");
+    LOG_CONT(info).printf("  Complete\n");
 
-    threadList[thread.listIdx] = nullptr;
-    dtTerm::PrintEndLine();
+    if (thread.listIdx >= 0)
+    {
+        threadList[thread.listIdx] = nullptr;
+    }
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteThread() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteThread() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
@@ -340,48 +304,44 @@ int DeleteAllThread()
 {
     int num = 0;
 
-    dtTerm::PrintTitle(" Delete All Thread ");
+    LOG(info).printf("Delete All Thread ");
     for (int idx = threadNum - 1; idx >= 0; idx--)
     {
         if (threadList[idx] == nullptr) continue;
         if (pthread_join(*threadList[idx], NULL)) goto error;
         num++;
     }
-    dtTerm::Printf("Delete %d thread ... ok\n", num);
-    dtTerm::Print("Complete\n");
-    dtTerm::PrintEndLine();
+    LOG_CONT(info).printf("  Delete %d thread ... ok\n", num);
+    LOG_CONT(info).printf("Complete\n");
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteAllThread() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteAllThread() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
 
 int CreateSemaphore(SemInfo &semInfo, unsigned int initValue)
 {
-    dtTerm::PrintTitle(" Create Semaphore ");
-    dtTerm::Print("Initialize Semaphore ... ");
+    LOG(info).printf("Create Semaphore ");
+    LOG_CONT(info).printf("  Initialize Semaphore ... ");
 
 #if defined(__APPLE__)
     semInfo.sem = dispatch_semaphore_create(initValue);
 #else
     if (sem_init(&semInfo.sem, 0, initValue)) goto error; // 0 means semaphore may only be used by threads in the same process
 #endif
-    dtTerm::Print("ok\n");
-    dtTerm::Print("Complete\n");
+    LOG_CONT(info).printf("ok\n");
+    LOG_CONT(info).printf("Complete\n");
     semList[semNum] = &semInfo.sem;
     semInfo.listIdx = semNum;
     semNum++;
-    dtTerm::PrintEndLine();
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! CreateSemaphore() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! CreateSemaphore() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
@@ -400,23 +360,22 @@ void PostAllSemaphore()
 
 int DeleteSemaphore(SemInfo &semInfo)
 {
-    dtTerm::PrintTitle(" Delete Semaphore ");
-    dtTerm::Print("Destroy Semaphore ... ");
+    LOG(info).printf("Delete Semaphore ");
+    LOG_CONT(info).printf("  Destroy Semaphore ... ");
 #if defined(__APPLE__)
     dispatch_release(semInfo.sem);
 #else
     if (sem_destroy(&semInfo.sem)) goto error;
 #endif
-    dtTerm::Print("ok\n");
-    dtTerm::Print("Complete\n");
+    LOG_CONT(info).printf("ok\n");
+    LOG_CONT(info).printf("Complete\n");
     semList[semInfo.listIdx] = nullptr;
-    dtTerm::PrintEndLine();
+    // LOG_CONT(info).printfEndLine();
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteSemaphore() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteSemaphore() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
@@ -424,7 +383,7 @@ int DeleteAllSemaphore()
 {
     int num = 0;
 
-    dtTerm::PrintTitle(" Delete All Semaphore ");
+    LOG(info).printf("Delete All Semaphore ");
     for (int idx = semNum - 1; idx >= 0; idx--)
     {
         if (semList[idx] == nullptr) continue;
@@ -435,53 +394,47 @@ int DeleteAllSemaphore()
 #endif
         num++;
     }
-    dtTerm::Printf("Delete %d semaphore ... ok\n", num);
-    dtTerm::Print("Complete\n");
-    dtTerm::PrintEndLine();
+    LOG_CONT(info).printf("  Delete %d semaphore ... ok\n", num);
+    LOG_CONT(info).printf("Complete\n");
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteAllSemaphore() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteAllSemaphore() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
 int CreateMutex(MtxInfo &mtxInfo)
 {
-    dtTerm::PrintTitle(" Create Mutex ");
-    dtTerm::Print("Initialize Mutex ... ");
+    LOG(info).printf("Create Mutex ");
+    LOG_CONT(info).printf("  Initialize Mutex ... ");
     if (pthread_mutex_init(&mtxInfo.mutex, NULL)) goto error;
-    dtTerm::Print("ok\n");
-    dtTerm::Print("Complete\n");
+    LOG_CONT(info).printf("ok\n");
+    LOG_CONT(info).printf("Complete\n");
     mtxList[mtxNum] = &mtxInfo.mutex;
     mtxInfo.listIdx = mtxNum;
     mtxNum++;
-    dtTerm::PrintEndLine();
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! CreateMutex() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! CreateMutex() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
 int DeleteMutex(MtxInfo &mtxInfo)
 {
-    dtTerm::PrintTitle(" Delete Mutex ");
-    dtTerm::Print("Destroy Mutex ... ");
+    LOG(info).printf("Delete Mutex ");
+    LOG_CONT(info).printf("  Destroy Mutex ... ");
     if (pthread_mutex_destroy(&mtxInfo.mutex)) goto error;
-    dtTerm::Print("ok\n");
-    dtTerm::Print("Complete\n");
+    LOG_CONT(info).printf("ok\n");
+    LOG_CONT(info).printf("Complete\n");
     mtxList[mtxInfo.listIdx] = nullptr;
-    dtTerm::PrintEndLine();
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteMutex() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteMutex() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 
@@ -489,22 +442,20 @@ int DeleteAllMutex()
 {
     int num = 0;
 
-    dtTerm::PrintTitle(" Delete All Mutex ");
+    LOG(info).printf("Delete All Mutex ");
     for (int idx = mtxNum - 1; idx >= 0; idx--)
     {
         if (mtxList[idx] == nullptr) continue;
         if (pthread_mutex_destroy(mtxList[idx])) goto error;
         num++;
     }
-    dtTerm::Printf("Delete %d mutex ... ok\n", num);
-    dtTerm::Print("Complete\n");
-    dtTerm::PrintEndLine();
+    LOG_CONT(info).printf("  Delete %d mutex ... ok\n", num);
+    LOG_CONT(info).printf("Complete\n");
 
     return 0;
 
 error:
-    fprintf(stderr, "!Error! DeleteAllMutex() : %s(%d)\n", strerror(errno), errno);
-    dtTerm::PrintEndLine();
+    LOG(err).printf("!Error! DeleteAllMutex() : %s(%d)\n", strerror(errno), errno);
     return -1;
 }
 #endif
