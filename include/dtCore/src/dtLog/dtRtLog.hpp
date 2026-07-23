@@ -640,32 +640,12 @@ public:
     static void FlushOn(LogLevel lvl);
     static void FlushOn(const std::string &logger_name, LogLevel lvl);
 
-    // dummy function for migration
-    static void FlushOn(const std::string &logger_name, LogLevel lvl)
-    {
-        Instance().LogRt(LogLevel::debug, "[RtLog] No need: FlushOn()");
-    }
-
     /**
      * Set log level of default logger
      * @param lvl log level
      */
     static void SetLogLevel(LogLevel lvl);
     static void SetLogLevel(const std::string &logger_name, LogLevel lvl);
-
-    /**
-     * Set log level of custom logger
-     * @param logger_name name of custom logger
-     * @param lvl log level
-     */
-    static void SetLogLevel(const std::string &logger_name, LogLevel lvl)
-    {
-        std::shared_ptr<spdlog::logger> logger = spdlog::get(logger_name);
-        if (logger) 
-        {
-            logger->set_level(lvl);
-        }
-    }
 
     /**
      * Default logger 로그 패턴 설정 (flag 조합 방식).
