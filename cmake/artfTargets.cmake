@@ -71,8 +71,8 @@ set_target_properties(artf::dtcore_grpc PROPERTIES
     LINKER_LANGUAGE CXX
 )
 
-# Create imported target artf::proto
-add_library(artf::dtproto SHARED IMPORTED GLOBAL)
+# Create imported target artf::dtproto
+add_library(artf::dtproto STATIC IMPORTED GLOBAL)
 set_target_properties(artf::dtproto PROPERTIES
     IMPORTED_LOCATION ${_IMPORT_PREFIX}/lib/libdtproto.a
     INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
@@ -81,7 +81,7 @@ set_target_properties(artf::dtproto PROPERTIES
     LINKER_LANGUAGE CXX
 )
 
-add_library(artf::dtproto_grpc SHARED IMPORTED GLOBAL)
+add_library(artf::dtproto_grpc STATIC IMPORTED GLOBAL)
 set_target_properties(artf::dtproto_grpc PROPERTIES
     IMPORTED_LOCATION ${_IMPORT_PREFIX}/lib/libdtproto_grpc.a
     INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
