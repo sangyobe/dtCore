@@ -50,6 +50,21 @@ void RtLog::Initialize(
         return;
     }
 
+    // Auto-disable TUI when output cannot be rendered in a terminal
+    if (enableTui)
+    {
+        if (fileBasename == "_SYSLOG_")
+        {
+            enableTui = false;
+            LogRaw(LogLevel::warn, "[RtLog] syslog output requested: TUI auto-disabled");
+        }
+        else if (!isatty(STDOUT_FILENO))
+        {
+            enableTui = false;
+            LogRaw(LogLevel::warn, "[RtLog] stdout is not a terminal (daemon/redirected): TUI auto-disabled");
+        }
+    }
+
     // create spdlog logger with appropriate sinks
     m_instance.m_logger = std::make_shared<spdlog::logger>(logName);
     m_instance.m_logger->sinks().clear();
@@ -82,8 +97,15 @@ void RtLog::Initialize(
         m_instance.m_logger->sinks().push_back(console_sink);
     }
 
+    // syslog sink
+    if (fileBasename == "_SYSLOG_")
+    {
+        auto syslog_sink = std::make_shared<ColorSyslogSinkMt>(logName);
+        syslog_sink->set_pattern("[%L][%H:%M:%S.%f] %v");
+        m_instance.m_logger->sinks().push_back(syslog_sink);
+    }
     // basic file sink
-    if (!fileBasename.empty() && (fileBasename != "_STDOUT_"))
+    else if (!fileBasename.empty() && (fileBasename != "_STDOUT_"))
     {
         spdlog::filename_t filename = fileBasename;
         if (annotDatetime)
@@ -162,6 +184,12 @@ void RtLog::Create(
         console_sink->set_pattern("%^[%L][%H:%M:%S.%f]%$ %v");
         logger->sinks().push_back(console_sink);
     }
+    else if (fileBasename == "_SYSLOG_")
+    {
+        auto syslog_sink = std::make_shared<ColorSyslogSinkMt>(logName);
+        syslog_sink->set_pattern("[%L][%H:%M:%S.%f] %v");
+        logger->sinks().push_back(syslog_sink);
+    }
     else
     {
         spdlog::filename_t filename = fileBasename;
@@ -233,8 +261,23 @@ void RtLog::Terminate()
 
     m_instance.m_initialized.store(false, std::memory_order_release);
 
-    // flush all pending log messages
+    // Flush all sinks and destroy the default logger before returning.
+    //
+    // Problem without this: DrainAll() appends log entries to the sink's internal
+    // buffer via sink_it_(), but the actual write() to the fd is deferred until
+    // flush() or the sink destructor. spdlog::shutdown() clears the registry
+    // reference, but m_instance.m_logger still holds a shared_ptr, so the sink
+    // destructor (and its final blocking write) is deferred until m_logger is
+    // replaced in the next Initialize() call. Any LOG_RT_RAW() between
+    // Terminate() and Initialize() then appears in the terminal before the
+    // buffered output, despite having a later timestamp.
+    //
+    // Fix: explicitly flush all sinks, call shutdown() to drop the registry
+    // reference, then reset m_logger to trigger the sink destructor here — its
+    // blocking final flush completes before Terminate() returns.
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> l) { l->flush(); });
     spdlog::shutdown();
+    m_instance.m_logger.reset();
 }
 
 void RtLog::FlushOn(LogLevel lvl)
@@ -441,11 +484,14 @@ void RtLog::Sync() noexcept
 void RtLog::LogRaw(LogLevel lvl, const char *fmt, ...) noexcept
 {
     char buf[512];
+    static const long s_tz_offset = (tzset(), -timezone); // seconds east of UTC
 
-    // Timestamp (Cobalt-wrapped, no mode switch)
+    // Timestamp in local time using cached UTC offset (no localtime_r, no mode switch).
+    // write(STDERR_FILENO) below still causes a Xenomai secondary-mode switch.
     struct timespec ts{};
     clock_gettime(CLOCK_REALTIME, &ts);
-    auto sod = ts.tv_sec % 86400L;
+    auto local_sec = ts.tv_sec + s_tz_offset;
+    auto sod = local_sec % 86400L;
     int  hh  = (int)(sod / 3600);
     int  mm  = (int)((sod % 3600) / 60);
     int  ss  = (int)(sod % 60);
