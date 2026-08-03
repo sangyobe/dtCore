@@ -14,6 +14,7 @@
 #include <spdlog/sinks/base_sink.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <syslog.h>
 #include <cerrno>
 #include <sys/stat.h>
 #include <atomic>
@@ -304,6 +305,73 @@ private:
 
 using ColorStdoutSink   = ColorStdoutSinkT<spdlog::details::null_mutex>;
 using ColorStdoutSinkMt = ColorStdoutSinkT<std::mutex>;
+
+// ColorSyslogSinkT — syslog sink for use when fileBasename == "_SYSLOG_"
+//
+// Each log_msg is forwarded to syslog() with a mapped priority.
+// ANSI color codes are not inserted (syslog does not render them).
+// flush_() is a no-op: syslog() writes are always synchronous.
+//
+// Two aliases:
+//   ColorSyslogSink   — null_mutex, drain thread
+//   ColorSyslogSinkMt — std::mutex, multi-threaded usage
+template<typename Mutex>
+class ColorSyslogSinkT final : public spdlog::sinks::base_sink<Mutex>
+{
+    using Base = spdlog::sinks::base_sink<Mutex>;
+
+public:
+    explicit ColorSyslogSinkT(const std::string &ident = "", int facility = LOG_USER)
+        : m_ident(ident)
+    {
+        openlog(m_ident.empty() ? nullptr : m_ident.c_str(), LOG_PID | LOG_NDELAY, facility);
+    }
+
+    ~ColorSyslogSinkT() override
+    {
+        closelog();
+    }
+
+    ColorSyslogSinkT(const ColorSyslogSinkT &)            = delete;
+    ColorSyslogSinkT &operator=(const ColorSyslogSinkT &) = delete;
+
+protected:
+    void sink_it_(const spdlog::details::log_msg &msg) override
+    {
+        spdlog::memory_buf_t buf;
+        Base::formatter_->format(msg, buf);
+
+        size_t len = buf.size();
+        if (len > 0 && buf[len - 1] == '\n')
+        {
+            --len;
+        }
+
+        syslog(SyslogPriorityFor(msg.level), "%.*s", static_cast<int>(len), buf.data());
+    }
+
+    void flush_() override {}
+
+private:
+    std::string m_ident;
+
+    static int SyslogPriorityFor(spdlog::level::level_enum lvl) noexcept
+    {
+        switch (lvl)
+        {
+            case spdlog::level::trace:    return LOG_DEBUG;
+            case spdlog::level::debug:    return LOG_DEBUG;
+            case spdlog::level::info:     return LOG_INFO;
+            case spdlog::level::warn:     return LOG_WARNING;
+            case spdlog::level::err:      return LOG_ERR;
+            case spdlog::level::critical: return LOG_CRIT;
+            default:                      return LOG_INFO;
+        }
+    }
+};
+
+using ColorSyslogSink   = ColorSyslogSinkT<spdlog::details::null_mutex>;
+using ColorSyslogSinkMt = ColorSyslogSinkT<std::mutex>;
 
 // TUI Sink: Routes spdlog messages to RtTui instead of stdout
 // This sink is used when TUI mode is enabled (enableTui: true in config.yaml)
