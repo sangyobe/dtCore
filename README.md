@@ -65,6 +65,61 @@ LOG(level).printf(...)      // <-- dtTerm::Printf(...)
   * [ : 레이아웃 전환 (왼쪽 방향) ex) layout#3 -> layout#2
   * ] : 레이아웃 전환 (오른쪽 방향) ex) layout#1 -> layout#2
 
+#### dtLog / RtTui - 클립보드 복사
+
+TUI 모드에서 로그 영역(Area 2)의 텍스트를 마우스로 드래그하면 선택 영역이 클립보드에 복사됩니다.
+복사 성공 시 우측 하단 커맨드라인에 복사된 라인 수가 표시됩니다.
+
+**클립보드 방식 자동 감지**
+
+TUI 초기화 시 실행 환경을 자동으로 감지하여 사용 가능한 클립보드 방식을 선택합니다.
+
+| 우선순위 | 감지 조건 | 선택 방식 | 비고 |
+| :---: | :--- | :---: | :--- |
+| 1 | `$TMUX` 환경변수 존재 | OSC 52 | TMUX passthrough 경유 |
+| 2 | XTVERSION 응답이 WezTerm / kitty / iTerm2 / VTE ≥ 0.70 | OSC 52 | 터미널 자체 지원 |
+| 3 | OSC 52 read query에 터미널이 응답 | OSC 52 | 기타 호환 터미널 |
+| 4 | `$WAYLAND_DISPLAY` 존재 + `wl-copy` 설치됨 | wl-copy | Wayland 환경 |
+| 5 | `$DISPLAY` 존재 + `xclip` 설치됨 | xclip | X11 환경 |
+| 6 | `$DISPLAY` 존재 + `xsel` 설치됨 | xsel | X11 환경 |
+| - | 위 조건 미해당 | None (미지원) | - |
+
+**OSC 52 미지원 환경 (Windows Terminal 등)**
+
+Windows Terminal은 SSH 연결 시 OSC 52 클립보드 프로토콜을 지원하지 않습니다.
+이 경우 wl-copy / xclip / xsel도 사용할 수 없으므로, X11 포워딩을 통해 접속해야 합니다.
+
+```bash
+ssh -X user@host
+```
+
+접속 후 서버에 `xclip` 또는 `xsel`이 설치되어 있으면 클립보드 복사가 활성화됩니다.
+
+```bash
+sudo apt install xclip
+```
+
+**클립보드 미지원 시 표시 메시지**
+
+클립보드 방식이 감지되지 않은 상태에서 복사를 시도하면, 커맨드라인에 다음 메시지가 표시됩니다.
+
+```
+[Clipboard not supported]
+```
+
+**TUI 비정상 종료 후 터미널 복구**
+
+TUI 모드에서 프로그램이 비정상 종료되면 마우스 트래킹 모드가 활성화된 상태로 남아 터미널 입력이 정상적으로 동작하지 않을 수 있습니다.
+이 경우 다음 명령으로 터미널 상태를 복구할 수 있습니다.
+
+```bash
+setterm --initialize
+```
+
+이 명령은 DECSTR(`\e[!p`) 시퀀스를 포함한 터미널 초기화 문자열을 전송하여 마우스 트래킹 해제, 커서 복원 등을 수행하며, **화면의 로그 내용은 지워지지 않습니다.**
+
+> **참고:** `setterm`은 Linux 전용 명령어이며 `$TERM` 환경변수가 설정되어 있어야 합니다.
+
 ### dtDAQ
 * 센서 데이터 등의 저장을 지원하기 위한 utility library 입니다.
 * 현재 gRPC 기반 네트워크 전송을 지원합니다.

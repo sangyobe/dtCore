@@ -43,6 +43,8 @@ void RtLog::Initialize(
     bool annotDatetime,
     bool truncate)
 {
+    tzset();  // populate timezone global in NRT context before any RT code runs
+
     auto &m_instance = Instance();
     if (m_instance.m_initialized.load(std::memory_order_acquire))   // check initialize state
     {
@@ -222,6 +224,17 @@ void RtLog::Create(
     }
 
     spdlog::register_logger(logger);
+
+    // Register named logger level in RT-safe array.
+    // Create() is expected to be called at startup before RT tasks start.
+    size_t idx = inst.m_namedLevelCount.load(std::memory_order_acquire);
+    if (idx < RtLogConstant::MAX_NAMED_LOGGERS)
+    {
+        strncpy(inst.m_namedLevels[idx].name, logName.c_str(), sizeof(NamedLevel::name) - 1);
+        inst.m_namedLevels[idx].name[sizeof(NamedLevel::name) - 1] = '\0';
+        inst.m_namedLevels[idx].level.store(static_cast<int>(LogLevel::trace), std::memory_order_relaxed);
+        inst.m_namedLevelCount.store(idx + 1, std::memory_order_release);
+    }
 }
 
 void RtLog::Terminate()
@@ -298,9 +311,20 @@ void RtLog::SetLogLevel(LogLevel lvl)
 void RtLog::SetLogLevel(const std::string &logger_name, LogLevel lvl)
 {
     std::shared_ptr<spdlog::logger> logger = spdlog::get(logger_name);
-    if (logger) 
+    if (logger)
     {
         logger->set_level(lvl);
+    }
+
+    auto &inst = Instance();
+    size_t count = inst.m_namedLevelCount.load(std::memory_order_acquire);
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (strncmp(inst.m_namedLevels[i].name, logger_name.c_str(), sizeof(NamedLevel::name)) == 0)
+        {
+            inst.m_namedLevels[i].level.store(static_cast<int>(lvl), std::memory_order_release);
+            break;
+        }
     }
 }
 
@@ -484,7 +508,7 @@ void RtLog::Sync() noexcept
 void RtLog::LogRaw(LogLevel lvl, const char *fmt, ...) noexcept
 {
     char buf[512];
-    static const long s_tz_offset = (tzset(), -timezone); // seconds east of UTC
+    static const long s_tz_offset = -timezone; // timezone pre-populated by Initialize() → tzset()
 
     // Timestamp in local time using cached UTC offset (no localtime_r, no mode switch).
     // write(STDERR_FILENO) below still causes a Xenomai secondary-mode switch.
@@ -570,7 +594,7 @@ void RtLog::LogRtNamedV(const char *loggerName, LogLevel lvl, const char *format
         return;
     }
 
-    if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+    if (static_cast<int>(lvl) < FindNamedLevel(loggerName))
     {
         return;
     }
@@ -1002,12 +1026,14 @@ int RtLog::LogRtStream::FormatIntState(long long val, bool is_signed) noexcept
 
 RtLog::NamedLogRtStream::NamedLogRtStream(const char *logName, LogLevel lvl) noexcept
     : m_logLevel(lvl),
-      m_active(Instance().IsInitialized() && Instance().IsActiveLevel(lvl)),
+      m_active(false),
       m_submitted(false),
       m_pos(0)
 {
     strncpy(m_logName, logName, NAME_BUF_LEN - 1);
     m_logName[NAME_BUF_LEN - 1] = '\0';
+    auto &inst = Instance();
+    m_active = inst.IsInitialized() && (static_cast<int>(lvl) >= inst.FindNamedLevel(m_logName));
     m_buf[0] = '\0';
 }
 

@@ -2,16 +2,20 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <poll.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <atomic>
 #include <algorithm>
+#include <string>
+#include <thread>
 
 #include "dtCore/src/dtLog/dtRtTui.hpp"
 #include "dtCore/src/dtLog/dtRtLog.hpp"
 
-namespace dt 
+namespace dt
 {
 namespace Log 
 {
@@ -38,41 +42,127 @@ namespace ansi
 // ═══════════════════════════════════════════════
 // RtTui implementation
 // ═══════════════════════════════════════════════
-RtTui::RtTui() 
+RtTui::RtTui()
 {
     memset(m_outBuf, 0, sizeof(m_outBuf));
     m_oldTermios = std::make_unique<struct termios>();
 
     // Assign default layout names
-    for (int i = 0; i < MAX_LAYOUTS; ++i) 
+    for (int i = 0; i < MAX_LAYOUTS; ++i)
     {
         snprintf(m_layouts[i].name, sizeof(m_layouts[i].name), "Layout %d", i + 1);
     }
+
+    // Initialize clipboard mutex with PTHREAD_PRIO_NONE so the SCHED_OTHER clipboard
+    // worker thread is accepted by Xenomai Cobalt. Default protocol (PTHREAD_PRIO_INHERIT)
+    // causes cobalt_mutex_lock() to return EPERM for SCHED_OTHER (XNWEAK) threads.
+    pthread_mutexattr_t mattr;
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_NONE);
+    pthread_mutex_init(&m_clipMtx, &mattr);
+    pthread_mutexattr_destroy(&mattr);
+    pthread_cond_init(&m_clipCv, nullptr);
 }
 
-RtTui::~RtTui() 
+RtTui::~RtTui()
 {
     Stop();
+    pthread_mutex_destroy(&m_clipMtx);
+    pthread_cond_destroy(&m_clipCv);
 }
 
 // ───────────────────────────────────────────────
 // Init / shutdown
 // ───────────────────────────────────────────────
-bool RtTui::Init() 
+bool RtTui::Init()
 {
     // already initialized
     if (m_termActive.load(std::memory_order_acquire))
         return true;
 
+    m_clipThreadRun.store(true, std::memory_order_release);
+    m_clipThread = std::thread(&RtTui::ClipboardWorkerThreadFunc, this);
+
     TermInit();
+
+    // Detect clipboard method.
+    // TMUX is checked first: it is set on the server side (not the client terminal),
+    // so it is always present over SSH. tmux forwards OSC 52 to the outer terminal.
+    // For everything else, probe the terminal directly (no env-var forwarding needed).
+    if (getenv("TMUX") || ProbeOsc52())
+    {
+        m_clipMethod = ClipboardMethod::Osc52;
+    }
+    else if (getenv("WAYLAND_DISPLAY") &&
+            (access("/usr/bin/wl-copy",       X_OK) == 0 ||
+             access("/usr/local/bin/wl-copy", X_OK) == 0)) 
+    {
+        m_clipMethod = ClipboardMethod::WlCopy;
+    } 
+    else if (getenv("DISPLAY") && access("/usr/bin/xclip", X_OK) == 0) 
+    {
+        m_clipMethod = ClipboardMethod::XClip;
+    } 
+    else if (getenv("DISPLAY") && access("/usr/bin/xsel",  X_OK) == 0) 
+    {
+        m_clipMethod = ClipboardMethod::XSel;
+    } 
+    else 
+    {
+        m_clipMethod = ClipboardMethod::None;
+    }
+
     m_running.store(true, std::memory_order_release);
     return true;
 }
 
-void RtTui::Stop() 
+void RtTui::Stop()
 {
     m_running.store(false, std::memory_order_release);
-    TermRestore();  // m_termActive guards against double-call
+
+    // Join clipboard thread BEFORE TermRestore() closes m_stdout_fd.
+    // DoClipboardWrite() (OSC 52 path) writes directly to m_stdout_fd; joining here
+    // ensures no concurrent write races against the close inside TermRestore().
+    if (m_clipThread.joinable()) {
+        m_clipThreadRun.store(false, std::memory_order_release);
+        pthread_mutex_lock(&m_clipMtx);
+        pthread_cond_signal(&m_clipCv);
+        pthread_mutex_unlock(&m_clipMtx);
+        m_clipThread.join();
+    }
+
+    // Drain any remaining entries pushed by DrainAll() after the last Tick().
+    // The drain thread has already stopped, so TryPop() is safe here.
+    {
+        TuiLogEntry entry;
+        while (m_logQueue.TryPop(entry)) {
+            if (m_logCount < LOG_KEEP) {
+                m_logHistory[(m_logHead + m_logCount) % LOG_KEEP] = entry;
+                m_logCount++;
+            } else {
+                m_logHistory[m_logHead] = entry;
+                m_logHead = (m_logHead + 1) % LOG_KEEP;
+            }
+        }
+    }
+
+    // Capture before TermRestore() clears it: true only on the first Stop() call.
+    bool const firstStop = m_termActive.load(std::memory_order_acquire);
+
+    TermRestore();  // clear TUI, restore terminal to normal mode
+
+    // Print the most recent log lines as plain text after terminal restore.
+    // Guard with firstStop so the destructor's implicit Stop() call doesn't repeat the output.
+    if (firstStop && m_logCount > 0) {
+        size_t n     = std::min(m_logCount, (size_t)m_termRows);
+        size_t start = m_logCount - n;
+        for (size_t i = start; i < m_logCount; ++i) {
+            const TuiLogEntry &e = m_logHistory[(m_logHead + i) % LOG_KEEP];
+            size_t len = strnlen(e.msg, QUEUE_MSG_LEN);
+            ::write(STDOUT_FILENO, e.msg, len);
+            ::write(STDOUT_FILENO, "\n", 1);
+        }
+    }
 }
 
 // ───────────────────────────────────────────────
@@ -84,7 +174,7 @@ void RtTui::TermInit()
     tcgetattr(STDIN_FILENO, m_oldTermios.get());
 
     struct termios raw = *m_oldTermios;
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG);  // raw mode
+    raw.c_lflag &= ~(ECHO | ICANON);  // raw mode; keep ISIG so Ctrl+C sends SIGINT
     raw.c_cc[VMIN]  = 0;
     raw.c_cc[VTIME] = 0;  // non-blocking read
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
@@ -111,6 +201,10 @@ void RtTui::TermInit()
 
     AppendData_str(ansi::HIDE_CURSOR);
     AppendData_str(ansi::CLEAR_SCREEN);
+    // Enable SGR mouse: button-event tracking (motion only while button held) + extended coords
+    // ?1002h sends motion only when a button is pressed — avoids hover noise.
+    // ?1006h enables SGR extended coordinates for terminals wider than 223 columns.
+    AppendData_str("\x1b[?1002h\x1b[?1006h");
     FlushOutput();
 }
 
@@ -133,6 +227,8 @@ void RtTui::TermRestore()
     }
 
     m_outPos = 0;
+    // Disable SGR mouse tracking before restoring terminal
+    AppendData_str("\x1b[?1002l\x1b[?1006l");
     AppendData_str("\x1b[0m");
     AppendData_str(ansi::SHOW_CURSOR);
     AppendData_str(ansi::CLEAR_SCREEN);
@@ -180,7 +276,7 @@ void RtTui::SetLayoutName(int layoutIdx, const char *name)
 
     strncpy(m_layouts[layoutIdx].name, name, sizeof(m_layouts[layoutIdx].name) - 1);
     m_layouts[layoutIdx].name[sizeof(m_layouts[layoutIdx].name) - 1] = '\0';
-    m_layouts[layoutIdx].defined = true;
+    m_layouts[layoutIdx].defined.store(true, std::memory_order_relaxed);
 }
 
 // ───────────────────────────────────────────────
@@ -223,7 +319,7 @@ void RtTui::SetGroup(int layoutIdx, int groupIdx, const char *labelHdr, const ch
     }
 
     gh.active = true;
-    m_layouts[layoutIdx].defined = true;
+    m_layouts[layoutIdx].defined.store(true, std::memory_order_relaxed);
 }
 
 void RtTui::SetGroupNoHeader(int layoutIdx, int groupIdx) 
@@ -243,7 +339,7 @@ void RtTui::SetGroupNoHeader(int layoutIdx, int groupIdx)
     gh.ncols      = 0;
     gh.hideHeader = true;
     gh.active     = true;
-    m_layouts[layoutIdx].defined = true;
+    m_layouts[layoutIdx].defined.store(true, std::memory_order_relaxed);
 }
 
 // ───────────────────────────────────────────────
@@ -302,7 +398,7 @@ void RtTui::SetRowData(int layoutIdx, int groupIdx, int row_idx, const char *lab
 
     gdata.nrows = std::max(gdata.nrows, row_idx + 1);
     dbuf.dirty.store(true, std::memory_order_release);
-    layout.defined = true;
+    layout.defined.store(true, std::memory_order_relaxed);
 }
 
 void RtTui::SetTextRow(int layoutIdx, int groupIdx, int row_idx, const char *label, const char *text) noexcept
@@ -338,7 +434,7 @@ void RtTui::SetTextRow(int layoutIdx, int groupIdx, int row_idx, const char *lab
 
     gdata.nrows = std::max(gdata.nrows, row_idx + 1);
     dbuf.dirty.store(true, std::memory_order_release);
-    layout.defined = true;
+    layout.defined.store(true, std::memory_order_relaxed);
 }
 
 void RtTui::SetTextRowFmt(int layoutIdx, int groupIdx, int row_idx, const char* label, const char* fmt, ...) noexcept 
@@ -390,7 +486,7 @@ int RtTui::CalcArea1Height() const noexcept
 // ───────────────────────────────────────────────
 // Area 2 log API (RT-safe, uses MpscLogQueue)
 // ───────────────────────────────────────────────
-void RtTui::Log(spdlog::level::level_enum level, const char *fmt, ...) 
+void RtTui::Log(spdlog::level::level_enum level, const char *fmt, ...) noexcept
 {
     va_list ap;
     va_start(ap, fmt);
@@ -398,7 +494,7 @@ void RtTui::Log(spdlog::level::level_enum level, const char *fmt, ...)
     va_end(ap);
 }
 
-void RtTui::LogV(spdlog::level::level_enum level, const char *fmt, va_list args) {
+void RtTui::LogV(spdlog::level::level_enum level, const char *fmt, va_list args) noexcept {
     TuiLogEntry entry;
     entry.SetV(level, 0, fmt, args);
     m_logQueue.TryPush(entry);
@@ -439,16 +535,68 @@ void RtTui::Tick()
         }
     }
 
-    // 2) process key input
-    char kbuf[64]{};
+    // 2) update Area 2 geometry for mouse coordinate mapping (uses last frame's termRows)
+    {
+        int needed  = CalcArea1Height();
+        int area1_h = std::max(4, std::min(needed, m_termRows - 1 - AREA2_MIN_ROWS));
+        m_area2StartRow = area1_h + 1;
+        m_area2Height   = m_termRows - area1_h - 1;
+    }
+
+    // 3) boundary-scroll when dragging at Area 2 edges (runs before rendering)
+    if (m_mouseDragging) {
+        int logAreaTop    = m_area2StartRow + 1;
+        int logAreaBottom = m_area2StartRow + m_area2Height - 2;
+        if (m_dragCurrentTermRow < logAreaTop) {
+            m_scrollOffset++;
+            if (m_scrollOffset > m_logCount)
+                m_scrollOffset = m_logCount;
+        } else if (m_dragCurrentTermRow > logAreaBottom) {
+            if (m_scrollOffset > 0)
+                m_scrollOffset--;
+        }
+        // Update selection end to match the (possibly scrolled) current drag position
+        m_selEndLogIdx = TermRowToLogIdx(m_dragCurrentTermRow);
+    }
+
+    // 4) process key/mouse input
+    // 256 bytes: fits ~15 SGR mouse events per read, reducing partial-sequence splits
+    char kbuf[256]{};
     ssize_t kr = read(STDIN_FILENO, kbuf, sizeof(kbuf));
-    if (kr > 0) 
+    if (kr > 0)
     {
         ssize_t pos = 0;
-        while (pos < kr) 
+        while (pos < kr)
         {
             ssize_t remaining = kr - pos;
-            if (kbuf[pos] == '\x1b' && remaining >= 3 && kbuf[pos + 1] == '[') 
+
+            // Try SGR mouse sequence first: \x1b[<Pb;Px;Py[Mm]
+            int mBtn, mCol, mRow;
+            bool mRelease;
+            ssize_t mLen = ParseMouseSgr(kbuf + pos, remaining, mBtn, mCol, mRow, mRelease);
+            if (mLen > 0) {
+                HandleMouseEvent(mBtn, mCol, mRow, mRelease);
+                pos += mLen;
+                continue;
+            }
+
+            // If the sequence starts with \x1b[< it is a mouse event that failed to
+            // parse (e.g. truncated at the read boundary). Skip to 'M'/'m' terminator
+            // so the leftover digits/semicolons do not leak into m_lastKey.
+            if (remaining >= 3 &&
+                kbuf[pos] == '\x1b' && kbuf[pos + 1] == '[' && kbuf[pos + 2] == '<')
+            {
+                ssize_t skip = 3;
+                while (pos + skip < kr &&
+                       kbuf[pos + skip] != 'M' && kbuf[pos + skip] != 'm') {
+                    ++skip;
+                }
+                if (pos + skip < kr) ++skip;  // consume terminator
+                pos += skip;
+                continue;
+            }
+
+            if (kbuf[pos] == '\x1b' && remaining >= 3 && kbuf[pos + 1] == '[')
             {
                 ssize_t seq_len = (remaining >= 4 && kbuf[pos + 3] == '~') ? 4 : 3;
                 HandleKey(kbuf + pos, seq_len);
@@ -459,7 +607,7 @@ void RtTui::Tick()
                 HandleKey(kbuf + pos, remaining);
                 break;
             }
-            else 
+            else
             {
                 HandleKey(kbuf + pos, 1);
                 pos += 1;
@@ -467,7 +615,7 @@ void RtTui::Tick()
         }
     }
 
-    // 3) update terminal size and compute layout
+    // 5) update terminal size and compute layout
     TermGetSize(m_termRows, m_termCols);
     int rows    = m_termRows;
     int cols    = m_termCols;
@@ -475,9 +623,9 @@ void RtTui::Tick()
     int area1_h = std::max(4, std::min(needed, rows - 1 - AREA2_MIN_ROWS));
     int area2_h = rows - area1_h - 1;
 
-    // 4) clear screen on terminal resize or layout switch
+    // 6) clear screen on terminal resize or layout switch
     bool force_clear = m_layoutChanged.exchange(false, std::memory_order_relaxed);
-    if (rows != m_prevTermRows || cols != m_prevTermCols || force_clear) 
+    if (rows != m_prevTermRows || cols != m_prevTermCols || force_clear)
     {
         AppendData_str(ansi::CLEAR_SCREEN);
         FlushOutput();
@@ -485,7 +633,7 @@ void RtTui::Tick()
         m_prevTermCols = cols;
     }
 
-    // 5) render: pack Area1 + Area2 + cmd_line into one buffer → single write()
+    // 7) render: pack Area1 + Area2 + cmd_line into one buffer → single write()
     FlushOutput();
     m_outPos = 0;
     RenderArea1(1, area1_h, cols);
@@ -512,7 +660,7 @@ void RtTui::RenderArea1(int startRow, int height, int width)
     int widx = layout.dataWriteIdx.load(std::memory_order_acquire);
     int ridx = 1 - widx;
 
-    if (layout.dataBuf[widx].dirty.load(std::memory_order_acquire)) 
+    if (layout.dataBuf[widx].dirty.load(std::memory_order_acquire))
     {
         layout.dataWriteIdx.store(1 - widx, std::memory_order_release);
         layout.dataBuf[widx].dirty.store(false, std::memory_order_release);
@@ -680,6 +828,19 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     size_t startIdx    = (endIdx > visibleH) ? (endIdx - visibleH) : 0;
     size_t linesToShow = endIdx - startIdx;
 
+    // Store for mouse coordinate mapping (TermRowToLogIdx uses this next Tick)
+    m_lastRenderStartIdx = startIdx;
+
+    // Selection bounds (valid when dragging or selection is finalized)
+    bool   doHighlight = (m_hasSelection || (m_mouseDragging && m_dragHadMotion)) && m_logCount > 0;
+    size_t selMin = 0, selMax = 0;
+    if (doHighlight) {
+        selMin = std::min(m_selStartLogIdx, m_selEndLogIdx);
+        selMax = std::max(m_selStartLogIdx, m_selEndLogIdx);
+        if (selMin >= m_logCount) doHighlight = false;
+        if (doHighlight && selMax >= m_logCount) selMax = m_logCount - 1;
+    }
+
     // ── top border ──
     const char* titleColor = m_autoScroll ? ansi::FG_CYAN : ansi::FG_YELLOW;
     const char* titleText  = m_autoScroll ? "─[ LOG : AUTO SCROLL ]─" : "─[ LOG : PAUSED      ]─";
@@ -694,19 +855,40 @@ void RtTui::RenderArea2(int startRow, int height, int width)
     SafeSnprintf("\x1b[%d;%dH┐%s", startRow, width, ansi::RESET);
 
     // ── log lines ──
-    for (size_t r = 0; r < visibleH; ++r) 
+    for (size_t r = 0; r < visibleH; ++r)
     {
-        int screen_row = startRow + 1 + (int)r;
+        int    screen_row = startRow + 1 + (int)r;
+        size_t absIdx     = startIdx + r;
+        bool   inSel      = doHighlight && (r < linesToShow) &&
+                            absIdx >= selMin && absIdx <= selMax;
+
+        // Left border (always cyan, no highlight)
         SafeSnprintf("\x1b[%d;1H%s│%s", screen_row, ansi::FG_CYAN, ansi::RESET);
-        AppendData_str("\x1b[K");  // erase from col 2 to EOL before writing message
+
+        // cursor is now at col 2; apply highlight and erase to EOL
+        if (inSel) {
+            AppendData_str("\x1b[7m");   // reverse video ON
+            AppendData_str("\x1b[K");    // fill rest of line with reversed bg
+        } else {
+            AppendData_str("\x1b[K");    // erase normally
+        }
 
         if (r < linesToShow)
         {
-            const TuiLogEntry& e = m_logHistory[(m_logHead + startIdx + r) % LOG_KEEP];
+            const TuiLogEntry& e = m_logHistory[(m_logHead + absIdx) % LOG_KEEP];
             int maxMsg = width - 4;
-            SafeSnprintf(" %.*s", maxMsg, e.msg);
+            if (inSel) {
+                char stripped[QUEUE_MSG_LEN];
+                StripAnsi(e.msg, stripped, sizeof(stripped));
+                SafeSnprintf(" %.*s", maxMsg, stripped);
+            } else {
+                SafeSnprintf(" %.*s", maxMsg, e.msg);
+            }
         }
 
+        if (inSel) {
+            AppendData_str("\x1b[27m");  // reverse video OFF
+        }
         AppendData_str(ansi::RESET);
         SafeSnprintf("\x1b[%d;%dH%s│%s", screen_row, width, ansi::FG_CYAN, ansi::RESET);
     }
@@ -842,7 +1024,7 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
         if (curr_layout == 0) {
             new_layout = MAX_LAYOUTS - 1;
             for (int i = 0; i < MAX_LAYOUTS; i++) {
-                if (!m_layouts[i].defined) {
+                if (!m_layouts[i].defined.load(std::memory_order_relaxed)) {
                     new_layout = i;
                     break;
                 }
@@ -854,7 +1036,7 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
     }
     else if (c == ']') {
         // direction: >>
-        if (curr_layout == (MAX_LAYOUTS - 1) || !m_layouts[curr_layout].defined) {
+        if (curr_layout == (MAX_LAYOUTS - 1) || !m_layouts[curr_layout].defined.load(std::memory_order_relaxed)) {
             new_layout = 0;
         }
         else {
@@ -862,7 +1044,14 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
         }
     }
     else {
-        // Single-char key: relay to main loop
+        // TUI-internal keys: consumed here, not relayed to main loop via m_lastKey
+        if (c == '\x1b') {  // bare ESC: clear selection
+            m_hasSelection  = false;
+            m_mouseDragging = false;
+            return;
+        }
+
+        // All other single-char keys: relay to main loop
         m_lastKey.store(c, std::memory_order_relaxed);
         return;
     }
@@ -871,6 +1060,142 @@ void RtTui::HandleKey(const char* buf, ssize_t len)
     {
         m_layoutChanged.store(true, std::memory_order_relaxed);
     }
+}
+
+// ───────────────────────────────────────────────
+// SGR mouse sequence parser
+// Format: \x1b[<Pb;Px;PyM (press/motion) or \x1b[<Pb;Px;Pym (release)
+// Returns byte count consumed, or 0 if not a valid SGR mouse sequence.
+// ───────────────────────────────────────────────
+ssize_t RtTui::ParseMouseSgr(const char *buf, ssize_t len,
+                               int &btn, int &col, int &row,
+                               bool &isRelease) noexcept
+{
+    // Minimum: \x1b[<0;1;1M = 9 bytes
+    if (len < 9) return 0;
+    if (buf[0] != '\x1b' || buf[1] != '[' || buf[2] != '<') return 0;
+
+    int vals[3] = {0, 0, 0};
+    int vi = 0;
+    ssize_t i = 3;
+    for (; i < len && vi < 3; ++i) {
+        char c = buf[i];
+        if (c >= '0' && c <= '9') {
+            vals[vi] = vals[vi] * 10 + (c - '0');
+        } else if (c == ';') {
+            if (++vi >= 3) return 0;  // too many fields
+        } else if (c == 'M' || c == 'm') {
+            if (vi != 2) return 0;  // need exactly 3 fields
+            btn       = vals[0];
+            col       = vals[1];
+            row       = vals[2];
+            isRelease = (c == 'm');
+            return i + 1;
+        } else {
+            return 0;
+        }
+    }
+    return 0;  // incomplete sequence
+}
+
+// ───────────────────────────────────────────────
+// Mouse event handler
+// ───────────────────────────────────────────────
+void RtTui::HandleMouseEvent(int button, int col, int row, bool isRelease) noexcept
+{
+    (void)col;
+
+    // Scroll wheel (button 64=up, 65=down) — always active
+    if (button == 64) {
+        m_scrollOffset++;
+        if (m_scrollOffset > m_logCount) m_scrollOffset = m_logCount;
+        m_autoScroll = false;
+        return;
+    }
+    if (button == 65) {
+        if (m_scrollOffset > 0) m_scrollOffset--;
+        if (m_scrollOffset == 0) m_autoScroll = true;
+        return;
+    }
+
+    // Only handle left button (0=press/release, 32=motion+left held)
+    bool isLeftPress   = (button == 0 && !isRelease);
+    bool isLeftMotion  = (button == 32);
+    bool isLeftRelease = (button == 0 && isRelease);
+
+    int logAreaTop    = m_area2StartRow + 1;
+    int logAreaBottom = m_area2StartRow + m_area2Height - 2;
+
+    if (isLeftPress) {
+        if (row >= logAreaTop && row <= logAreaBottom) {
+            // Save prior selection state — checked at release to enable click-to-copy
+            m_hadSelectionOnPress = m_hasSelection;
+            m_savedSelStart       = m_selStartLogIdx;
+            m_savedSelEnd         = m_selEndLogIdx;
+
+            m_mouseDragging      = true;
+            m_dragHadMotion      = false;
+            m_hasSelection       = false;
+            m_autoScroll         = false;
+            m_dragCurrentTermRow = row;
+            m_selStartLogIdx     = TermRowToLogIdx(row);
+            m_selEndLogIdx       = m_selStartLogIdx;
+        } else {
+            // Clicked outside Area 2: clear selection
+            m_hadSelectionOnPress = false;
+            m_mouseDragging       = false;
+            m_dragHadMotion       = false;
+            m_hasSelection        = false;
+        }
+        return;
+    }
+
+    if (isLeftMotion && m_mouseDragging) {
+        m_dragHadMotion      = true;
+        m_dragCurrentTermRow = row;
+        m_selEndLogIdx       = TermRowToLogIdx(row);
+        return;
+    }
+
+    if (isLeftRelease && m_mouseDragging) {
+        m_mouseDragging      = false;
+        m_dragCurrentTermRow = row;
+        m_selEndLogIdx       = TermRowToLogIdx(row);
+
+        if (m_logCount == 0) return;
+
+        if (!m_dragHadMotion) {
+            // True single click (no motion events): copy PRIOR selection if one existed
+            if (m_hadSelectionOnPress) {
+                m_selStartLogIdx = m_savedSelStart;
+                m_selEndLogIdx   = m_savedSelEnd;
+                m_hasSelection   = true;
+                CopySelectionToClipboard();
+                m_hasSelection = false;
+            }
+            // No prior selection → nothing happens
+        } else {
+            // Drag (including 1-line same-row drag): show selection, Ctrl+C to copy
+            if (std::min(m_selStartLogIdx, m_selEndLogIdx) < m_logCount)
+                m_hasSelection = true;
+        }
+        return;
+    }
+}
+
+// ───────────────────────────────────────────────
+// Map a terminal row number → log history offset from m_logHead
+// ───────────────────────────────────────────────
+size_t RtTui::TermRowToLogIdx(int termRow) const noexcept
+{
+    int logAreaTop = m_area2StartRow + 1;
+    int visIdx = termRow - logAreaTop;
+    if (visIdx < 0) visIdx = 0;
+
+    size_t idx = m_lastRenderStartIdx + (size_t)visIdx;
+    if (m_logCount == 0) return 0;
+    if (idx >= m_logCount) idx = m_logCount - 1;
+    return idx;
 }
 
 // ───────────────────────────────────────────────
@@ -886,7 +1211,7 @@ void RtTui::RenderCmdLine(int row, int width)
     int  sw_pos = 0;
     for (int i = 0; i < MAX_LAYOUTS && sw_pos < (int)sizeof(switcher) - 20; ++i) 
     {
-        if (!m_layouts[i].defined)
+        if (!m_layouts[i].defined.load(std::memory_order_relaxed))
         {
             continue;
         }
@@ -923,11 +1248,22 @@ void RtTui::RenderCmdLine(int row, int width)
         snprintf(keyStr, sizeof(keyStr), "0x%02X", (unsigned char)lastKey);
     }
 
-    SafeSnprintf("\x1b[%d;1H%s LAYOUTS: %s%s%s  CMD: %s%-10s%s\x1b[K",
+    SafeSnprintf("\x1b[%d;1H%s LAYOUTS: %s%s%s  CMD: %s%-10s%s",
                   row,
                   ansi::FG_GRAY,
                   ansi::FG_MAGENTA, switcher, ansi::RESET,
                   ansi::FG_WHITE, keyStr, ansi::RESET);
+
+    // Selection / copy feedback
+    if (m_copyFeedbackTicks > 0) {
+        --m_copyFeedbackTicks;
+        if (m_clipUnsupported)
+            AppendData_str("  \x1b[31m[Clipboard not supported]\x1b[m");
+        else
+            SafeSnprintf("  \x1b[32m[Copied: %zu lines]\x1b[m", m_copiedLineCount);
+    }
+
+    AppendData_str("\x1b[K");  // clear remainder of line
 }
 
 // ───────────────────────────────────────────────
@@ -959,7 +1295,280 @@ void RtTui::AppendData_hbar(int n)
     }
 }
 
-void RtTui::FlushOutput() 
+// ───────────────────────────────────────────────
+// ANSI code stripper
+// ───────────────────────────────────────────────
+void RtTui::StripAnsi(const char *src, char *dst, size_t dstLen) noexcept
+{
+    size_t di = 0;
+    for (size_t si = 0; src[si] && di + 1 < dstLen; ++si) {
+        if (src[si] != '\x1b') {
+            dst[di++] = src[si];
+            continue;
+        }
+        // ESC sequence
+        ++si;
+        if (!src[si]) break;
+        if (src[si] == '[') {
+            // CSI: skip until a letter in @-~ range terminates it
+            ++si;
+            while (src[si] && !(src[si] >= '@' && src[si] <= '~')) ++si;
+        } else if (src[si] == ']') {
+            // OSC: skip until BEL or ESC
+            ++si;
+            while (src[si] && src[si] != '\x07' && src[si] != '\x1b') ++si;
+        }
+        // si will be incremented by the outer for loop
+    }
+    dst[di] = '\0';
+}
+
+// ───────────────────────────────────────────────
+// Extract selected lines as plain text
+// ───────────────────────────────────────────────
+std::string RtTui::ExtractSelectedText() const
+{
+    if (m_logCount == 0) return {};
+
+    size_t selMin = std::min(m_selStartLogIdx, m_selEndLogIdx);
+    size_t selMax = std::max(m_selStartLogIdx, m_selEndLogIdx);
+    if (selMin >= m_logCount) return {};
+    if (selMax >= m_logCount) selMax = m_logCount - 1;
+
+    std::string result;
+    char stripped[QUEUE_MSG_LEN];
+    for (size_t i = selMin; i <= selMax; ++i) {
+        const TuiLogEntry &e = m_logHistory[(m_logHead + i) % LOG_KEEP];
+        StripAnsi(e.msg, stripped, sizeof(stripped));
+        result += stripped;
+        result += '\n';
+    }
+    return result;
+}
+
+// ───────────────────────────────────────────────
+// Signal clipboard worker thread
+// ───────────────────────────────────────────────
+void RtTui::CopySelectionToClipboard()
+{
+    if (m_clipMethod == ClipboardMethod::None) {
+        m_clipUnsupported   = true;
+        m_copyFeedbackTicks = 25;
+        return;
+    }
+
+    std::string text = ExtractSelectedText();
+    if (text.empty()) return;
+
+    size_t nLines = (m_selEndLogIdx >= m_selStartLogIdx)
+                    ? (m_selEndLogIdx - m_selStartLogIdx + 1)
+                    : (m_selStartLogIdx - m_selEndLogIdx + 1);
+
+    m_clipUnsupported = false;
+
+    if (m_clipMethod == ClipboardMethod::Osc52) 
+    {
+        // Write OSC 52 directly into m_outBuf (we are in drain-thread / Tick() context).
+        // FlushOutput() at step 7 of Tick() sends it atomically with the render frame,
+        // avoiding concurrent writes to the PTY from the clipboard worker thread.
+        std::string encoded = Base64Encode(text);
+        std::string seq = "\x1b]52;c;" + encoded + "\x07";
+        AppendData(seq.c_str(), seq.size());
+    } 
+    else 
+    {
+        // wl-copy / xclip / xsel: delegate to worker thread (requires fork/exec)
+        pthread_mutex_lock(&m_clipMtx);
+        m_clipText    = std::move(text);
+        m_clipPending = true;
+        pthread_mutex_unlock(&m_clipMtx);
+        pthread_cond_signal(&m_clipCv);
+    }
+
+    // Feedback display: ~1 second at 25 Hz
+    m_copiedLineCount   = nLines;
+    m_copyFeedbackTicks = 25;
+}
+
+// ───────────────────────────────────────────────
+// Base64 encoder (for OSC 52)
+// ───────────────────────────────────────────────
+std::string RtTui::Base64Encode(const std::string &input)
+{
+    static const char kTable[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    out.reserve((input.size() + 2) / 3 * 4);
+    for (size_t i = 0; i < input.size(); i += 3) {
+        unsigned char b0 = (unsigned char)input[i];
+        unsigned char b1 = (i + 1 < input.size()) ? (unsigned char)input[i + 1] : 0;
+        unsigned char b2 = (i + 2 < input.size()) ? (unsigned char)input[i + 2] : 0;
+        out += kTable[b0 >> 2];
+        out += kTable[((b0 & 3) << 4) | (b1 >> 4)];
+        out += (i + 1 < input.size()) ? kTable[((b1 & 0xf) << 2) | (b2 >> 6)] : '=';
+        out += (i + 2 < input.size()) ? kTable[b2 & 0x3f] : '=';
+    }
+    return out;
+}
+
+// ───────────────────────────────────────────────
+// Fork/exec helper — pipe text to command's stdin
+// Blocking: must be called from the clipboard worker thread only.
+// ───────────────────────────────────────────────
+void RtTui::RunPipe(const char *cmd, const std::string &text) noexcept
+{
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return;
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child: redirect stdin from pipe and exec
+        if (dup2(pipefd[0], STDIN_FILENO) < 0) _exit(1);
+        close(pipefd[0]);
+        close(pipefd[1]);
+        execl("/bin/sh", "sh", "-c", cmd, nullptr);
+        _exit(1);
+    } else if (pid > 0) {
+        // Parent: write text then close; blocking wait is OK in worker thread
+        close(pipefd[0]);
+        const char *p   = text.c_str();
+        size_t      rem = text.size();
+        while (rem > 0) {
+            ssize_t n = write(pipefd[1], p, rem);
+            if (n <= 0) break;
+            p   += n;
+            rem -= (size_t)n;
+        }
+        close(pipefd[1]);
+        waitpid(pid, nullptr, 0);
+    } else {
+        close(pipefd[0]);
+        close(pipefd[1]);
+    }
+}
+
+
+// Probe for OSC 52 support. Two-stage detection:
+//   1. XTVERSION (\x1b[>q) — identifies terminal by name.
+//      Windows Terminal supports OSC 52 write but NOT the read query (\x1b]52;c;?\x07),
+//      so it must be detected via name, not via read response.
+//   2. OSC 52 read query — for terminals that respond to the read probe.
+// Must be called after TermInit() (stdin in raw + O_NONBLOCK mode).
+bool RtTui::ProbeOsc52() noexcept
+{
+    // ── Stage 1: XTVERSION (\x1b[>q) ────────────────────────────────────────
+    // Terminals that support OSC 52 write typically respond to XTVERSION with
+    // their name and version: \x1bP>|<Name>(<Version>)\x1b\\
+    { char d[64]; while (::read(STDIN_FILENO, d, sizeof(d)) > 0) {} }  // drain
+
+    if (::write(STDOUT_FILENO, "\x1b[>q", 4) == 4) {
+        struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
+        if (poll(&pfd, 1, 200) > 0 && (pfd.revents & POLLIN)) {
+            char buf[512]{};
+            ssize_t n = ::read(STDIN_FILENO, buf, sizeof(buf) - 1);
+            if (n > 0) {
+                buf[n] = '\0';
+                // Terminals confirmed to support OSC 52 write via SSH.
+                // Windows Terminal is intentionally excluded: it responds to XTVERSION
+                // but does NOT support OSC 52 write through SSH sessions.
+                if (strstr(buf, "WezTerm") ||
+                    strstr(buf, "kitty")   ||
+                    strstr(buf, "iTerm2"))
+                    return true;
+                // VTE: OSC 52 write added in version 0.70
+                const char *vte = strstr(buf, "VTE(");
+                if (vte) {
+                    int major = 0, minor = 0;
+                    if (sscanf(vte + 4, "%d.%d", &major, &minor) == 2 &&
+                        (major > 0 || minor >= 70))
+                        return true;
+                }
+            }
+        }
+    }
+
+    // ── Stage 2: OSC 52 read query (\x1b]52;c;?\x07) ────────────────────────
+    // For terminals not identified above that respond to the clipboard read request.
+    { char d[64]; while (::read(STDIN_FILENO, d, sizeof(d)) > 0) {} }  // drain
+
+    if (::write(STDOUT_FILENO, "\x1b]52;c;?\x07", 9) <= 0) return false;
+
+    struct pollfd pfd2 = {STDIN_FILENO, POLLIN, 0};
+    if (poll(&pfd2, 1, 150) <= 0 || !(pfd2.revents & POLLIN)) return false;
+
+    char buf2[256]{};
+    ssize_t n2 = ::read(STDIN_FILENO, buf2, sizeof(buf2) - 1);
+    if (n2 <= 0) return false;
+
+    // Response: \x1b]52;c;<base64_data>\x07 or \x1b]52;c;\x07 (empty clipboard)
+    for (ssize_t i = 0; i + 4 < n2; ++i) {
+        if (buf2[i]   == '\x1b' && buf2[i+1] == ']' &&
+            buf2[i+2] == '5'   && buf2[i+3] == '2'  && buf2[i+4] == ';')
+            return true;
+    }
+    return false;
+}
+
+// ───────────────────────────────────────────────
+// Clipboard worker thread — waits for copy requests, never blocks drain thread
+// ───────────────────────────────────────────────
+void RtTui::ClipboardWorkerThreadFunc()
+{
+    while (true) {
+        std::string text;
+        pthread_mutex_lock(&m_clipMtx);
+        while (!m_clipPending && m_clipThreadRun.load(std::memory_order_relaxed)) {
+            pthread_cond_wait(&m_clipCv, &m_clipMtx);
+        }
+        bool const shouldExit = !m_clipThreadRun.load(std::memory_order_relaxed);
+        if (m_clipPending) {
+            text          = std::move(m_clipText);
+            m_clipPending = false;
+        }
+        pthread_mutex_unlock(&m_clipMtx);
+
+        if (!text.empty()) DoClipboardWrite(text);
+        if (shouldExit) break;
+    }
+}
+
+// ───────────────────────────────────────────────
+// Actual clipboard write (runs in worker thread)
+// ───────────────────────────────────────────────
+void RtTui::DoClipboardWrite(const std::string &text) noexcept
+{
+    if (text.empty()) return;
+
+    switch (m_clipMethod) {
+    case ClipboardMethod::Osc52: {
+        std::string encoded = Base64Encode(text);
+        std::string seq = "\x1b]52;c;" + encoded + "\x07";
+        // Use blocking STDOUT_FILENO (not m_stdout_fd which is O_NONBLOCK) so the
+        // full sequence is always written. The clipboard worker thread may block here.
+        const char *p   = seq.c_str();
+        size_t      rem = seq.size();
+        while (rem > 0) {
+            ssize_t n = ::write(STDOUT_FILENO, p, rem);
+            if (n > 0) { p += (size_t)n; rem -= (size_t)n; }
+            else break;
+        }
+        break;
+    }
+    case ClipboardMethod::WlCopy:
+        RunPipe("wl-copy", text);
+        break;
+    case ClipboardMethod::XClip:
+        RunPipe("xclip -selection clipboard", text);
+        break;
+    case ClipboardMethod::XSel:
+        RunPipe("xsel --clipboard --input", text);
+        break;
+    case ClipboardMethod::None:
+        break;
+    }
+}
+
+void RtTui::FlushOutput()
 {
     if (m_outPos == 0)
     {
@@ -983,7 +1592,7 @@ void RtTui::FlushOutput()
                 // Wait up to 10 ms for the terminal to drain before giving up.
                 // A timeout is normal backpressure — not an error.
                 struct pollfd pfd = {m_stdout_fd, POLLOUT, 0};
-                if (poll(&pfd, 1, 10) > 0 && (pfd.revents & POLLOUT))
+                if (poll(&pfd, 1, 3) > 0 && (pfd.revents & POLLOUT))
                 {
                     continue;
                 }

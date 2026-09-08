@@ -5,6 +5,9 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <atomic>
+#include <string>
+#include <thread>
+#include <pthread.h>
 #include <spdlog/spdlog.h>
 
 #include "dtLogQueue.hpp"
@@ -80,7 +83,7 @@ public:
         TuiGroupHeader   groupHeaders[TUI_MAX_GROUPS]{};
         TuiDataBuffer    dataBuf[2]{};
         std::atomic<int> dataWriteIdx{0};
-        bool             defined{false};  // true once any group/row is configured
+        std::atomic<bool> defined{false};
     };
 
     // Per-column format+value pair for set_row_cols().
@@ -158,8 +161,8 @@ public:
         __attribute__((format(printf, 6, 7)));
 
     // ── Area 2 log API (RT-safe) ─────────────────
-    void Log(spdlog::level::level_enum level, const char *fmt, ...);
-    void LogV(spdlog::level::level_enum level, const char *fmt, va_list args);
+    void Log(spdlog::level::level_enum level, const char *fmt, ...) noexcept;
+    void LogV(spdlog::level::level_enum level, const char *fmt, va_list args) noexcept;
 
     char PopPendingKey() 
     {
@@ -204,6 +207,39 @@ private:
     char                m_outBuf[OUT_BUF_SIZE];
     size_t              m_outPos{0};
 
+    // Clipboard mechanism
+    enum class ClipboardMethod { None, Osc52, WlCopy, XClip, XSel };
+    ClipboardMethod     m_clipMethod{ClipboardMethod::None};
+    std::string         m_clipText;
+    // Use raw pthread primitives with PTHREAD_PRIO_NONE so the SCHED_OTHER clipboard
+    // worker thread is not rejected by Xenomai Cobalt's priority-inheritance check.
+    pthread_mutex_t     m_clipMtx;
+    pthread_cond_t      m_clipCv;
+    bool                m_clipPending{false};
+    std::atomic<bool>   m_clipThreadRun{false};
+    std::thread         m_clipThread;
+
+    // Mouse selection state
+    bool                m_mouseDragging{false};
+    bool                m_hasSelection{false};
+    bool                m_dragHadMotion{false};  // true if any motion event arrived during current drag
+    bool                m_hadSelectionOnPress{false};  // selection state saved at mouse press
+    int                 m_dragCurrentTermRow{0};
+    size_t              m_selStartLogIdx{0};
+    size_t              m_selEndLogIdx{0};
+    size_t              m_savedSelStart{0};
+    size_t              m_savedSelEnd{0};
+
+    // Area 2 geometry — updated at start of each Tick(), used by HandleMouseEvent()
+    int                 m_area2StartRow{0};
+    int                 m_area2Height{0};
+    size_t              m_lastRenderStartIdx{0};
+
+    // Copy feedback display (countdown in Tick frames at 25 Hz)
+    int                 m_copyFeedbackTicks{0};
+    size_t              m_copiedLineCount{0};
+    bool                m_clipUnsupported{false};  // true when last copy attempt failed (None method)
+
 private:
     // Helper for formatting individual columns
     template<typename T>
@@ -234,6 +270,41 @@ private:
 
     // Key input handler (buf: byte array read, len: byte count)
     void HandleKey(const char *buf, ssize_t len);
+
+    // Mouse event handler (called from Tick() after SGR sequence parse)
+    void HandleMouseEvent(int button, int col, int row, bool isRelease) noexcept;
+
+    // Map terminal row → log history offset from m_logHead
+    size_t TermRowToLogIdx(int termRow) const noexcept;
+
+    // Extract selected lines as plain text (ANSI codes stripped)
+    std::string ExtractSelectedText() const;
+
+    // Signal clipboard worker thread to copy the current selection
+    void CopySelectionToClipboard();
+
+    // Worker thread body: blocks on m_clipCv, calls DoClipboardWrite()
+    void ClipboardWorkerThreadFunc();
+
+    // Perform the actual clipboard write (runs in clipboard worker thread)
+    void DoClipboardWrite(const std::string &text) noexcept;
+
+    // Send an OSC 52 read request and check for a terminal reply (called once in Init, after TermInit)
+    bool ProbeOsc52() noexcept;
+
+    // Strip ANSI escape codes from src into dst
+    static void StripAnsi(const char *src, char *dst, size_t dstLen) noexcept;
+
+    // Base64 encode for OSC 52 clipboard
+    static std::string Base64Encode(const std::string &input);
+
+    // Fork/exec a command, pipe text to its stdin (blocking — call from worker thread)
+    static void RunPipe(const char *cmd, const std::string &text) noexcept;
+
+    // Try to parse a SGR mouse sequence; returns byte count consumed or 0
+    static ssize_t ParseMouseSgr(const char *buf, ssize_t len,
+                                  int &btn, int &col, int &row,
+                                  bool &isRelease) noexcept;
  
     // Output buffer (single write() syscall per frame)
     void FlushOutput();

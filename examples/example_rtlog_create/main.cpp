@@ -24,11 +24,11 @@ void DEMO_log_str_custom()
 int main(int argc, const char **argv)
 {
     dt::Log::Initialize("logger_1");
-    dt::Log::SetLogLevel(dt::Log::LogLevel::trace);
+    dt::Log::SetLogLevel(dt::Log::LogLevel::info);
     DEMO_log_str();
 
     dt::Log::Create("logger_2", "_STDOUT_");
-    dt::Log::SetLogLevel("logger_2", dt::Log::LogLevel::info);
+    dt::Log::SetLogLevel("logger_2", dt::Log::LogLevel::trace);
     dt::Log::SetLogPattern("logger_2", dt::Log::LogPatternFlag::type | dt::Log::LogPatternFlag::date, "|");
     DEMO_log_str_custom();
 
@@ -43,7 +43,7 @@ int main(int argc, const char **argv)
     auto thread_2 = std::thread([]() {
         for (int i = 0; i < 500; i++)
         {
-            LOG_U(logger_2, info) << "logger_2: 2222222222222222222222222222222";
+            LOG_U(logger_2, trace) << "logger_2: 2222222222222222222222222222222";
             usleep(10 * 1000);
         }
     });

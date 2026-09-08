@@ -100,7 +100,7 @@ public:
         {
             Slot& slot = m_slots[head & (m_capacity - 1)];
             uint32_t seq = slot.seq.load(std::memory_order_acquire);
-            int32_t diff = (int32_t)seq - (int32_t)head;
+            int32_t diff = (int32_t)(seq - head);
 
             if (diff == 0) 
             {
@@ -136,7 +136,7 @@ public:
         uint32_t tail = m_tail.load(std::memory_order_relaxed);
         Slot &slot = m_slots[tail & (m_capacity - 1)];
         uint32_t seq  = slot.seq.load(std::memory_order_acquire);
-        int32_t  diff = (int32_t)seq - (int32_t)(tail + 1);
+        int32_t  diff = (int32_t)(seq - (tail + 1));
 
         if (diff == 0) 
         {
