@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 
 function(GetCurrentDirectoryName dir_name)
     get_filename_component(list_name ${CMAKE_CURRENT_LIST_DIR} NAME)

@@ -78,38 +78,17 @@ OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      ON)
 
 
 # --------------------------------------------------------
-# Find & Include 3rd-party modules
+# Find 3rd-party modules
 # --------------------------------------------------------
-# include(cmake/common.cmake)
+# spdlog
+find_package(spdlog REQUIRED CONFIG)
+message(STATUS "Using spdlog ${spdlog_VERSION}")
+message(STATUS "    spdlog_DIR  ${spdlog_DIR}")
 
-# DOWNLOAD ALL THE SUBMODULES
-find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
-        message(STATUS "Submodule update...")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-            message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules.")
-        endif()
-    endif()
-endif()
-
-# CHECK & BUILD SUBMODULES
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extlib/spdlog/CMakeLists.txt")
-    message(FATAL_ERROR "The spdlog submodules was not downloaded. GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
-endif()
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extlib/yaml-cpp/CMakeLists.txt")
-    message(FATAL_ERROR "The yaml-cpp submodules was not downloaded. GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
-endif()
-
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-set(SPDLOG_INSTALL ON)
-add_subdirectory(extlib/spdlog)
-set(YAML_CPP_INSTALL ON)
-add_subdirectory(extlib/yaml-cpp)
+# yaml-cpp
+find_package(yaml-cpp REQUIRED CONFIG)
+message(STATUS "Using yaml-cpp ${yaml-cpp_VERSION}")
+message(STATUS "    yaml-cpp_DIR  ${yaml-cpp_DIR}")
 
 # --------------------------------------------------------
 # Build dtCore modules
@@ -202,10 +181,6 @@ endif(BUILD_DOCS)
 # --------------------------------------------------------
 install(DIRECTORY ./include/dtCore
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include
-)
-
-install(DIRECTORY ./extlib/mcap/cpp/mcap/include
-        DESTINATION ${CMAKE_INSTALL_PREFIX}
 )
 
 include(CMakePackageConfigHelpers)
