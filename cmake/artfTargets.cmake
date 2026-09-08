@@ -1,9 +1,7 @@
-if(CMAKE_VERSION VERSION_LESS 3.5.0)
-    message(FATAL_ERROR "This file relies on consumers using CMake 3.5.0 or greater.")
-endif()
+cmake_minimum_required(VERSION 3.13)
 
 cmake_policy(PUSH)
-cmake_policy(VERSION 3.5)
+cmake_policy(VERSION 3.13)
 
 # Commands may need to know the format version.
 set(CMAKE_IMPORT_FILE_VERSION 1)

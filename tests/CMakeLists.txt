@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 project("test_${CMAKE_PROJECT_NAME}")
 
 cmake_policy(SET CMP0074 NEW)
