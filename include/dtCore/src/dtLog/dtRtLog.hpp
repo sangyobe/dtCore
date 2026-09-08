@@ -100,6 +100,7 @@ namespace RtLogConstant
     // Visible prefix width of pattern "%^[%L][%H:%M:%S.%f]%$ %v":
     // "[I]"=3 + "[HH:MM:SS.ffffff]"=17 + " "=1 = 21 chars
     inline constexpr size_t DEFAULT_CONT_INDENT = 21;
+    inline constexpr size_t MAX_NAMED_LOGGERS   = 16;  // max number of named logger to create
 }   // namespace RtLogConstant
 
 // Colored stdout sink using a single write() syscall per message.
@@ -884,7 +885,7 @@ public:
             return;
         }
 
-        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+        if (static_cast<int>(lvl) < FindNamedLevel(loggerName))
         {
             return;
         }
@@ -906,7 +907,7 @@ public:
             return;
         }
 
-        if (static_cast<int>(lvl) < m_level.load(std::memory_order_relaxed))
+        if (static_cast<int>(lvl) < FindNamedLevel(loggerName))
         {
             return;
         }
@@ -1315,6 +1316,14 @@ private:
     spdlog::level::level_enum        m_contLevel{spdlog::level::info};
     std::string                      m_patternStr;  // current spdlog pattern, restored after %v switch
 
+    // Named logger level array for RT-safe per-logger level filtering
+    struct NamedLevel {
+        char             name[64]{};
+        std::atomic<int> level{};
+    };
+    std::array<NamedLevel, RtLogConstant::MAX_NAMED_LOGGERS> m_namedLevels{};
+    std::atomic<size_t>              m_namedLevelCount{0};
+
 private:
     RtLog() noexcept;
     ~RtLog();
@@ -1336,6 +1345,21 @@ private:
 
     void Enqueue(const Entry &entry) noexcept;
     bool IsActiveLevel(LogLevel lvl) const noexcept;
+
+    // RT-safe named logger level lookup: strncmp scan over fixed array, lock-free.
+    // Falls back to default m_level when loggerName is not registered.
+    int FindNamedLevel(const char *loggerName) const noexcept
+    {
+        size_t count = m_namedLevelCount.load(std::memory_order_acquire);
+        for (size_t i = 0; i < count; ++i)
+        {
+            if (strncmp(m_namedLevels[i].name, loggerName, sizeof(NamedLevel::name)) == 0)
+            {
+                return m_namedLevels[i].level.load(std::memory_order_relaxed);
+            }
+        }
+        return m_level.load(std::memory_order_relaxed);
+    }
 
     inline int64_t MonoNow_ns() const noexcept
     {
