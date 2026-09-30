@@ -3,6 +3,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/eventfd.h>
 #include <poll.h>
 #include <string.h>
 #include <stdio.h>
@@ -61,14 +62,21 @@ RtTui::RtTui()
     pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_NONE);
     pthread_mutex_init(&m_clipMtx, &mattr);
     pthread_mutexattr_destroy(&mattr);
-    pthread_cond_init(&m_clipCv, nullptr);
+    
+    // eventfd wakes the clipboard worker via poll() — a plain Linux syscall,
+    // so it blocks/wakes correctly for a SCHED_OTHER thread under Xenomai
+    // Cobalt regardless of weak-thread status (unlike a pthread condvar).
+    m_clipEventFd = eventfd(0, EFD_CLOEXEC);
 }
 
 RtTui::~RtTui()
 {
     Stop();
     pthread_mutex_destroy(&m_clipMtx);
-    pthread_cond_destroy(&m_clipCv);
+    if (m_clipEventFd >= 0)
+    {
+        close(m_clipEventFd);
+    }
 }
 
 // ───────────────────────────────────────────────
@@ -80,8 +88,11 @@ bool RtTui::Init()
     if (m_termActive.load(std::memory_order_acquire))
         return true;
 
-    m_clipThreadRun.store(true, std::memory_order_release);
-    m_clipThread = std::thread(&RtTui::ClipboardWorkerThreadFunc, this);
+    if (m_clipEventFd >= 0)
+    {
+        m_clipThreadRun.store(true, std::memory_order_release);
+        m_clipThread = std::thread(&RtTui::ClipboardWorkerThreadFunc, this);
+    }
 
     TermInit();
 
@@ -125,9 +136,8 @@ void RtTui::Stop()
     // ensures no concurrent write races against the close inside TermRestore().
     if (m_clipThread.joinable()) {
         m_clipThreadRun.store(false, std::memory_order_release);
-        pthread_mutex_lock(&m_clipMtx);
-        pthread_cond_signal(&m_clipCv);
-        pthread_mutex_unlock(&m_clipMtx);
+        uint64_t const one = 1;
+        ::write(m_clipEventFd, &one, sizeof(one));
         m_clipThread.join();
     }
 
@@ -1382,7 +1392,8 @@ void RtTui::CopySelectionToClipboard()
         m_clipText    = std::move(text);
         m_clipPending = true;
         pthread_mutex_unlock(&m_clipMtx);
-        pthread_cond_signal(&m_clipCv);
+        uint64_t const one = 1;
+        ::write(m_clipEventFd, &one, sizeof(one));
     }
 
     // Feedback display: ~1 second at 25 Hz
@@ -1458,8 +1469,8 @@ bool RtTui::ProbeOsc52() noexcept
 {
     // ── Stage 1: XTVERSION (\x1b[>q) ────────────────────────────────────────
     // Terminals that support OSC 52 write typically respond to XTVERSION with
-    // their name and version: \x1bP>|<Name>(<Version>)\x1b\\
-    { char d[64]; while (::read(STDIN_FILENO, d, sizeof(d)) > 0) {} }  // drain
+    // their name and version: \x1bP>|<Name>(<Version>)\x1b
+    //     { char d[64]; while (::read(STDIN_FILENO, d, sizeof(d)) > 0) {} }  // drain
 
     if (::write(STDOUT_FILENO, "\x1b[>q", 4) == 4) {
         struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
@@ -1515,12 +1526,23 @@ bool RtTui::ProbeOsc52() noexcept
 void RtTui::ClipboardWorkerThreadFunc()
 {
     while (true) {
+        // poll() is a plain Linux syscall (unlike a pthread condvar, which is
+        // intercepted by Xenomai's POSIX skin), so it blocks/wakes correctly
+        // here regardless of this SCHED_OTHER thread's Cobalt weak-thread
+        // status. The thread costs 0% CPU while idle and wakes immediately
+        // when CopySelectionToClipboard() or Stop() signals m_clipEventFd.
+        struct pollfd pfd = {m_clipEventFd, POLLIN, 0};
+        int pr = poll(&pfd, 1, -1);
+        if (pr > 0 && (pfd.revents & POLLIN))
+        {
+            uint64_t val;
+            ::read(m_clipEventFd, &val, sizeof(val));
+        }
+
+        bool const shouldExit = !m_clipThreadRun.load(std::memory_order_relaxed);
+
         std::string text;
         pthread_mutex_lock(&m_clipMtx);
-        while (!m_clipPending && m_clipThreadRun.load(std::memory_order_relaxed)) {
-            pthread_cond_wait(&m_clipCv, &m_clipMtx);
-        }
-        bool const shouldExit = !m_clipThreadRun.load(std::memory_order_relaxed);
         if (m_clipPending) {
             text          = std::move(m_clipText);
             m_clipPending = false;

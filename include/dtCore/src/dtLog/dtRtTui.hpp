@@ -211,10 +211,13 @@ private:
     enum class ClipboardMethod { None, Osc52, WlCopy, XClip, XSel };
     ClipboardMethod     m_clipMethod{ClipboardMethod::None};
     std::string         m_clipText;
-    // Use raw pthread primitives with PTHREAD_PRIO_NONE so the SCHED_OTHER clipboard
-    // worker thread is not rejected by Xenomai Cobalt's priority-inheritance check.
+    // m_clipMtx guards m_clipText/m_clipPending only (plain lock/unlock, no PI
+    // protocol involved, so it is safe for the SCHED_OTHER clipboard worker
+    // thread under Xenomai Cobalt). The worker is woken via m_clipEventFd +
+    // poll() instead of a pthread condvar: poll() is a plain Linux syscall,
+    // so it blocks/wakes correctly regardless of Cobalt's weak-thread status.
     pthread_mutex_t     m_clipMtx;
-    pthread_cond_t      m_clipCv;
+    int                 m_clipEventFd{-1};
     bool                m_clipPending{false};
     std::atomic<bool>   m_clipThreadRun{false};
     std::thread         m_clipThread;
@@ -283,7 +286,7 @@ private:
     // Signal clipboard worker thread to copy the current selection
     void CopySelectionToClipboard();
 
-    // Worker thread body: blocks on m_clipCv, calls DoClipboardWrite()
+    // Worker thread body: blocks on poll(m_clipEventFd), calls DoClipboardWrite()
     void ClipboardWorkerThreadFunc();
 
     // Perform the actual clipboard write (runs in clipboard worker thread)
