@@ -84,8 +84,8 @@ public:
 };
 namespace RtLogConstant
 {
-    inline constexpr size_t DEFAULT_MAX_SIZE    = 10 * 1024 * 1024;  // 10MB
-    inline constexpr size_t DEFAULT_MAX_FILES   = 5;
+    inline constexpr size_t DEFAULT_MAX_SIZE    = 100 * 1024 * 1024;  // 100MB
+    inline constexpr size_t DEFAULT_MAX_FILES   = 0;    // unlimited
     inline constexpr size_t INTERNAL_BUF_SIZE   = 65536;  // 64 KB internal buffer
     inline constexpr size_t QUEUE_CAPACITY      = 1024;
     inline constexpr size_t QUEUE_MSGLEN        = 1024;
@@ -426,8 +426,13 @@ public:
           m_bufPos(0),
           m_currentSize(0),
           m_maxSize(max_size),
-          m_maxFiles(max_files == 0 ? 1 : max_files)
+          m_maxFiles(max_files)
     {
+        if (m_maxFiles == 0)
+        {
+            InitRotatedCount();
+        }
+    
         OpenFile(truncate);
     }
 
@@ -516,6 +521,7 @@ private:
     size_t m_currentSize;
     size_t m_maxSize;
     size_t m_maxFiles;
+    size_t m_rotatedCount;   // cached number of rotated files currently on disk (m_maxFiles==0 mode only)
 
 private:
     void OpenFile(bool truncate) noexcept
@@ -595,6 +601,27 @@ private:
         m_bufPos = 0;
     }
 
+    void InitRotatedCount() noexcept
+    {
+        // Unlimited mode only: scan once at startup for existing rotated files
+        // (e.g. left over from a previous process run) so RotateFiles() continues
+        // the sequence instead of overwriting ".1".
+        try
+        {
+            size_t count = 0;
+            while (::access((m_baseFilename + "." + std::to_string(count + 1)).c_str(), F_OK) == 0)
+            {
+                ++count;
+            }
+            m_rotatedCount = count;
+        }
+        catch (...)
+        {
+            // Allocation failure: fall back to 0 (may overwrite ".1" on first rotation)
+            m_rotatedCount = 0;
+        }
+    }
+
     void RotateFiles() noexcept
     {
         // Flush and close current file
@@ -609,16 +636,32 @@ private:
         // Wrap in try-catch so that a noexcept boundary violation cannot trigger std::terminate().
         try
         {
-            for (size_t i = m_maxFiles - 1; i > 0; --i)
+            if (m_maxFiles == 0)
             {
-                std::string src = m_baseFilename + "." + std::to_string(i);
-                std::string dst = m_baseFilename + "." + std::to_string(i + 1);
-                if (i == m_maxFiles - 1)
+                // Unlimited rotation: shift every existing rotated file up by one using
+                // the cached count (no filesystem scan), then bump the cache. Nothing unlinked.
+                for (size_t i = m_rotatedCount; i > 0; --i)
                 {
-                    ::unlink(dst.c_str());
+                    std::string src = m_baseFilename + "." + std::to_string(i);
+                    std::string dst = m_baseFilename + "." + std::to_string(i + 1);
+                    ::rename(src.c_str(), dst.c_str());
                 }
-                ::rename(src.c_str(), dst.c_str());
+                ++m_rotatedCount;
             }
+            else
+            {
+                for (size_t i = m_maxFiles - 1; i > 0; --i)
+                {
+                    std::string src = m_baseFilename + "." + std::to_string(i);
+                    std::string dst = m_baseFilename + "." + std::to_string(i + 1);
+                    if (i == m_maxFiles - 1)
+                    {
+                        ::unlink(dst.c_str());
+                    }
+                    ::rename(src.c_str(), dst.c_str());
+                }
+            }
+
             std::string backup = m_baseFilename + ".1";
             ::rename(m_baseFilename.c_str(), backup.c_str());
         }
