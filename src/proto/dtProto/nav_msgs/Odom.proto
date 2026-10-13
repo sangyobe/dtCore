@@ -4,7 +4,6 @@ package dtproto.nav_msgs;
 
 import "dtProto/std_msgs/Header.proto";
 import "dtProto/geometry_msgs/Pose.proto";
-import "dtProto/geometry_msgs/Orientation.proto";
 import "dtProto/geometry_msgs/Twist.proto";
 import "dtProto/geometry_msgs/Matrix.proto";
 

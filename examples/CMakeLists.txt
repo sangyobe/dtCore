@@ -1,5 +1,4 @@
-include(DebugUtil)
-include(GetDirectoryName)
+include(ArtUtil)
 
 include_directories(
     "${CMAKE_SOURCE_DIR}/extlib/spdlog/include"
@@ -72,7 +71,7 @@ if(BUILD_dtProto AND BUILD_EXAMPLES_MCAP)
 endif()
 
 # eCAL example targets
-if(BUILD_dtProto AND BUILD_EXAMPLES_eCAL)
+if(BUILD_dtProto AND BUILD_EXAMPLES_DAQ_eCAL)
   file(GLOB EXAMPLE_DIRS "example_ecal_*")
   foreach(example_dir ${EXAMPLE_DIRS})
       add_subdirectory(${example_dir})
@@ -80,8 +79,16 @@ if(BUILD_dtProto AND BUILD_EXAMPLES_eCAL)
 endif()
 
 # gRPC example targets
-if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_EXAMPLES_gRPC)
+if(BUILD_dtProto AND BUILD_dtProto_gRPC AND BUILD_EXAMPLES_DAQ_gRPC)
   file(GLOB EXAMPLE_DIRS "example_grpc_*")
+  foreach(example_dir ${EXAMPLE_DIRS})
+      add_subdirectory(${example_dir})
+  endforeach()
+endif()
+
+# RPC example targets
+if(BUILD_EXAMPLES_RPC)
+  file(GLOB EXAMPLE_DIRS "example_rpc_*")
   foreach(example_dir ${EXAMPLE_DIRS})
       add_subdirectory(${example_dir})
   endforeach()
@@ -89,7 +96,6 @@ endif()
 
 # other examples
 file(GLOB EXAMPLE_DIRS "example_thread*" "example_log*" "example_rtlog*" "example_utils*")
-
 foreach(example_dir ${EXAMPLE_DIRS})
     add_subdirectory(${example_dir})
 endforeach()

@@ -1,3 +1,24 @@
+#### [v1.17.0]
+(2026/10/58)
+##### dt::Rpc (dtRpc) — 신규 모듈
+- `dt::Rpc::Server` / `dt::Rpc::Client` 신규 도입: gRPC 기반 범용 RPC 서버/클라이언트
+- `dt::Rpc::ServiceServer<RequestType, ResponseType>`: Unary RPC 서비스 서버 세션 (요청 수신 → 즉시 응답)
+- `dt::Rpc::ServiceClient<RequestType, ResponseType>`: Unary RPC 서비스 클라이언트 세션
+- `dt::Rpc::ActionServer<RequestType, ResponseType>`: Server-streaming RPC 액션 서버 세션 (요청 수신 → 스트림 응답)
+- `dt::Rpc::ActionClient<RequestType, ResponseType>`: Server-streaming RPC 액션 클라이언트 세션
+- `dt::Rpc::TopicPublisher<RequestType, MessageType>`: Server-streaming RPC 토픽 발행자 서버 세션 (클라이언트 구독 → 지속 발행)
+- `dt::Rpc::TopicSubscriber<RequestType, MessageType>`: Server-streaming RPC 토픽 구독자 클라이언트 세션
+- `dt::Rpc::TopicFeeder<MessageType, ResponseType>`: Client-streaming RPC 토픽 피더 클라이언트 세션 (지속 발행 → 서버 수신)
+- `dt::Rpc::TopicListener<MessageType, ResponseType>`: Client-streaming RPC 토픽 리스너 서버 세션
+- `example_rpc_action_client`, `example_rpc_action_server`, `example_rpc_service_client`, `example_rpc_service_server`, `example_rpc_topic_feeder`, `example_rpc_topic_listener`, `example_rpc_topic_publisher`, `example_rpc_topic_subscriber` 예제 추가
+##### dt::Task (dtTask) — 신규 모듈
+- `dt::Task::Task` / `dt::Task::TaskArray` 추가
+- `dt::Task::TaskManager` / `dt::Task::TaskManagerSingleQueue` 추가
+##### Build
+- CMake 옵션 이름 변경: `BUILD_EXAMPLES_eCAL` → `BUILD_EXAMPLES_DAQ_eCAL`, `BUILD_EXAMPLES_gRPC` → `BUILD_EXAMPLES_DAQ_gRPC`
+- `BUILD_EXAMPLES_RPC` 옵션 추가: RPC 예제 빌드 제어
+- `DebugUtil.cmake`, `GetDirectoryName.cmake` 삭제 → `ArtUtil.cmake`로 통합
+
 #### [v1.16.1]
 (2026/6/15)
 ##### dt::Log (dtRtLog)

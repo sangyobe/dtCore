@@ -1,1 +1,1 @@
-cmake --build build --config Release -j8
+cmake --build build --config Release -j$(nproc)

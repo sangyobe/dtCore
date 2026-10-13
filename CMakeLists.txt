@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 
+# --------------------------------------------------------
+# Project settings
+# --------------------------------------------------------
 project(dtCore
     LANGUAGES C CXX
     HOMEPAGE_URL https://github.hmc.co.kr/art_framework
     DESCRIPTION "HMC's Art Framework Library"
-    VERSION 1.16.1
+    VERSION 1.17.0
 )
 
 cmake_policy(VERSION 3.13)
@@ -23,7 +26,6 @@ configure_file(${version_h_in} ${version_h} @ONLY)
 #set(CMAKE_CXX_FLAGS "-Wall -std=c++0x -stdlib=libc++")
 #set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g")
 #set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O4 -DNDEBUG")
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -41,6 +43,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
+# set ART Framework installed directory
 if("$ENV{ARTF_INSTALL_DIR}" STREQUAL "")
     set(ARTF_INSTALL_DIR "$ENV{HOME}/.local/ART_Framework")
 else()
@@ -63,19 +66,18 @@ set(PROTOBUF_GEN_DIR "") # this variable will be set while configuring 'src' dir
 
 # --------------------------------------------------------
 # Build options
-# use it that way cmake .. -DBUILD_EXAMPLES=ON -DBUILD_dtProto=ON
 # --------------------------------------------------------
-OPTION(BUILD_DOCS           "Build documents"                         OFF)
-OPTION(BUILD_UNIT_TESTS     "Build unit test"                         OFF)
-OPTION(BUILD_EXAMPLES       "Build examples"                          OFF)
-OPTION(BUILD_EXAMPLES_eCAL  "Build eCAL examples"                     OFF)
-OPTION(BUILD_EXAMPLES_gRPC  "Build gRPC examples"                     OFF)
-OPTION(BUILD_EXAMPLES_MCAP  "Build MCAP examples"                     OFF)
-OPTION(BUILD_dtCore         "Build dtCore library"                    ON)
-OPTION(BUILD_dtProto        "Build dtProto library"                   ON)
-OPTION(BUILD_dtProto_gRPC   "Build dtProto library with gRPC support" ON)
-OPTION(BUILD_dtCore_gRPC    "Build dtCore with gRPC DAQ support"      ON)
-
+OPTION(BUILD_DOCS               "Build documents"                           OFF)
+OPTION(BUILD_UNIT_TESTS         "Build unit test"                           OFF)
+OPTION(BUILD_EXAMPLES           "Build examples"                            OFF)
+OPTION(BUILD_EXAMPLES_RPC       "Build RPC examples"                        OFF)
+OPTION(BUILD_EXAMPLES_DAQ_eCAL  "Build DAQ(eCAL) examples"                  OFF)
+OPTION(BUILD_EXAMPLES_DAQ_gRPC  "Build DAQ(gRPC) examples"                  OFF)
+OPTION(BUILD_EXAMPLES_MCAP      "Build MCAP examples"                       OFF)
+OPTION(BUILD_dtCore             "Build dtCore library"                      ON)
+OPTION(BUILD_dtProto            "Build dtProto library"                     ON)
+OPTION(BUILD_dtProto_gRPC       "Build dtProto library with gRPC support"   ON)
+OPTION(BUILD_dtCore_gRPC        "Build dtCore with gRPC DAQ support"        ON)
 
 # --------------------------------------------------------
 # Find 3rd-party modules
@@ -104,14 +106,12 @@ if(BUILD_UNIT_TESTS)
   add_subdirectory(tests)
 endif()
 
-
 # --------------------------------------------------------
 # Build examples
 # --------------------------------------------------------
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
-
 
 # --------------------------------------------------------
 # Build documents
@@ -175,7 +175,6 @@ if(BUILD_DOCS)
   endif(DOXYGEN_FOUND)
 endif(BUILD_DOCS)
 
-
 # --------------------------------------------------------
 # Install
 # --------------------------------------------------------
@@ -204,8 +203,9 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "BUILD_DOCS                                     : ${BUILD_DOCS}")
 message(STATUS "BUILD_UNIT_TESTS                               : ${BUILD_UNIT_TESTS}")
 message(STATUS "BUILD_EXAMPLES                                 : ${BUILD_EXAMPLES}")
-message(STATUS "BUILD_EXAMPLES_eCAL                            : ${BUILD_EXAMPLES_eCAL}")
-message(STATUS "BUILD_EXAMPLES_gRPC                            : ${BUILD_EXAMPLES_gRPC}")
+message(STATUS "BUILD_EXAMPLES_RPC                             : ${BUILD_EXAMPLES_RPC}")
+message(STATUS "BUILD_EXAMPLES_DAQ_eCAL                        : ${BUILD_EXAMPLES_DAQ_eCAL}")
+message(STATUS "BUILD_EXAMPLES_DAQ_gRPC                        : ${BUILD_EXAMPLES_DAQ_gRPC}")
 message(STATUS "BUILD_EXAMPLES_MCAP                            : ${BUILD_EXAMPLES_MCAP}")
 message(STATUS "BUILD_dtCore                                   : ${BUILD_dtCore}")
 message(STATUS "BUILD_dtProto                                  : ${BUILD_dtProto}")

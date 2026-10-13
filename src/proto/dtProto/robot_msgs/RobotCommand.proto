@@ -2,11 +2,7 @@ syntax = "proto3";
 
 package dtproto.robot_msgs;
 
-import "google/protobuf/timestamp.proto";
 import "dtProto/std_msgs/Header.proto";
-import "dtProto/geometry_msgs/Pose.proto";
-import "dtProto/geometry_msgs/Velocity.proto";
-import "dtProto/geometry_msgs/Trajectory.proto";
 import "dtProto/nav_msgs/NavCommand.proto";
 import "dtProto/robot_msgs/ControlCmd.proto";
 import "dtProto/robot_msgs/JointControl.proto";

@@ -1,1 +1,1 @@
-sudo cmake --build build --target install
+cmake --build build --target install -j$(nproc)

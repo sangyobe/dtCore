@@ -28,10 +28,11 @@ if(BUILD_dtProto)
     # Find gRPC installation
     # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
     find_package(gRPC CONFIG REQUIRED)
+    get_target_property(GRPC_INC_PATH gRPC::grpc++ INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(GRPC_LIB_PATH gRPC::grpc++ IMPORTED_LOCATION_RELEASE)
     message(STATUS "Using gRPC ${gRPC_VERSION}")
-    message(STATUS "    gRPC_INCLUDE_DIRS ${gRPC_INCLUDE_DIRS}")
-    message(STATUS "    gRPC_LIBRARY ${gRPC_LIBRARY}")
-    message(STATUS "    gRPC_LIBRARY_DEBUG ${gRPC_LIBRARY_DEBUG}")
+    message(STATUS "    gRPC_INCLUDE_DIR ${GRPC_INC_PATH}")
+    message(STATUS "    gRPC_LIBRARY ${GRPC_LIB_PATH}")
 
     set(_GRPC_GRPCPP gRPC::grpc++)
     set(_GRPC_REFLECTION gRPC::grpc++_reflection)
