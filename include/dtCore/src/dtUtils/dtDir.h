@@ -25,14 +25,25 @@ namespace Utils
 
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir();
+// set the current working directory to dir
+bool SetCurrentWorkingDir(const std::string &dir);
+// returns the current working directory
+std::string GetCurrentWorkingDir();
 // returns the directory where tasks are stored
-std::string GetTasksDir();
-// returns path to a model XML file given path relative to models dir
+std::string GetTaskDir();
+// returns the directory where configuration files are stored
+std::string GetConfigDir();
+// returns the directory where model files are stored
+std::string GetModelDir();
+// (**deprecated**) returns path to a model XML file given path relative to model dir
 std::string GetModelPath(std::string path);
 // return file extension for the given file
 std::string GetFileExtension(const std::string &filePath);
 // returns the current user's home directory
 std::string GetUserHomeDir();
+
+
+
 
 } // namespace Utils
 } // namespace dt

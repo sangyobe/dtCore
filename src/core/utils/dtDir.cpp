@@ -2,6 +2,7 @@
 #include "dtCore/src/dtUtils/dtDir.h"
 
 //* C/C++ System Headers -----------------------------------------------------*/
+#include <climits> // PATH_MAX
 #include <cstdint>
 #include <memory>
 #include <stdio.h>
@@ -140,21 +141,69 @@ std::string GetExecutableDir()
     return "";
 }
 
-// returns the directory where tasks are stored
-std::string GetTasksDir()
+// set the current working directory to dir
+bool SetCurrentWorkingDir(const std::string &dir)
 {
-    const char *tasks_dir = std::getenv("USERCTRL_TASK_DIR");
-    if (tasks_dir)
+    if (chdir(dir.c_str()) != 0)
     {
-        return tasks_dir;
+        return false;
     }
-    return GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1));
+    return true;
+}
+// returns the current working directory
+std::string GetCurrentWorkingDir()
+{
+    char buf[PATH_MAX];
+    if (getcwd(buf, sizeof(buf)) != nullptr)
+    {
+        std::string cwdStr(buf);
+        return cwdStr;
+    }
+    else
+    {
+        return "";
+    }
 }
 
-// returns path to a model XML file given path relative to models dir
+// returns the directory where tasks are stored
+std::string GetTaskDir()
+{
+    const char *task_dir = std::getenv("ARTF_TASK_DIR");
+    if (task_dir)
+    {
+        return task_dir;
+    }
+    // return GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1));
+    return GetCurrentWorkingDir() + "/task";
+}
+
+// returns the directory where configuration files are stored
+std::string GetConfigDir()
+{
+    const char *conf_dir = std::getenv("ARTF_CONFIG_DIR");
+    if (conf_dir)
+    {
+        return conf_dir;
+    }
+    return GetCurrentWorkingDir() + "/config";
+}
+
+// returns the directory where model files are stored
+std::string GetModelDir()
+{
+    const char *model_dir = std::getenv("ARTF_MODEL_DIR");
+    if (model_dir)
+    {
+        return model_dir;
+    }
+    return GetCurrentWorkingDir() + "/model";
+}
+
+// (**deprecated**) returns path to a model XML file given path relative to models dir
 std::string GetModelPath(std::string path)
 {
-    return GetTasksDir() + "/model/" + std::string(path);
+    std::string cwd = GetExecutableDir().substr(0, GetExecutableDir().find_last_of("/\\", GetExecutableDir().find_last_of("/\\") - 1));
+    return cwd + "/model/" + std::string(path);
 }
 
 // return file extension for the given file
@@ -188,6 +237,10 @@ std::string GetUserHomeDir()
     return buf ? buf : std::string{};
 #endif
 }
+
+
+
+
 
 } // namespace Utils
 } // namespace dt

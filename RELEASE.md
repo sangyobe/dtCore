@@ -1,5 +1,14 @@
+#### [v1.17.1]
+(2026/11/4)
+##### dt::Utils
+- dt::Utils::SetCurrentWorkingDir API 추가: set the current working directory to dir
+- dt::Utils::GetCurrentWorkingDir() 추가: returns the current working directory
+- dt::Utils::GetTaskDir() 변경: returns the directory where tasks are stored
+- dt::Utils::GetConfigDir() 추가: returns the directory where configuration files are stored
+- dt::Utils::GetModelDir() 추가: returns the directory where model files are stored
+
 #### [v1.17.0]
-(2026/10/58)
+(2026/10/13)
 ##### dt::Rpc (dtRpc) — 신규 모듈
 - `dt::Rpc::Server` / `dt::Rpc::Client` 신규 도입: gRPC 기반 범용 RPC 서버/클라이언트
 - `dt::Rpc::ServiceServer<RequestType, ResponseType>`: Unary RPC 서비스 서버 세션 (요청 수신 → 즉시 응답)
