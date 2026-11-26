@@ -15,7 +15,7 @@ void *threadProc(void *)
         watchdog.Watch(false);
         dtTerm::Printf("Dec watchdog counter.\n");
     }
-    dtTerm::Printf("[ALARM]] Watchdog fired.\n");
+    dtTerm::Printf("[ALARM] Watchdog fired.\n");
     bRun.store(false);
     return 0;
 }
